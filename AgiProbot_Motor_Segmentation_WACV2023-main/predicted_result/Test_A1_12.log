@@ -1,0 +1,26 @@
+Test with backgroud: mIoU 0.934026,  Test point acc 0.993888, Test avg class acc 0.957235
+Test without backgroud----mIoU 0.921202,  Test point acc: 0.986417, Test avg class acc: 0.948922
+------- IoU --------
+class clamping_system  percentage: 0.6034, IoU: 0.9981 
+class cover            percentage: 0.2867, IoU: 0.9878 
+class gear_container   percentage: 0.0281, IoU: 0.9478 
+class charger          percentage: 0.0243, IoU: 0.9504 
+class bottom           percentage: 0.0456, IoU: 0.9629 
+class side_screw       percentage: 0.0118, IoU: 0.7571 
+
+
+
+
+Test with backgroud: mIoU 0.946456,  Test point acc 0.995203, Test avg class acc 0.967515
+Test without backgroud----mIoU 0.936000,  Test point acc: 0.988960, Test avg class acc: 0.961157
+------- IoU --------
+class clamping_system  percentage: 0.6034, IoU: 0.9987 
+class cover            percentage: 0.2867, IoU: 0.9913 
+class gear_container   percentage: 0.0282, IoU: 0.9530 
+class charger          percentage: 0.0243, IoU: 0.9553 
+class bottom           percentage: 0.0456, IoU: 0.9685 
+class side_screw       percentage: 0.0118, IoU: 0.8119 
+
+
+
+

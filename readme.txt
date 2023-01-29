@@ -1,6 +1,4 @@
-a rough defensive strategy
+Project AgiProbot
 
-based on Monte Casrlo Policy Gradient
-
-more details see OneNote:
-	https://onedrive.live.com/view.aspx?resid=BAA8E6F02FF9473E%214379&id=documents
+TODO: Readme.txt
+TODO: read all codes
