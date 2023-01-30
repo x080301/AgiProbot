@@ -1,2 +1,4 @@
 *.ckp
-*.link
+*.lnk
+my_test.py
+.idea/
