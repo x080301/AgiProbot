@@ -66,3 +66,5 @@ if __name__ == '__main__':
     trainer = Trainer(net, criterion, optimizer, test_dl, test_dl, cuda=True)
 
     trainer.test('checkpoints/checkpoint_0088_0.693.ckp')
+
+    pass
