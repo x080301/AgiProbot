@@ -14,9 +14,9 @@ class Trainer:
                  model,  # Model to be trained.
                  crit,  # Loss function
                  optim=None,  # Optimizer
-                 train_dl=None,  # Training data set
-                 val_dl=None,  # Validation (or test) data set
-                 cuda=True  # Whether to use the GPU
+                 train_dl=None,  # Train data_process set loader
+                 val_dl=None,  # Validation (or test) data_process set loader
+                 cuda=True,  # Whether to use the GPU
                  ):
         self._model = model
         self._crit = crit
@@ -280,8 +280,8 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    from Model_VGG16 import VGGnet
-    from data import CAPTCHADataset
+    '''from Model_VGG16 import VGGnet
+    from data_process import CAPTCHADataset
     from Model_ResNet import ResNet
 
     train_dataset = pd.read_csv('data_train.csv', sep=';')
@@ -302,4 +302,5 @@ if __name__ == '__main__':
     # create an object of type Trainer and set its early stopping criterion
     trainer = Trainer(net, criterion, optimizer, train_dl, valid_dl, cuda=True)
 
-    trainer.fit(100)
+    trainer.fit(10)'''
+    pass

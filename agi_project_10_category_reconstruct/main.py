@@ -1,6 +1,6 @@
 from Model_VGG16 import VGGnet
 import pandas as pd
-from data import CAPTCHADataset
+from data_process import CAPTCHADataset
 from Model_ResNet import ResNet
 import torch
 from trainer import Trainer

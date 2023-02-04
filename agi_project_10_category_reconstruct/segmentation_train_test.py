@@ -1,0 +1,491 @@
+from utilities.argumentparser import argumentparser
+
+import warnings
+
+import os
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
+from data_process.dataloader import MotorDataset, MotorDataset_validation, MotorDataset_patch
+from model.PCT import PCT_semseg, PCT_patch_semseg
+import numpy as np
+from torch.utils.data import DataLoader
+from utilities.util import cal_loss, mean_loss, normalize_data, rotate_per_batch, feature_transform_reguliarzer
+import time
+from tqdm import tqdm
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 'side_bolt', 'cover_bolt', 'geara_up',
+           'geara_down', 'gearb']
+types = ['TypeA0', 'TypeA1', 'TypeA2', 'TypeB0', 'TypeB1']
+labels2type_ = {i: cls for i, cls in enumerate(types)}
+labels2categories = {i: cls for i, cls in enumerate(classes)}  # dictionary for labels2categories
+NUM_CLASS_MOTOR = 5
+
+
+def train(args, io):
+    NUM_POINT = args.npoints
+    print("start loading training data_process ...")
+    TRAIN_DATASET = MotorDataset(split='train', data_root=args.data_dir, num_class=NUM_CLASS, num_points=NUM_POINT,
+                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)  # TODO
+    print("start loading test data_process ...")
+    VALIDATION_SET = MotorDataset_validation(split='test', data_root=args.data_dir, num_class=NUM_CLASS,
+                                             num_points=NUM_POINT, test_area=args.validation_symbol, sample_rate=1.0,
+                                             transform=None)
+    train_loader = DataLoader(TRAIN_DATASET, num_workers=8, batch_size=args.batch_size, shuffle=True, drop_last=True,
+                              worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
+    validation_loader = DataLoader(VALIDATION_SET, num_workers=8, batch_size=args.test_batch_size, shuffle=True,
+                                   drop_last=False)
+
+    device = torch.device("cuda" if args.cuda else "cpu")
+    io.cprint(args)
+    # Try to load models
+    tmp = torch.cuda.max_memory_allocated()
+    if args.model == 'PCT':
+        model = PCT_semseg(args).to(device)
+    elif args.model == 'PCT_patch':
+        model = PCT_patch_semseg(args).to(device)  # TODO
+    else:
+        raise Exception("Not implemented")
+    # summary(model,input_size=(3,4096),batch_size=1,device='cuda')
+
+    model = nn.DataParallel(model)
+    print("Let's use", torch.cuda.device_count(), "GPUs!")
+
+    if args.use_sgd:
+        print("Use SGD")
+        opt = optim.SGD([{'params': model.parameters(), 'initial_lr': args.lr}], lr=args.lr, momentum=args.momentum,
+                        weight_decay=1e-4)
+    else:
+        print("Use Adam")
+        opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+
+    if args.scheduler == 'cos':
+        scheduler = CosineAnnealingLR(opt, args.epochs, eta_min=1e-5)
+    elif args.scheduler == 'step':
+        scheduler = StepLR(opt, 20, 0.1, args.epochs)
+
+    ## if finetune is true, the the best_finetune will be cosidered first, then best.pth will be taken into consideration
+    if args.finetune:
+        add_string = '_finetune'
+        if os.path.exists(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"):
+            checkpoint = torch.load(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth")
+            print('Use pretrain finetune model to finetune')
+
+        elif os.path.exists(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
+            checkpoint = torch.load(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth")
+            print('Use pretrain model to finetune')
+        else:
+            print('no exiting pretrained model to finetune')
+            exit(-1)
+        if not os.path.exists(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth") and os.path.exists(
+            str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
+            start_epoch = 0
+        else:
+            start_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint['model_state_dict'])
+
+    else:
+        add_string = ''
+        if os.path.exists(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best.pth"):
+            checkpoint = torch.load(str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best.pth")
+            start_epoch = checkpoint['epoch']
+            model.load_state_dict(checkpoint['model_state_dict'])
+            print('Use pretrain model')
+        else:
+            start_epoch = 0
+            print('no exiting pretrained model,starting from scratch')
+
+    criterion = cal_loss
+    criterion2 = mean_loss
+    best_iou = 0
+    best_bolts_iou = 0
+    weights = torch.Tensor(TRAIN_DATASET.labelweights).cuda()  # TODO
+    persentige = torch.Tensor(TRAIN_DATASET.persentage).cuda()  # TODO
+    io.cprint(persentige)
+    scale = weights * persentige
+    scale = 1 / scale.sum()
+    weights *= scale
+    if args.use_class_weight == 0:
+        for i in range(NUM_CLASS):
+            weights[i] = 1
+
+    for epoch in range(start_epoch, args.epochs):
+        ####################
+        # Train
+        ####################
+        num_batches = len(train_loader)
+        total_correct = 0
+        total_correct_classification = 0
+        total_seen_classification = 0
+        total_seen = 0
+        loss_sum = 0
+        model = model.train()
+        args.training = True
+        total_correct_class__ = [0 for _ in range(NUM_CLASS)]
+        total_iou_deno_class__ = [0 for _ in range(NUM_CLASS)]
+        for i, (points, target, type_label, goals, masks, type) in tqdm(enumerate(train_loader),
+                                                                        total=len(train_loader), smoothing=0.9):
+            points, target, type_label, goals, masks = points.to(device), target.to(device), type_label.to(
+                device), goals.to(device), masks.to(
+                device)  # (batch_size, num_points, features)    (batch_size, num_points)
+            # TODO:goals? masks?
+            points = normalize_data(points)
+            # Visuell_PointCloud_per_batch_according_to_label(points,target)
+            if args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
+                points, goals, GT = rotate_per_batch(points, goals)
+            else:
+                points, _, GT = rotate_per_batch(points, goals)
+            # Visuell_PointCloud_per_batch_according_to_label(points,target)
+            points = points.permute(0, 2, 1)  # (batch_size,features,numpoints)
+            batch_size = points.size()[0]
+            opt.zero_grad()
+            seg_pred, trans, class_pred, result = model(points.float(),
+                                                        target)  # (batch_size, class_categories, num_points)
+
+            batch_type_label = type_label.view(-1, 1)[:, 0].cpu().data.numpy()
+            loss_class = criterion(class_pred, type_label, weights, using_weight=args.use_class_weight)
+            pred_class_choice = class_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+            correct_class = np.sum(pred_class_choice == batch_type_label)
+            total_correct_classification += correct_class
+            total_seen_classification += (batch_size)
+
+            seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (batch_size,num_points, class_categories)
+            batch_label = target.view(-1, 1)[:,
+                          0].cpu().data.numpy()  # array(batch_size*num_points)            loss = criterion(seg_pred.view(-1, NUM_CLASS), target.view(-1,1).squeeze(),weights,using_weight=args.use_class_weight)     #a scalar
+            loss = criterion(seg_pred.view(-1, NUM_CLASS), target.view(-1, 1).squeeze(), weights,
+                             using_weight=args.use_class_weight)  # a scalar
+            if args.model == "PCT_patch" or args.model == "dgcnn_patch":
+                loss = loss + criterion2(result.view(-1, 3), goals.view(-1, 3), masks) * args.kernel_loss_weight
+            loss = loss + feature_transform_reguliarzer(trans) * args.stn_loss_weight + loss_class
+            loss.backward()
+            opt.step()
+            seg_pred = seg_pred.contiguous().view(-1, NUM_CLASS)  # (batch_size*num_points , num_class)
+            pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+            correct = np.sum(
+                pred_choice == batch_label)  # when a np arraies have same shape, a==b means in conrrespondending position it equals to one,when they are identical
+            total_correct += correct
+            total_seen += (batch_size * NUM_POINT)
+            loss_sum += loss
+            for l in range(NUM_CLASS):
+                total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
+                total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+        mIoU__ = np.mean(np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6))
+
+        if args.scheduler == 'cos':
+            scheduler.step()
+        elif args.scheduler == 'step':
+            if opt.param_groups[0]['lr'] > 1e-5:
+                scheduler.step()
+            if opt.param_groups[0]['lr'] < 1e-5:
+                for param_group in opt.param_groups:
+                    param_group['lr'] = 1e-5
+
+        outstr = 'Segmentation:Train %d, loss: %.6f, train acc: %.6f ' % (
+            epoch, (loss_sum / num_batches), (total_correct / float(total_seen)))
+        outstr = 'Classification:Train %d, loss: %.6f, train acc: %.6f ' % (
+            epoch, (loss_class / num_batches), (total_correct_classification / float(total_seen_classification)))
+        io.cprint(outstr)
+        writer.add_scalar('Training loss', (loss_sum / num_batches), epoch)
+        writer.add_scalar('Training accuracy', (total_correct / float(total_seen)), epoch)
+        writer.add_scalar('Training mean ioU', (mIoU__), epoch)
+        writer.add_scalar('Training loU of bolt', (total_correct_class__[5] / float(total_iou_deno_class__[5])), epoch)
+        ####################
+        # Validation
+        ####################
+        with torch.no_grad():
+            num_batches = len(validation_loader)
+            total_correct = 0
+            total_seen = 0
+            total_correct_classification = 0
+            total_seen_classification = 0
+            loss_sum = 0
+            labelweights = np.zeros(NUM_CLASS)
+            total_seen_class = [0 for _ in range(NUM_CLASS)]
+            total_correct_class = [0 for _ in range(NUM_CLASS)]
+            total_iou_deno_class = [0 for _ in range(NUM_CLASS)]
+            cla_seen_class = [0 for _ in range(5)]
+            cla_correct_class = [0 for _ in range(5)]
+            cla_iou_deno_class = [0 for _ in range(5)]
+            model = model.eval()
+            args.training = False
+
+            for i, (points, seg, type_label_, _) in tqdm(enumerate(validation_loader), total=len(validation_loader),
+                                                         smoothing=0.9):
+                points, seg, type_label_ = points.to(device), seg.to(device), type_label_.to(device)
+                points = normalize_data(points)
+                points, GT = rotate_per_batch(points, None)
+                points = points.permute(0, 2, 1)
+                batch_size = points.size()[0]
+                seg_pred_, trans_, class_pred_, _ = model(points.float(), seg)
+
+                batch_type_label_ = type_label_.view(-1, 1)[:, 0].cpu().data.numpy()
+                loss_class = criterion(class_pred_, type_label_, weights, using_weight=args.use_class_weight)
+                pred_class_choice_ = class_pred_.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                correct_class_ = np.sum(pred_class_choice_ == batch_type_label_)
+                total_correct_classification += correct_class_
+                total_seen_classification += (batch_size)
+
+                seg_pred_ = seg_pred_.permute(0, 2, 1).contiguous()
+                batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
+                loss = criterion(seg_pred_.view(-1, NUM_CLASS), seg.view(-1, 1).squeeze(), weights,
+                                 using_weight=args.use_class_weight)  # a scalar
+                loss = loss + feature_transform_reguliarzer(trans_) * args.stn_loss_weight
+                seg_pred_ = seg_pred_.contiguous().view(-1, NUM_CLASS)  # (batch_size*num_points , num_class)
+                pred_choice = seg_pred_.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                correct = np.sum(pred_choice == batch_label)
+                total_correct += correct
+                total_seen += (batch_size * NUM_POINT)
+                loss_sum += loss
+                tmp, _ = np.histogram(batch_label, range(NUM_CLASS + 1))
+                labelweights += tmp
+                for l in range(NUM_CLASS):
+                    total_seen_class[l] += np.sum((batch_label == l))
+                    total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
+                    total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
+                ####### calculate without Background ##############
+                for l in range(NUM_CLASS_MOTOR):
+                    cla_seen_class[l] += np.sum((batch_type_label_ == l))
+                    cla_correct_class[l] += np.sum((pred_class_choice_ == l) & (batch_type_label_ == l))
+                    cla_iou_deno_class[l] += np.sum(((pred_class_choice_ == l) | (batch_type_label_ == l)))
+
+            labelweights = labelweights.astype(np.float32) / np.sum(labelweights.astype(np.float32))
+            mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
+
+            outstr = 'Validation with backgroud----epoch: %d,  eval loss %.6f,  eval mIoU %.6f,  eval point acc %.6f, eval avg class acc %.6f' % (
+                epoch, (loss_sum / num_batches), mIoU,
+                (total_correct / float(total_seen)),
+                (np.mean(np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
+
+            io.cprint(outstr)
+            cla_mIoU = np.mean(np.array(cla_correct_class) / (np.array(cla_iou_deno_class, dtype=np.float64) + 1e-6))
+            outstr_without_background = 'Validation for Classification----epoch: %d, mIoU %.6f' % (epoch, cla_mIoU)
+
+            io.cprint(outstr_without_background)
+
+            iou_per_class_str = '------- IoU --------\n'
+            for l in range(NUM_CLASS):
+                iou_per_class_str += 'class %s percentage: %.4f, loss_weight: %.4f, IoU: %.4f \n' % (
+                    labels2categories[l] + ' ' * (16 - len(labels2categories[l])), labelweights[l], weights[l],
+                    total_correct_class[l] / float(total_iou_deno_class[l]))
+            io.cprint(iou_per_class_str)
+            io.cprint('\n')
+            iou_per_class_str_ = ''
+            for l in range(NUM_CLASS_MOTOR):
+                iou_per_class_str_ += 'class %s,claffification IoU: %.4f \n' % (
+                    labels2type_[l] + ' ' * (16 - len(labels2type_[l])),
+                    cla_correct_class[l] / float(cla_iou_deno_class[l]))
+            io.cprint(iou_per_class_str_)
+
+            if mIoU >= best_iou:
+                best_iou = mIoU
+                if args.finetune:
+                    savepath = str(
+                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune_m.pth"
+                else:
+                    savepath = str(
+                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_m.pth"
+
+                state = {
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': opt.state_dict(),
+                }
+                io.cprint('Saving best model at %s' % savepath)
+                torch.save(state, savepath)
+            io.cprint('Best mIoU: %f' % best_iou)
+            cur_bolts_iou = total_correct_class[5] / float(total_iou_deno_class[5])
+            if cur_bolts_iou >= best_bolts_iou:
+                best_bolts_iou = cur_bolts_iou
+                if args.finetune:
+                    add_string = '_finetune'
+                    savepath = str(
+                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"
+                else:
+                    add_string = ''
+                    savepath = str(
+                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best.pth"
+                state = {
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': opt.state_dict(),
+                }
+                io.cprint('Saving best model at %s' % savepath)
+                torch.save(state, savepath)
+            io.cprint('Best IoU of bolt: %f' % best_bolts_iou)
+            io.cprint('\n\n')
+        writer.add_scalar('learning rate', opt.param_groups[0]['lr'], epoch)
+        writer.add_scalar('Validation loss', (loss_sum / num_batches), epoch)
+        writer.add_scalar('Validation accuracy', (total_correct / float(total_seen)), epoch)
+        writer.add_scalar('validation mean ioU', (mIoU), epoch)
+        writer.add_scalar('Validation loU of bolt', (total_correct_class[5] / float(total_iou_deno_class[5])), epoch)
+
+    io.close()
+
+
+def test(args, io):
+    NUM_POINT = args.npoints
+    print("start loading test data_process ...")
+    TEST_DATASET = MotorDataset_patch(split='Validation', data_root=args.data_dir, num_points=NUM_POINT,
+                                      test_area=args.test_symbol, sample_rate=1.0, transform=None)
+    test_loader = DataLoader(TEST_DATASET, num_workers=8, batch_size=args.test_batch_size, shuffle=True,
+                             drop_last=False)
+
+    device = torch.device("cuda" if args.cuda else "cpu")
+
+    # Try to load models
+
+    if args.model == 'PCT':
+        model = PCT_semseg(args).to(device)
+    elif args.model == 'pointnet':
+        model = PCT_patch_semseg(args).to(device)
+    else:
+        raise Exception("Not implemented")
+
+    model = nn.DataParallel(model)
+    print("Let's test and use", torch.cuda.device_count(), "GPUs!")
+
+    try:
+        if args.finetune:
+            add_string = '_finetune'
+            if os.path.exists(str(
+                    BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"):
+                model_path = str(
+                    BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"
+                checkpoint = torch.load(model_path)
+                model.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            add_string = ''
+            inter = str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"
+            checkpoint = torch.load(inter)
+        model.load_state_dict(checkpoint['model_state_dict'])
+    except:
+        print('No existing model, a trained model is needed')
+        exit(-1)
+
+    criterion = cal_loss
+    ####################
+    # Test
+    ####################
+    with torch.no_grad():
+        num_batches = len(test_loader)
+        total_correct = 0
+        total_seen = 0
+        loss_sum = 0
+        total_correct_classification = 0
+        total_seen_classification = 0
+        labelweights = np.zeros(NUM_CLASS)
+        total_seen_class = [0 for _ in range(NUM_CLASS)]
+        total_correct_class = [0 for _ in range(NUM_CLASS)]
+        total_iou_deno_class = [0 for _ in range(NUM_CLASS)]
+        cla_seen_class = [0 for _ in range(5)]
+        cla_correct_class = [0 for _ in range(5)]
+        cla_iou_deno_class = [0 for _ in range(5)]
+        model = model.eval()
+        for i, (data, seg, type_label_) in tqdm(enumerate(test_loader), total=len(test_loader), smoothing=0.9):
+            data, seg, type_label_ = data.to(device), seg.to(device), type_label_.to(device)
+            data = normalize_data(data)
+            data_ = data
+            data, GT = rotate_per_batch(data, None)
+            data = data.permute(0, 2, 1)
+            batch_size = data.size()[0]
+            seg_pred, trans, class_pred_, _, = model(data, seg)
+            # save the predicted result
+
+            batch_type_label_ = type_label_.view(-1, 1)[:, 0].cpu().data.numpy()
+            pred_class_choice_ = class_pred_.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+            correct_class_ = np.sum(pred_class_choice_ == batch_type_label_)
+            total_correct_classification += correct_class_
+            total_seen_classification += (batch_size)
+            seg_pred = seg_pred.permute(0, 2, 1).contiguous()
+            batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
+            # loss = criterion(seg_pred.view(-1, NUM_CLASS), seg.view(-1,1).squeeze(),weights,using_weight=args.use_class_weight)     #a scalar
+            seg_pred = seg_pred.contiguous().view(-1, NUM_CLASS)  # (batch_size*num_points , num_class)
+            pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+            ##########vis
+            points = data_.view(-1, 3).cpu().data.numpy()
+            pred_choice_ = np.reshape(pred_choice, (-1, 1))
+            points = np.hstack((points, pred_choice_))
+            # vis(points)
+
+            correct = np.sum(pred_choice == batch_label)
+            total_correct += correct
+            total_seen += (batch_size * NUM_POINT)
+            # loss_sum+=loss
+            tmp, _ = np.histogram(batch_label, range(NUM_CLASS + 1))
+            labelweights += tmp
+
+            for l in range(NUM_CLASS):
+                total_seen_class[l] += np.sum((batch_label == l))
+                total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
+                total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
+            ####### calculate without Background ##############
+            for l in range(NUM_CLASS_MOTOR):
+                cla_seen_class[l] += np.sum((batch_type_label_ == l))
+                cla_correct_class[l] += np.sum((pred_class_choice_ == l) & (batch_type_label_ == l))
+                cla_iou_deno_class[l] += np.sum(((pred_class_choice_ == l) | (batch_type_label_ == l)))
+
+        labelweights = labelweights.astype(np.float32) / np.sum(labelweights.astype(np.float32))
+        mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
+
+        cla_mIoU = np.mean(np.array(cla_correct_class) / (np.array(cla_iou_deno_class, dtype=np.float64) + 1e-6))
+
+        outstr = 'Test : mIoU %.6f,  Test point acc %.6f, Test avg class acc %.6f' % (mIoU,
+                                                                                      (total_correct / float(
+                                                                                          total_seen)), (np.mean(
+            np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
+        io.cprint(outstr)
+
+        iou_per_class_str = '------- IoU --------\n'
+        for l in range(NUM_CLASS):
+            iou_per_class_str += 'class %s percentage: %.4f, IoU: %.4f \n' % (
+                labels2categories[l] + ' ' * (16 - len(labels2categories[l])), labelweights[l],
+                total_correct_class[l] / float(total_iou_deno_class[l]))
+        io.cprint(iou_per_class_str)
+        iou_per_class_str_ = ''
+        for l in range(NUM_CLASS_MOTOR):
+            iou_per_class_str_ += 'class %s,claffification IoU: %.4f \n' % (
+                labels2type_[l] + ' ' * (16 - len(labels2type_[l])),
+                cla_correct_class[l] / float(cla_iou_deno_class[l]))
+        io.cprint(iou_per_class_str_)
+        io.cprint("\n\n")
+
+
+if __name__ == '__main__':
+    args, path, writer, io, io_test = argumentparser()
+
+    '''os.system('cp train_semseg_rotation_step1.py ' + path + '/' + 'train_semseg_rotation_step1.py.backup')
+    os.system('cp train_semseg_rotation_step2.py ' + path + '/' + 'train_semseg_rotation_step2.py.backup')
+    os.system('cp util.py ' + path + '/' + 'util.py.backup')
+    os.system('cp model_rotation.py ' + path + '/' + 'model_rotation.py.backup')
+    os.system('cp dataloader.py ' + path + '/' + 'dataloader.py.backup')
+    os.system('cp train.sh ' + path + '/' + 'train.sh.backup')'''
+
+    # ans=torch.cuda.is_available()
+    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    torch.manual_seed(args.seed)
+    if not args.test:
+        if args.cuda:
+            io.c_print('Using GPU : ' + str(torch.cuda.current_device()) + ' from ' + str(
+                torch.cuda.device_count()) + ' devices')
+            torch.cuda.manual_seed(args.seed)
+        else:
+            warnings.warn('Using CPU', RuntimeWarning)
+    NUM_CLASS = args.num_segmentation_type
+
+    if args.test:
+        test(args, io_test)
+    else:
+        train(args, io)
