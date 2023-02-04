@@ -1,4 +1,8 @@
 *.ckp
 *.lnk
 my_test.py
+
 .idea/
+agi_project_10_category-main/.idea/
+AgiProbot_Motor_Segmentation_WACV2023-main/.idea/
+agi_project_10_category_reconstruct/.idea/

@@ -48,7 +48,7 @@ def train(args, io):
     NUM_POINT = args.npoints
     print("start loading training data ...")
     TRAIN_DATASET = MotorDataset(split='train', data_root=args.data_dir, num_class=NUM_CLASS, num_points=NUM_POINT,
-                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)
+                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)  # TODO
     print("start loading test data ...")
     VALIDATION_SET = MotorDataset_validation(split='test', data_root=args.data_dir, num_class=NUM_CLASS,
                                              num_points=NUM_POINT, test_area=args.validation_symbol, sample_rate=1.0,
@@ -65,7 +65,7 @@ def train(args, io):
     if args.model == 'PCT':
         model = PCT_semseg(args).to(device)
     elif args.model == 'PCT_patch':
-        model = PCT_patch_semseg(args).to(device)
+        model = PCT_patch_semseg(args).to(device)  # TODO
     else:
         raise Exception("Not implemented")
     # summary(model,input_size=(3,4096),batch_size=1,device='cuda')
@@ -104,8 +104,8 @@ def train(args, io):
             exit(-1)
         if not os.path.exists(str(
                 BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth") and os.path.exists(
-                str(
-                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
+            str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
             start_epoch = 0
         else:
             start_epoch = checkpoint['epoch']
@@ -127,8 +127,8 @@ def train(args, io):
     criterion2 = mean_loss
     best_iou = 0
     best_bolts_iou = 0
-    weights = torch.Tensor(TRAIN_DATASET.labelweights).cuda()
-    persentige = torch.Tensor(TRAIN_DATASET.persentage).cuda()
+    weights = torch.Tensor(TRAIN_DATASET.labelweights).cuda()  # TODO
+    persentige = torch.Tensor(TRAIN_DATASET.persentage).cuda()  # TODO
     io.cprint(persentige)
     scale = weights * persentige
     scale = 1 / scale.sum()
@@ -156,6 +156,7 @@ def train(args, io):
             points, target, type_label, goals, masks = points.to(device), target.to(device), type_label.to(
                 device), goals.to(device), masks.to(
                 device)  # (batch_size, num_points, features)    (batch_size, num_points)
+            # TODO:goals? masks?
             points = normalize_data(points)
             # Visuell_PointCloud_per_batch_according_to_label(points,target)
             if args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
@@ -208,9 +209,9 @@ def train(args, io):
                     param_group['lr'] = 1e-5
 
         outstr = 'Segmentation:Train %d, loss: %.6f, train acc: %.6f ' % (
-        epoch, (loss_sum / num_batches), (total_correct / float(total_seen)))
+            epoch, (loss_sum / num_batches), (total_correct / float(total_seen)))
         outstr = 'Classification:Train %d, loss: %.6f, train acc: %.6f ' % (
-        epoch, (loss_class / num_batches), (total_correct_classification / float(total_seen_classification)))
+            epoch, (loss_class / num_batches), (total_correct_classification / float(total_seen_classification)))
         io.cprint(outstr)
         writer.add_scalar('Training loss', (loss_sum / num_batches), epoch)
         writer.add_scalar('Training accuracy', (total_correct / float(total_seen)), epoch)
@@ -280,9 +281,9 @@ def train(args, io):
             mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
 
             outstr = 'Validation with backgroud----epoch: %d,  eval loss %.6f,  eval mIoU %.6f,  eval point acc %.6f, eval avg class acc %.6f' % (
-            epoch, (loss_sum / num_batches), mIoU,
-            (total_correct / float(total_seen)),
-            (np.mean(np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
+                epoch, (loss_sum / num_batches), mIoU,
+                (total_correct / float(total_seen)),
+                (np.mean(np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
 
             io.cprint(outstr)
             cla_mIoU = np.mean(np.array(cla_correct_class) / (np.array(cla_iou_deno_class, dtype=np.float64) + 1e-6))
@@ -573,7 +574,7 @@ if __name__ == "__main__":
             while (True):
                 if not os.path.exists(str(
                         BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + '/' + str(
-                        i)):
+                    i)):
                     os.makedirs(str(
                         BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + '/' + str(
                         i))
@@ -596,7 +597,7 @@ if __name__ == "__main__":
             i)
         while os.path.exists(str(
                 BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + '/' + str(
-                i)):
+            i)):
             path = str(
                 BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + '/' + str(
                 i)
