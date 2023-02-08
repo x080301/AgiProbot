@@ -1,4 +1,3 @@
 Project AgiProbot
 
-TODO: Readme.txt
-TODO: read all codes
+details s. readme in every folder
