@@ -13,59 +13,7 @@ from torch import nn as nn
 
 from torch.autograd import Variable
 
-
-def knn(x, k):
-    """
-    Input:
-        points: input points data, [B, N, C]
-    Return:
-        idx: sample index data, [B, N, K]
-    """
-    inner = -2 * torch.matmul(x.transpose(2, 1), x)
-    xx = torch.sum(x ** 2, dim=1, keepdim=True)
-    pairwise_distance = -xx - inner - xx.transpose(2, 1)
-    idx = pairwise_distance.topk(k=k, dim=-1)[1]  # (batch_size, num_points, k)
-    return idx
-
-
-def index_points_neighbors(x, idx):
-    """
-    Input:
-        points: input points data, [B, N, C]
-        idx: sample index data, [B, N, K]
-    Return:
-        new_points:, indexed points data, [B, N, K, C]
-    """
-    batch_size = x.size(0)
-    num_points = x.size(1)
-    num_dims = x.size(2)
-
-    device = idx.device
-    idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1) * num_points
-    idx = idx + idx_base
-    neighbors = x.view(batch_size * num_points, -1)[idx, :]
-    neighbors = neighbors.view(batch_size, num_points, -1, num_dims)
-
-    return neighbors
-
-
-def get_neighbors(x, k=20):
-    """
-    Input:
-        points: input points data, [B, C, N]
-    Return:
-        feature_points:, indexed points data, [B, 2*C, N, K]
-    """
-    batch_size = x.size(0)
-    num_dims = x.size(1)
-    num_points = x.size(2)
-    idx = knn(x, k)  # batch_size x num_points x 20
-    x = x.transpose(2, 1).contiguous()
-    neighbors = index_points_neighbors(x, idx)
-    x = x.view(batch_size, num_points, 1, num_dims).repeat(1, 1, k, 1)
-    feature = torch.cat((neighbors - x, x), dim=3).permute(0, 3, 1, 2).contiguous()
-
-    return feature
+from utilities.utilities import get_neighbors
 
 
 class STN3d(nn.Module):
@@ -85,25 +33,51 @@ class STN3d(nn.Module):
         self.bn4 = nn.BatchNorm1d(512)
         self.bn5 = nn.BatchNorm1d(256)
 
-    def forward(self, x):
+    def forward(self, x):  # input (B,3,N)
         batchsize = x.size()[0]
-        x = F.relu(self.bn1(self.conv1(x)))  # bs features 2048
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = torch.max(x, 2, keepdim=True)[0]
-        x = x.view(-1, 1024)
+        x = F.relu(self.bn1(self.conv1(x)))  # (B,3,N)->(B,64,N)
+        x = F.relu(self.bn2(self.conv2(x)))  # (B,64,N)->(B,128,N)
+        x = F.relu(self.bn3(self.conv3(x)))  # (B,128,N)->(B,1024,N)
+        x, _ = torch.max(x, 2, keepdim=True)  # (B,1024,N)->(B,1024,1)
+        x = x.view(-1, 1024)  # (B,1024,1)->(B,1024)
 
-        x = F.relu(self.bn4(self.fc1(x)))
-        x = F.relu(self.bn5(self.fc2(x)))
-        x = self.fc3(x)
+        x = F.relu(self.bn4(self.fc1(x)))  # (B,1024)->(B,512)
+        x = F.relu(self.bn5(self.fc2(x)))  # (B,512)->(B,256)
+        x = self.fc3(x)  # (B,256)->(B,9)
 
         iden = Variable(torch.from_numpy(np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).astype(np.float32))).view(1, 9).repeat(
             batchsize, 1)
         if x.is_cuda:
             iden = iden.cuda()
-        x = x + iden
-        x = x.view(-1, 3, 3)
-        return x
+        x = x + iden  # (B,9)
+        x = x.view(-1, 3, 3)  # (B,9)->(B,3,3)
+        return x  # output (B,3,3)
+
+
+class SA_Layer_Single_Head(nn.Module):
+    def __init__(self, channels):
+        super(SA_Layer_Single_Head, self).__init__()
+        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
+        self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
+        self.v_conv = nn.Conv1d(channels, channels, 1)
+        self.trans_conv = nn.Conv1d(channels, channels, 1)
+        self.after_norm = nn.BatchNorm1d(channels)
+        self.act = nn.ReLU()
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x):  # input (B,N,128)
+        x = x.permute(0, 2, 1)  # (B,N,128)->(B,128,N)
+        x_q = self.q_conv(x).permute(0, 2, 1)  # (B,128,N)->(B,32,N)->(B,N,128)
+        x_k = self.k_conv(x)  # (B,128,N)->(B,32,N)
+        x_v = self.v_conv(x)
+        energy = x_q @ x_k  # (B,N,128)@(B,128,N)->(B,N,N)
+        attention = self.softmax(energy)  # (B,N,N)->(B,N,N)
+        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))  # (B,N,N)->(B,N,N)
+        x_r = x @ attention  # (B,128,N)@(B,N,N)->(B,128,N)
+        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))  # (B,128,N)->(B,128,N)
+        x = x + x_r
+        x = x.permute(0, 2, 1)  # (B,128,N)->(B,N,128)
+        return x  # output (B,N,128)
 
 
 class PCT_semseg(nn.Module):
@@ -156,83 +130,55 @@ class PCT_semseg(nn.Module):
         self.dp3 = nn.Dropout(p=args.dropout)
         self.linear3 = nn.Linear(256, 5)
 
-    def forward(self, x, input_for_alignment_all_structure):
+    def forward(self, x, input_for_alignment_all_structure):  # input (B,3,N)
         batch_size = x.size(0)
         num_points = x.size(2)
         x = x.float()
 
-        trans = self.s3n(x)
-        x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
-        x = torch.bmm(x, trans)
+        trans = self.s3n(x)  # (B,3,N)->(B,3,3)
+        x = x.permute(0, 2, 1)  # (B, 3, N)->(B, N,3)
+        x = torch.bmm(x, trans)  # (B,N,3)*(B,3,3)->(B,N,3)
         # Visuell_PointCloud_per_batch(x,target)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # (B,N,3)->(B,3,N)
 
-        x = get_neighbors(x, k=self.k)  # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)
-        x = self.conv1(x)  # (batch_size, 3*2, num_points, k) -> (batch_size, 64, num_points, k)
-        x = self.conv2(x)  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points, k)
-        x1 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
+        x = get_neighbors(x, k=self.k)  # (B, 3, N) -> (B, 3*2, N, k)
+        x = self.conv1(x)  # (B, 3*2, N, k) -> (B, 64, N, k)
+        x = self.conv2(x)  # (B, 64, N, k) -> (B, 64, N, k)
+        x1, _ = x.max(dim=-1, keepdim=False)  # (B, 64, N, k) -> (B, 64, N)
 
-        x = get_neighbors(x1, k=self.k)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
-        x = self.conv3(x)  # (batch_size, 64*2, num_points, k) -> (batch_size, 64, num_points, k)
-        x = self.conv4(x)  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points, k)
-        x2 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
+        x = get_neighbors(x1, k=self.k)  # (B, 64, N) -> (B, 64*2, N, k)
+        x = self.conv3(x)  # (B, 64*2, N, k) -> (B, 64, N, k)
+        x = self.conv4(x)  # (B, 64, N, k) -> (B, 64, N, k)
+        x2, _ = x.max(dim=-1, keepdim=False)  # (B, 64, N, k) -> (B, 64, N)
 
-        x = torch.cat((x1, x2), dim=1)  # (batch_size, 64, num_points, k)*2 ->(batch_size, 128, num_points)
+        x = torch.cat((x1, x2), dim=1)  # (B, 64, N, k)*2 ->(B, 128, N)
 
-        x = x.permute(0, 2, 1)
-        x1 = self.sa1(x)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)  50MB
-        x2 = self.sa2(x1)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x3 = self.sa3(x2)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x4 = self.sa4(x3)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x = torch.cat((x1, x2, x3, x4), dim=-1)  # (batch_size, 64*2, num_points)*4->(batch_size, 512, num_points)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # (B,128,N)->(B,N,128)
+        x1 = self.sa1(x)  # (B,N,128)->(B,N,128)
+        x2 = self.sa2(x1)  # (B,N,128)->(B,N,128)
+        x3 = self.sa3(x2)  # (B,N,128)->(B,N,128)
+        x4 = self.sa4(x3)  # (B,N,128)->(B,N,128)
+        x = torch.cat((x1, x2, x3, x4), dim=-1)  # (B,N,128)*4->(B,N,512)
+        x = x.permute(0, 2, 1)  # (B,N,512)->(B,512,N)
         x__ = x
-        x = self.conv__(x)  # (batch_size, 512, num_points)->(batch_size, 1024, num_points)
+        x = self.conv__(x)  # (B, 512, N)->(B, 1024, N)
         x_class = x
-        x = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 1024, num_points) -> (batch_size, 1024)
-        x = x.unsqueeze(-1).repeat(1, 1, num_points)  # (batch_size, 1024)->(batch_size, 1024, num_points)
-        x = torch.cat((x, x__),
-                      dim=1)  # (batch_size,2048,num_points)+(batch_size, 1024,num_points) ->(batch_size, 3036,num_points)
-        x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 3036,num_points)-> (batch_size, 512,num_points)
+        x, _ = x.max(dim=-1, keepdim=False)  # (B, 1024, N) -> (B, 1024)
+        x = x.unsqueeze(-1).repeat(1, 1, num_points)  # (B, 1024)->(B, 1024, N)
+        x = torch.cat((x, x__), dim=1)
+        # (B,1024,N)+(B, 512,N) ->(B, 1536,N)
+        x = self.relu(self.bn5(self.conv5(x)))  # (B, 1536,N)-> (B, 512,N)
         x = self.dp5(x)
-        x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
-        x = self.conv7(x)  # # (batch_size, 256,num_points) ->(batch_size,6,num_points)
+        x = self.relu(self.bn6(self.conv6(x)))  # (B, 512,N) ->(B,256,N)
+        x = self.conv7(x)  # # (B, 256,N) ->(B,num_segmentation_type,N)
 
-        y1 = F.adaptive_max_pool1d(x_class, 1).view(batch_size,
-                                                    -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
-        y2 = F.adaptive_avg_pool1d(x_class, 1).view(batch_size,
-                                                    -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
-        y = torch.cat((y1, y2), 1)  # (batch_size, emb_dims*2)
+        y1 = F.adaptive_max_pool1d(x_class, 1).view(batch_size, -1)  # (B,1024,N)->(B,1024)
+        y2 = F.adaptive_avg_pool1d(x_class, 1).view(batch_size, -1)  # (B,1024,N)->(B,1024)
+        y = torch.cat((y1, y2), 1)  # (B, 1024*2)
 
-        y = F.leaky_relu(self.bn9(self.linear1(y)), negative_slope=0.2)  # (batch_size, emb_dims*2) -> (batch_size, 512)
+        y = F.leaky_relu(self.bn9(self.linear1(y)), negative_slope=0.2)  # (B, 1024*2) -> (B, 512)
         y = self.dp2(y)
-        y = F.leaky_relu(self.bn10(self.linear2(y)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
+        y = F.leaky_relu(self.bn10(self.linear2(y)), negative_slope=0.2)  # (B, 512) -> (B, 256)
         y = self.dp3(y)
-        y = self.linear3(y)  # (batch_size, 256) -> (batch_size, 5)
+        y = self.linear3(y)  # (B, 256) -> (B, 5)
         return x, trans, y, None
-
-
-class SA_Layer_Single_Head(nn.Module):
-    def __init__(self, channels):
-        super(SA_Layer_Single_Head, self).__init__()
-        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
-        self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
-        self.v_conv = nn.Conv1d(channels, channels, 1)
-        self.trans_conv = nn.Conv1d(channels, channels, 1)
-        self.after_norm = nn.BatchNorm1d(channels)
-        self.act = nn.ReLU()
-        self.softmax = nn.Softmax(dim=-1)
-
-    def forward(self, x):
-        x = x.permute(0, 2, 1)
-        x_q = self.q_conv(x).permute(0, 2, 1)  # b, n, c
-        x_k = self.k_conv(x)  # b, c, n
-        x_v = self.v_conv(x)
-        energy = x_q @ x_k  # b, n, n
-        attention = self.softmax(energy)
-        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))
-        x_r = x @ attention  # b, c, n
-        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))
-        x = x + x_r
-        x = x.permute(0, 2, 1)
-        return x

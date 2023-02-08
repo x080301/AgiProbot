@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from data_postprocess.data_postprecess import find_geara, find_gearb, find_bolts
-from data_preprocess.data_preprocess import normalize_data, rotate_per_batch, cut_motor, cam_to_base_transform
+from data_preprocess.data_preprocess import normalize_data, rotate_per_batch, cut_motor, camera_to_base
 from data_preprocess.dataloader import MotorDataset_patch
 import torch.nn as nn
 from sklearn.cluster import DBSCAN
@@ -56,9 +56,9 @@ def predict(points):
         which_type_ret = np.zeros((1))
         for data, data_no_normalize in test_loader:
             data = data.to(device)
-            data = normalize_data(data)
+            data = normalize_data(data)  # (B,N,3)
             data, GT = rotate_per_batch(data, None)
-            data = data.permute(0, 2, 1)
+            data = data.permute(0, 2, 1)  # (B,3,N)
             seg_pred, _, which_type, _, = model(data, 1)
             which_type = which_type.cpu().data.max(1)[1].numpy()
             which_type_ret = np.hstack((which_type_ret, which_type))
@@ -78,23 +78,6 @@ def predict(points):
             count = np.bincount(which_type_ret.astype(int))
             type = np.argmax(count)
         return result, type
-
-
-def camera_to_base(xyz, calc_angle=False):
-    '''
-    '''
-    # squeeze the first two dimensions
-    xyz_transformed2 = xyz.reshape(-1, 3)  # [N=X*Y, 3]
-
-    # homogeneous transformation
-    if calc_angle:
-        xyz_transformed2 = np.hstack((xyz_transformed2, np.zeros((xyz_transformed2.shape[0], 1))))  # [N, 4]
-    else:
-        xyz_transformed2 = np.hstack((xyz_transformed2, np.ones((xyz_transformed2.shape[0], 1))))  # [N, 4]
-
-    xyz_transformed2 = np.matmul(cam_to_base_transform, xyz_transformed2.T).T  # [N, 4]
-
-    return xyz_transformed2[:, :-1].reshape(xyz.shape)  # [X, Y, 3]
 
 
 def open3d_save_pcd(pc, filename):

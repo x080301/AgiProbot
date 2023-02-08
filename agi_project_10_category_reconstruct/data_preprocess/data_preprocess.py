@@ -189,3 +189,20 @@ def set_Boundingbox(panel_list, point_cor):
 
                             return True
     return False
+
+
+def camera_to_base(xyz, calc_angle=False):
+    '''
+    '''
+    # squeeze the first two dimensions
+    xyz_transformed2 = xyz.reshape(-1, 3)  # [N=X*Y, 3]
+
+    # homogeneous transformation
+    if calc_angle:
+        xyz_transformed2 = np.hstack((xyz_transformed2, np.zeros((xyz_transformed2.shape[0], 1))))  # [N, 4]
+    else:
+        xyz_transformed2 = np.hstack((xyz_transformed2, np.ones((xyz_transformed2.shape[0], 1))))  # [N, 4]
+
+    xyz_transformed2 = np.matmul(cam_to_base_transform, xyz_transformed2.T).T  # [N, 4]
+
+    return xyz_transformed2[:, :-1].reshape(xyz.shape)  # [X, Y, 3]
