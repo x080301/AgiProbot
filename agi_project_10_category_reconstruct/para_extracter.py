@@ -9,10 +9,11 @@ from data_preprocess.dataloader import MotorDataset_patch
 import torch.nn as nn
 from sklearn.cluster import DBSCAN
 import open3d as o3d
-import os
 from model.model_rotation import PCT_semseg
 import csv
 import warnings
+
+import os
 
 color_map = {"back_ground": [0, 0, 128],
              "cover": [0, 100, 0],
@@ -26,60 +27,6 @@ color_map = {"back_ground": [0, 0, 128],
              "gear_b": [230, 230, 255]}
 
 
-def predict(points):
-    parser = argparse.ArgumentParser(description='Point Cloud Semantic Segmentation')
-    parser.add_argument('--dropout', type=float, default=0.5,
-                        help='dropout rate')
-    parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
-                        help='Dimension of embeddings')
-    parser.add_argument('--k', type=int, default=20, metavar='N',
-                        help='Num of nearest neighbors to use')
-    parser.add_argument('--num_heads', type=int, default=4, metavar='num_attention_heads',
-                        help='number of attention_heads for self_attention ')
-    parser.add_argument('--num_segmentation_type', type=int, default=10, metavar='num_segmentation_type',
-                        help='num_segmentation_type)')
-    args = parser.parse_args()
-    device = torch.device("cuda")
-    model = PCT_semseg(args).to(device)
-    model = nn.DataParallel(model)
-    filename = os.getcwd()
-    filename = filename + "/pipeline/merge_model.pth"
-    loaded_model = torch.load(filename)
-    model.load_state_dict(loaded_model['model_state_dict'])
-    TEST_DATASET = MotorDataset_patch(points=points)
-    test_loader = DataLoader(TEST_DATASET, num_workers=8, batch_size=16, shuffle=True, drop_last=False)
-    num_points_size = points.shape[0]
-    result = np.zeros((num_points_size, 4), dtype=float)
-    with torch.no_grad():
-        model = model.eval()
-        cur = 0
-        which_type_ret = np.zeros((1))
-        for data, data_no_normalize in test_loader:
-            data = data.to(device)
-            data = normalize_data(data)  # (B,N,3)
-            data, GT = rotate_per_batch(data, None)
-            data = data.permute(0, 2, 1)  # (B,3,N)
-            seg_pred, _, which_type, _, = model(data, 1)
-            which_type = which_type.cpu().data.max(1)[1].numpy()
-            which_type_ret = np.hstack((which_type_ret, which_type))
-            seg_pred = seg_pred.permute(0, 2, 1).contiguous()
-            seg_pred = seg_pred.contiguous().view(-1, 10)  # (batch_size*num_points , num_class)
-            pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
-            ##########vis
-            points = data_no_normalize.view(-1, 3).cpu().data.numpy()
-            pred_choice_ = np.reshape(pred_choice, (-1, 1))
-            points = np.hstack((points, pred_choice_))
-            # vis(points)
-            if cur == 0:
-                cur = 1
-                result = points
-            else:
-                result = np.vstack((result, points))
-            count = np.bincount(which_type_ret.astype(int))
-            type = np.argmax(count)
-        return result, type
-
-
 def open3d_save_pcd(pc, filename):
     sampled = np.asarray(pc)
     PointCloud_koordinate = sampled[:, 0:3]
@@ -90,17 +37,16 @@ def open3d_save_pcd(pc, filename):
     o3d.io.write_point_cloud(filename, point_cloud, write_ascii=True)
 
 
-def find_covers(seg_motor):
+def find_covers(seg_motor, cover_file_dir):
     bottom = []
     for point in seg_motor:
         if point[3] == 1: bottom.append(point[0:3])
     bottom = np.array(bottom)
     if bottom.shape[0] < 1000:
         return -1, None, None
-    filename = os.getcwd()
-    filename = filename + "/data/cover.pcd"
-    open3d_save_pcd(bottom, filename)
-    pcd = o3d.io.read_point_cloud(filename)
+    cover_file_dir = cover_file_dir + "/data/cover.pcd"
+    open3d_save_pcd(bottom, cover_file_dir)
+    pcd = o3d.io.read_point_cloud(cover_file_dir)
     downpcd = pcd.voxel_down_sample(voxel_size=0.002)  # 下采样滤波，体素边长为0.002m
     downpcd.estimate_normals(
         search_param=o3d.geometry.KDTreeSearchParamKNN(knn=20))  # 计算法线，只考虑邻域内的20个点
@@ -131,9 +77,22 @@ def find_covers(seg_motor):
 # interface functions for users
 class ParaExtracter:
     def __init__(self):
-        pass
+        parser = argparse.ArgumentParser(description='Point Cloud Semantic Segmentation')
+        parser.add_argument('--dropout', type=float, default=0.5,
+                            help='dropout rate')
+        parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
+                            help='Dimension of embeddings')
+        parser.add_argument('--k', type=int, default=20, metavar='N',
+                            help='Num of nearest neighbors to use')
+        parser.add_argument('--num_heads', type=int, default=4, metavar='num_attention_heads',
+                            help='number of attention_heads for self_attention ')
+        parser.add_argument('--num_segmentation_type', type=int, default=10, metavar='num_segmentation_type',
+                            help='num_segmentation_type)')
+        self.args = parser.parse_args()
 
-    def load(self, point_cloud_input_file_name):  # find_action_load
+        self.device = torch.device("cuda")
+
+    def load_data(self, point_cloud_input_file_name):  # find_action_load
 
         self.filename_ = point_cloud_input_file_name.split('/')[-1]
         # read point cloud data
@@ -154,6 +113,13 @@ class ParaExtracter:
             points_to_model.append([dp[0], dp[1], dp[2], r, g, b])
 
         return points_to_model, num_points
+
+    def load_model(self, model_file_dir):
+        self.model = PCT_semseg(self.args).to(self.device)
+        self.model = nn.DataParallel(self.model)
+        model_file_dir = model_file_dir + "/pipeline/merge_model.pth"
+        loaded_model = torch.load(model_file_dir)
+        self.model.load_state_dict(loaded_model['model_state_dict'])
 
     def predict(self, points_to_model):  # find_pushButton
         # ******************************
@@ -176,8 +142,40 @@ class ParaExtracter:
         # ******************************
         # find_predict
         # ******************************
-        motor_points_forecast, self.type = predict(motor_points[:, 0:3])
 
+        motor_points = motor_points[:, 0:3]
+
+        TEST_DATASET = MotorDataset_patch(points=motor_points)
+        test_loader = DataLoader(TEST_DATASET, num_workers=8, batch_size=16, shuffle=True, drop_last=False)
+        num_points_size = motor_points.shape[0]
+        motor_points_forecast = np.zeros((num_points_size, 4), dtype=float)
+        with torch.no_grad():
+            self.model = self.model.eval()
+            cur = 0
+            which_type_ret = np.zeros((1))
+            for data, data_no_normalize in test_loader:
+                data = data.to(self.device)
+                data = normalize_data(data)  # (B,N,3)
+                data, GT = rotate_per_batch(data, None)
+                data = data.permute(0, 2, 1)  # (B,3,N)
+                seg_pred, _, which_type, _, = self.model(data, 1)
+                which_type = which_type.cpu().data.max(1)[1].numpy()
+                which_type_ret = np.hstack((which_type_ret, which_type))
+                seg_pred = seg_pred.permute(0, 2, 1).contiguous()
+                seg_pred = seg_pred.contiguous().view(-1, 10)  # (batch_size*num_points , num_class)
+                pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                ##########vis
+                motor_points = data_no_normalize.view(-1, 3).cpu().data.numpy()
+                pred_choice_ = np.reshape(pred_choice, (-1, 1))
+                motor_points = np.hstack((motor_points, pred_choice_))
+                # vis(points)
+                if cur == 0:
+                    cur = 1
+                    motor_points_forecast = motor_points
+                else:
+                    motor_points_forecast = np.vstack((motor_points_forecast, motor_points))
+                count = np.bincount(which_type_ret.astype(int))
+                self.type = np.argmax(count)
         self.transfer_to_borot_coordinate(motor_points_forecast)
 
         return motor_points_forecast, self.type
@@ -192,7 +190,7 @@ class ParaExtracter:
 
         return motor_points_forecast_in_robot
 
-    def save(self, motor_points_forecast):  # find_action_save
+    def save(self, save_dir, motor_points_forecast):  # find_action_save
 
         motor_points_forecast_in_robot = self.transfer_to_borot_coordinate(motor_points_forecast)
         sampled = np.asarray(motor_points_forecast_in_robot)
@@ -261,21 +259,20 @@ class ParaExtracter:
         point_cloud.points = o3d.utility.Vector3dVector(PointCloud_koordinate)
         point_cloud.colors = o3d.utility.Vector3dVector(colors)
         # o3d.visualization.draw_geometries([point_cloud])
-        filename = os.getcwd()
         if not os.path.exists(
                 'predicted_result'):  # initial the file, if not exiting (os.path.exists() is pointed at ralative position and current cwd)
             os.makedirs('predicted_result')
-        FileName = filename + '/data/' + 'predicted_result'
+        filename = save_dir + '/predicted_result/'
         if not os.path.exists(
-                FileName):  # initial the file, if not exiting (os.path.exists() is pointed at ralative position and current cwd)
-            os.makedirs(FileName)
-        FileName__ = FileName + '/data/' + self.filename_.split('.')[0] + "_segmentation"
-        o3d.io.write_point_cloud(FileName__ + ".pcd", point_cloud)
+                filename):  # initial the file, if not exiting (os.path.exists() is pointed at ralative position and current cwd)
+            os.makedirs(filename)
+        filename = filename + self.filename_.split('.')[0] + "_segmentation"
+        o3d.io.write_point_cloud(filename + ".pcd", point_cloud)
 
         # self.positions_bolts,self.num_bolts,
         # self.normal
         if self.cover_existence > 0:
-            csv_path = FileName__ + '.csv'
+            csv_path = filename + '.csv'
             with open(csv_path, 'a+', newline='') as f:
                 csv_writer = csv.writer(f)
                 head = ["     ", "x", "y", "z", "Rx", "Ry", "Rz"]
@@ -286,7 +283,7 @@ class ParaExtracter:
                             str(self.normal[0]), str(self.normal[1]), str(self.normal[2])]
                     csv_writer.writerow(head)
         else:
-            csv_path = FileName__ + '.csv'
+            csv_path = filename + '.csv'
             with open(csv_path, 'a+', newline='') as f:
                 csv_writer = csv.writer(f)
                 head = ["     ", "x", "y", "z"]
