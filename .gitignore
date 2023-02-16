@@ -2,9 +2,12 @@
 *.lnk
 my_test.py
 todo.py
+_todo.py
+_my_test.py
 
 副本/
 .idea/
 agi_project_10_category-main/.idea/
 AgiProbot_Motor_Segmentation_WACV2023-main/.idea/
 agi_project_10_category_reconstruct/.idea/
+standard_deep_Learning_structure/.idea/

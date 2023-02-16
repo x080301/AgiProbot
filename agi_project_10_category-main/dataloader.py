@@ -276,7 +276,7 @@ class MotorDataset(Dataset):
             motor_points = motor_data[:, 0:6]
             motor_labels = motor_data[:, 6]  # result is a np array
             num_eachtype_in_one_motor, _ = np.histogram(motor_labels, bins=self.num_class, range=(
-            0, self.num_class))  # count how much points is there for each type(usage of np.histotram)
+                0, self.num_class))  # count how much points is there for each type(usage of np.histotram)
             label_num_eachtype += num_eachtype_in_one_motor
             self.motors_points.append(motor_points)
             self.motors_labels.append(motor_labels)
@@ -393,7 +393,7 @@ class MotorDataset_validation(Dataset):
             motor_points = motor_data[:, 0:6]
             motor_labels = motor_data[:, 6]  # result is a np array
             num_eachtype_in_one_motor, _ = np.histogram(motor_labels, bins=num_class, range=(
-            0, num_class))  # count how much points is there for each type(usage of np.histotram)
+                0, num_class))  # count how much points is there for each type(usage of np.histotram)
             label_num_eachtype += num_eachtype_in_one_motor
             self.motors_points.append(motor_points)
             self.motors_labels.append(motor_labels)
@@ -514,7 +514,7 @@ class MotorDataset_patch(Dataset):
             self.interation_times_eachmotor.append(
                 motor_labels.size / self.num_points)  # record how money 4096 points could be taken out for one motor points cloud after patch
             num_eachtype_in_one_motor, _ = np.histogram(motor_labels, bins=6, range=(
-            0, 6))  # count how much points is there for each type(usage of np.histotram)
+                0, 6))  # count how much points is there for each type(usage of np.histotram)
             label_num_eachtype += num_eachtype_in_one_motor
             self.motors_points.append(motor_points)
             self.motors_labels.append(motor_labels)
