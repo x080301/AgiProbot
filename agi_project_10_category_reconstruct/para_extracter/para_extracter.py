@@ -93,39 +93,35 @@ class ParaExtracter:
         self.device = torch.device("cuda")
 
         self.model = PCT_semseg(self.args).to(self.device)
+        self.model = nn.DataParallel(self.model)
 
     def load_pcd_data(self, point_cloud_input_file_name):  # find_action_load
 
-        self.filename_ = point_cloud_input_file_name.split('/')[-1]
         # read point cloud data
-        pcd = o3d.io.read_point_cloud(point_cloud_input_file_name)
-        colors = np.asarray(pcd.colors)
-        points = np.asarray(pcd.points)
-        cloud = np.concatenate([points, colors], axis=-1)
+        point_cloud = o3d.io.read_point_cloud(point_cloud_input_file_name,
+                                              remove_nan_points=True, remove_infinite_points=True, print_progress=True)
+        colors = np.asarray(point_cloud.colors)
+        points = np.asarray(point_cloud.points)
+        point_cloud = np.concatenate([points, colors], axis=-1)
 
-        num_points = len(cloud)
+        num_points = len(point_cloud)
 
-        points_to_model = []
-        for i in range(num_points):
-            dp = cloud[i]
+        point_cloud[:, 3] *= 225
+        point_cloud[:, 4] *= 225
+        point_cloud[:, 5] *= 225
 
-            r = int(cloud[i][3] * 255)
-            g = int(cloud[i][4] * 255)
-            b = int(cloud[i][5] * 255)
-            points_to_model.append([dp[0], dp[1], dp[2], r, g, b])
+        self.point_cloud = point_cloud
 
-        self.points_to_model = points_to_model
-
-        return points_to_model, num_points
+        return self.point_cloud, num_points
 
     def load_model(self, model_file_dir='not defined'):
 
         if model_file_dir == 'not defined':
             model_file_dir = os.path.dirname(__file__) + '/merge_model.pth'
 
-        self.model = nn.DataParallel(self.model)
         model_file_dir = model_file_dir  # + "/pipeline/merge_model.pth"
         loaded_model = torch.load(model_file_dir)
+
         self.model.load_state_dict(loaded_model['model_state_dict'])
 
     def predict(self, points_to_model):  # find_pushButton
@@ -188,7 +184,7 @@ class ParaExtracter:
         return motor_points_forecast, self.type
 
     def run(self):
-        self.segementation_prediction, self.classification_prediction = self.predict(self.points_to_model)
+        self.segementation_prediction, self.classification_prediction = self.predict(self.point_cloud)
 
     def get_segmentation_prediction(self):
         return self.segementation_prediction

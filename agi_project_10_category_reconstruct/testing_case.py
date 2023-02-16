@@ -2,6 +2,7 @@ import numpy as np
 import open3d as o3d
 from para_extracter.para_extracter import ParaExtracter
 from para_extracter.utilities.utilities import calculate_mIoU
+import copy
 
 
 def visualization_pointcloud_noemal():
@@ -36,8 +37,9 @@ def visualization_pointcloud_noemal():
 def test_load_data():
     extracter = ParaExtracter()
     print('loading')
-    point_cloud, num_points = extracter.load_pcd_data('E:/datasets/agiprobot/largeMotorDemo20230215/003.pcd')  # TODO
-    point_cloud = np.asarray(point_cloud)[:, 0:3]
+    point_cloud, num_points = extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
+
+    point_cloud = point_cloud[:, 0: 3]
 
     print('{num} points in point cloud are loaded'.format(num=num_points))
 
@@ -50,33 +52,26 @@ def test_load_data():
     o3d.visualization.draw_geometries([point_cloud_o3d])
 
 
-def test_load_pretrained_model():
+def test_load_pretrained_model(expected_return):
     extracter = ParaExtracter()
-    init_model = extracter.model.parameters()
+    init_model = copy.deepcopy(extracter.model)
 
     print('loading pretrained model')
-    loaded_model = extracter.load_model('data/trained_model/merge_model.pth')  # TODO
+    if expected_return is True:
+        extracter.load_model()
 
-    if hash(init_model) == hash(loaded_model):
-        print('Model is not changed.')
-    else:
-        print('New model is loaded')
+    loaded_model = copy.deepcopy(extracter.model)
 
+    for para_name in list(init_model.state_dict()):
+        if (init_model.state_dict()[para_name] != loaded_model.state_dict()[para_name]).sum() != 0:
+            print('New model is loaded')
+            return True
 
-def test_predict():
-    extracter = ParaExtracter()
-    point_cloud, _ = extracter.load_pcd_data('data/')  # TODO
-    # prepose
-    extracter.load_model('data/trained_model/merge_model.pth')
-
-    print('Predicting')
-    seg_pred, type_pred = extracter.predict(point_cloud)
-    ground_truth = 'Where is it'  # TODO
-    print('Finished, mIoU is {mIoU}'.format(mIoU=calculate_mIoU(seg_pred, ground_truth)))  # TODO
-    print('Predicted type is {type_label}'.format(type_label=type_pred))  # TODO
+    print('Model is not changed.')
+    return False
 
 
-if __name__ == '__main__':
+def pipline_example():
     # ***************************************
     # pipline example
     # ***************************************
@@ -84,7 +79,7 @@ if __name__ == '__main__':
     # Define the object and provide the necessary information
     extracter = ParaExtracter()
     extracter.load_model()
-    extracter.load_pcd_data('E:/datasets/agiprobot/largeMotorDemo20230215/003.pcd')
+    extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
 
     # Run the model
     extracter.run()
@@ -94,3 +89,8 @@ if __name__ == '__main__':
     classification_prediction = extracter.get_classification_prediction()
 
     bolt_positions, bolt_normal, bolt_num, bolt_piont_clouds = extracter.find_bolts()
+
+
+if __name__ == '__main__':
+    test_load_data()
+    pass
