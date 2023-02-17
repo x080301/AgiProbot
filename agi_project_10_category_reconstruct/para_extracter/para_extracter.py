@@ -26,14 +26,17 @@ def open3d_save_pcd(pc, filename):
     o3d.io.write_point_cloud(filename, point_cloud, write_ascii=True)
 
 
-def find_covers(seg_motor, cover_file_dir):
+def find_covers(seg_motor, cover_file_dir=None):
     bottom = []
     for point in seg_motor:
         if point[3] == 1: bottom.append(point[0:3])
     bottom = np.array(bottom)
     if bottom.shape[0] < 1000:
         return -1, None, None
-    cover_file_dir = cover_file_dir + "/data/cover.pcd"
+
+    if cover_file_dir is None:
+        cover_file_dir = os.path.dirname(__file__) + '/cover.pcd'
+
     open3d_save_pcd(bottom, cover_file_dir)
     pcd = o3d.io.read_point_cloud(cover_file_dir)
     downpcd = pcd.voxel_down_sample(voxel_size=0.002)  # 下采样滤波，体素边长为0.002m
@@ -179,12 +182,14 @@ class ParaExtracter:
                     motor_points_forecast = np.vstack((motor_points_forecast, motor_points))
                 count = np.bincount(which_type_ret.astype(int))
                 self.type = np.argmax(count)
-        self.transfer_to_robot_coordinate(motor_points_forecast)
 
         return motor_points_forecast, self.type
 
     def run(self):
         self.segementation_prediction, self.classification_prediction = self.predict(self.point_cloud)
+
+        self.segementation_prediction_in_robot = self.transfer_to_robot_coordinate(self.segementation_prediction)
+        self.cover_existence, self.covers, self.normal = find_covers(self.segementation_prediction_in_robot)
 
     def get_segmentation_prediction(self):
         return self.segementation_prediction
@@ -311,32 +316,31 @@ class ParaExtracter:
                     head = ["TypeB_gear", str(self.posgearb[0]), str(self.posgearb[1]), str(self.posgearb[2])]
                     csv_writer.writerow(head)
 
-    def find_bolts(self):  # find_action_bolts_position
-
-        motor_points_forecast_in_robot = self.segementation_prediction  # TODO: check coordinate system
+    def find_screws(self):  # find_action_bolts_position
 
         if self.cover_existence <= 0:
             warnings.warn("Cover has been removed\nno cover screw found", UserWarning)
-
-            return
-        self.positions_bolts, self.num_bolts, bolts = find_bolts(motor_points_forecast_in_robot, eps=2.5,
+            return None, None, None, None
+        self.positions_bolts, self.num_bolts, bolts = find_bolts(self.segementation_prediction_in_robot, eps=2.5,
                                                                  min_points=50)
 
-        return self.positions_bolts, self.num_bolts, bolts
+        normal_cover_screws = self.normal
 
-    def display_gear(self, motor_points_forecast_in_robot):  # find_actionGear_position
+        return self.positions_bolts, normal_cover_screws, self.num_bolts, bolts
+
+    def find_gears(self):  # find_actionGear_position
         if self.cover_existence > 0:
-            warnings.warn("Cover has been removed\nno cover screw found", UserWarning)
-            return
+            warnings.warn("\nCover has not been removed\nno gear found", UserWarning)
+            return None, None
 
         gearpositions = []
         if self.type <= 2:
             gear, self.posgearaup, self.posgearadown = find_geara(
-                seg_motor=motor_points_forecast_in_robot)
+                seg_motor=self.segementation_prediction_in_robot)
             gearpositions.append(self.posgearaup)
             gearpositions.append(self.posgearadown)
         else:
-            gear, self.posgearb = find_gearb(seg_motor=motor_points_forecast_in_robot)
+            gear, self.posgearb = find_gearb(seg_motor=self.segementation_prediction_in_robot)
             gearpositions.append(self.posgearb)
 
         return gear, gearpositions
