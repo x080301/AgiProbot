@@ -4,6 +4,8 @@ from para_extracter.para_extracter import ParaExtracter
 from para_extracter.utilities.utilities import calculate_mIoU
 import copy
 
+import matplotlib.pyplot as plt
+
 
 def visualization_pointcloud_noemal():
     pcd = o3d.io.read_point_cloud('data/cover.pcd')  # ("/home/bi/study/thesis/pyqt/cover.pcd")
@@ -52,6 +54,26 @@ def test_load_data():
     o3d.visualization.draw_geometries([point_cloud_o3d])
 
 
+def test_prediction():
+    # Define the object and provide the necessary information
+    extracter = ParaExtracter()
+    extracter.load_model()
+    extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
+
+    # Run the model
+    extracter.run()
+
+    # get what you need
+    classification_prediction = extracter.get_classification_prediction()
+    print(classification_prediction)
+
+    segementation_prediction = extracter.get_segmentation_prediction()
+    segementation_prediction = segementation_prediction[:, 3].flatten()
+    print(np.histogram(segementation_prediction, bins=10, range=(0, 10)))
+    plt.hist(segementation_prediction, bins=10, range=(0, 10))
+    plt.show()
+
+
 def test_load_pretrained_model(expected_return):
     extracter = ParaExtracter()
     init_model = copy.deepcopy(extracter.model)
@@ -71,12 +93,22 @@ def test_load_pretrained_model(expected_return):
     return False
 
 
+def test_find_bolts_position():
+    pass
+
+
+def test_find_bolts_direction():
+    pass
+
+
 def pipline_example():
     # ***************************************
     # pipline example
     # ***************************************
+    # import package ParaExtracter
+    from para_extracter.para_extracter import ParaExtracter
 
-    # Define the object and provide the necessary information
+    # Define the object and provide necessary information
     extracter = ParaExtracter()
     extracter.load_model()
     extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
@@ -88,9 +120,23 @@ def pipline_example():
     segementation_prediction = extracter.get_segmentation_prediction()
     classification_prediction = extracter.get_classification_prediction()
 
-    bolt_positions, bolt_normal, bolt_num, bolt_piont_clouds = extracter.find_bolts()
+    # bolt_positions, bolt_normal, bolt_num, bolt_piont_clouds = extracter.find_bolts()
+
+    # further data
+    extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/B1_17_gear.pcd')
+    extracter.run()
+    segementation_prediction = extracter.get_segmentation_prediction()
+    classification_prediction = extracter.get_classification_prediction()
+    # ...
 
 
 if __name__ == '__main__':
-    test_load_data()
+    # print(test_load_pretrained_model(True))
+    # print(test_load_pretrained_model(False))
+
+    # test_load_data()
+    test_prediction()
+    # test_find_bolts_position()
+
+    # test_find_bolts_direction()
     pass

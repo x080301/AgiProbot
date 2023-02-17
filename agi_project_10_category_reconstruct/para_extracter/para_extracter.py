@@ -198,7 +198,7 @@ class ParaExtracter:
         motor_points_forecast_in_robot[:, 0:3] = np.array(camera_to_base(motor_points_forecast[:, 0:3]))
         motor_points_forecast_in_robot[:, 3] = np.array(motor_points_forecast[:, 3])
 
-        self.cover_existence, self.covers, self.normal = find_covers(motor_points_forecast_in_robot)
+        # self.cover_existence, self.covers, self.normal = find_covers(motor_points_forecast_in_robot)
 
         return motor_points_forecast_in_robot
 
