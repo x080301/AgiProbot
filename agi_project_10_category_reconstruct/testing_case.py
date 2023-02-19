@@ -168,20 +168,20 @@ def pipline_example():
 
 
 if __name__ == '__main__':
-    # print(test_load_pretrained_model(expected_return=True))
-    # print(test_load_pretrained_model(expected_return=False))
+    print(test_load_pretrained_model(expected_return=True))
+    print(test_load_pretrained_model(expected_return=False))
 
-    # test_load_data()
-    # test_prediction()
-    # test_find_screws_position(with_cover=True)
-    # test_find_screws_position(with_cover=False)
+    test_load_data()
+    test_prediction()
+    test_find_screws_position(with_cover=True)
+    test_find_screws_position(with_cover=False)
 
-    # test_find_screws_direction(with_cover=True)
-    # test_find_screws_direction(with_cover=False)
+    test_find_screws_direction(with_cover=True)
+    test_find_screws_direction(with_cover=False)
 
-    # test_find_gear_position(with_cover=True)
-    # test_find_gear_position(with_cover=False)
+    test_find_gear_position(with_cover=True)
+    test_find_gear_position(with_cover=False)
 
-    pipline_example()
+    # pipline_example()
 
     pass
