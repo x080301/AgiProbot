@@ -1,7 +1,6 @@
 import numpy as np
 import open3d as o3d
 from para_extracter.para_extracter import ParaExtracter
-from para_extracter.utilities.utilities import calculate_mIoU
 import copy
 
 import matplotlib.pyplot as plt
@@ -138,6 +137,19 @@ def test_find_gear_position(with_cover=True):
     print('\n*************************')
 
 
+def test_if_cover_existence(with_cover=True):
+    extracter = ParaExtracter()
+    extracter.load_model()
+
+    if with_cover:
+        extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
+    else:
+        extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/B1_17_gear.pcd')
+
+    extracter.run()
+    print(extracter.if_cover_existence())
+
+
 def pipline_example():
     # ***************************************
     # pipline example
@@ -156,8 +168,10 @@ def pipline_example():
     # get what you need
     segementation_prediction = extracter.get_segmentation_prediction()
     classification_prediction = extracter.get_classification_prediction()
-    bolt_positions, cover_screw_normal, bolt_num, bolt_piont_clouds = extracter.find_screws()
-    gear_piont_clouds, gearpositions = extracter.find_gears()
+    if extracter.if_cover_existence():
+        bolt_positions, cover_screw_normal, bolt_num, bolt_piont_clouds = extracter.find_screws()
+    else:
+        gear_piont_clouds, gearpositions = extracter.find_gears()
 
     # further data
     extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/B1_17_gear.pcd')
@@ -168,19 +182,23 @@ def pipline_example():
 
 
 if __name__ == '__main__':
-    print(test_load_pretrained_model(expected_return=True))
-    print(test_load_pretrained_model(expected_return=False))
-
-    test_load_data()
-    test_prediction()
-    test_find_screws_position(with_cover=True)
-    test_find_screws_position(with_cover=False)
-
-    test_find_screws_direction(with_cover=True)
-    test_find_screws_direction(with_cover=False)
-
-    test_find_gear_position(with_cover=True)
-    test_find_gear_position(with_cover=False)
+    # print(test_load_pretrained_model(expected_return=True))
+    # print(test_load_pretrained_model(expected_return=False))
+    #
+    # test_load_data()
+    # test_prediction()
+    #
+    # test_if_cover_existence(with_cover=True)
+    # test_if_cover_existence(with_cover=False)
+    #
+    # test_find_screws_position(with_cover=True)
+    # test_find_screws_position(with_cover=False)
+    #
+    # test_find_screws_direction(with_cover=True)
+    # test_find_screws_direction(with_cover=False)
+    #
+    # test_find_gear_position(with_cover=True)
+    # test_find_gear_position(with_cover=False)
 
     # pipline_example()
 

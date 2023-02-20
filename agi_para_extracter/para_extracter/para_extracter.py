@@ -189,7 +189,7 @@ class ParaExtracter:
         self.segementation_prediction, self.classification_prediction = self.predict(self.point_cloud)
 
         self.segementation_prediction_in_robot = self.transfer_to_robot_coordinate(self.segementation_prediction)
-        self.cover_existence, self.covers, self.normal = find_covers(self.segementation_prediction_in_robot)
+        self._cover_existence, self.covers, self.normal = find_covers(self.segementation_prediction_in_robot)
 
     def get_segmentation_prediction(self):
         return self.segementation_prediction
@@ -288,7 +288,7 @@ class ParaExtracter:
 
         # self.positions_bolts,self.num_bolts,
         # self.normal
-        if self.cover_existence > 0:
+        if self._cover_existence > 0:
             csv_path = filename + '.csv'
             with open(csv_path, 'a+', newline='') as f:
                 csv_writer = csv.writer(f)
@@ -318,7 +318,7 @@ class ParaExtracter:
 
     def find_screws(self):  # find_action_bolts_position
 
-        if self.cover_existence <= 0:
+        if self._cover_existence <= 0:
             warnings.warn("Cover has been removed\nno cover screw found", UserWarning)
             return None, None, None, None
         self.positions_bolts, self.num_bolts, bolts = find_bolts(self.segementation_prediction_in_robot, eps=2.5,
@@ -328,8 +328,14 @@ class ParaExtracter:
 
         return self.positions_bolts, normal_cover_screws, self.num_bolts, bolts
 
+    def if_cover_existence(self):
+        if self._cover_existence > 0:
+            return True
+        else:
+            return False
+
     def find_gears(self):  # find_actionGear_position
-        if self.cover_existence > 0:
+        if self._cover_existence > 0:
             warnings.warn("\nCover has not been removed\nno gear found", UserWarning)
             return None, None
 

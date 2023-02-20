@@ -1,6 +1,6 @@
 import torch as t
-from data import ChallengeDataset
-from trainer import Trainer
+from data_preprocess.data_loader import ChallengeDataset
+from trainer.trainer import Trainer
 from matplotlib import pyplot as plt
 import numpy as np
 import model

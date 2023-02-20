@@ -11,5 +11,9 @@ agi_project_10_category-main/.idea/
 AgiProbot_Motor_Segmentation_WACV2023-main/.idea/
 agi_para_extracter/.idea/
 standard_deep_Learning_structure/.idea/
+model_trainer/.idea/
 
 agi_para_extracter/para_extracter/cover.pcd
+
+model_trainer/data/date_set/*
+model_trainer/data/check_points/*

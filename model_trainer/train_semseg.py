@@ -10,7 +10,6 @@ import os
 import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from dataloader import MotorDataset, MotorDataset_validation, MotorDataset_patch
@@ -21,7 +20,6 @@ from util import cal_loss, mean_loss, normalize_data, rotate_per_batch, feature_
 from torch.utils.tensorboard import SummaryWriter
 import time
 from tqdm import tqdm
-from visilize import visialize_cluster
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 'side_bolt', 'cover_bolt', 'geara_up',
