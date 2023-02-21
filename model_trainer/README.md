@@ -32,7 +32,7 @@ train_semseg_and_two_classification_two_opt is the training entry for 10 catefor
 
 You can use below command line to run the pretraining script and gain the pretraining model:
 ```
-CUDA_VISIBLE_DEVICES=0,1 python train_semseg.py --batch_size 16 --npoints 2048 --epoch 100 --model PCT --lr 0.01   --exp_name STN_16_2048_100 --factor_stn_los 0.01 --kernel_loss_weight 0.05 --use_class_weight 0 --screw_weight 1 --which_dataset Dataset4 --num_segmentation_type 10 --emb_dims 1024 --train 1 --finetune 0 --test 0 --data_dir /home/ies/bi/data/Dataset4
+python train_semseg.py --batch_size 2 --npoints 2048 --epochs 100 --model PCT --lr 0.01   --exp_name STN_16_2048_100 --kernel_loss_weight 0.05 --use_class_weight 0 --screw_weight 1 --which_dataset Dataset3 --num_segmentation_type 10 --emb_dims 1024 --train 1 --finetune 0 --test 0 --data_dir D:/Jupyter/AgiProbot/model_trainer/data/date_set/Dataset3_merge
 ```
 
 | cmd  | Description          | Type | Property |

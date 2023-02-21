@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def test_load_data():
     extracter = ParaExtracter()
     print('loading')
-    point_cloud, num_points = extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/A1_13_screws.pcd')
+    point_cloud, num_points = extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/B1_17_gear.pcd')
 
     point_cloud = point_cloud[:, 0: 3]
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     # print(test_load_pretrained_model(expected_return=True))
     # print(test_load_pretrained_model(expected_return=False))
     #
-    # test_load_data()
+    test_load_data()
     # test_prediction()
     #
     # test_if_cover_existence(with_cover=True)

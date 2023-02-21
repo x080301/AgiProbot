@@ -27,7 +27,7 @@ classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 's
 types = ['TypeA0', 'TypeA1', 'TypeA2', 'TypeB0', 'TypeB1']
 labels2type_ = {i: cls for i, cls in enumerate(types)}
 labels2categories = {i: cls for i, cls in enumerate(classes)}  # dictionary for labels2categories
-NUM_CLASS = 6
+NUM_CLASS = 10
 NUM_CLASS_MOTOR = 5
 
 
@@ -483,11 +483,12 @@ if __name__ == "__main__":
                         help='Model to use, [dgcnn]')
     parser.add_argument('--batch_size', type=int, default=3, metavar='batch_size',
                         help='Size of batch)')
-    parser.add_argument('--data_dir', type=str, default='E:/datasets/agiprobot/agi_small_motor_datasets/Dataset3_merge',
+    parser.add_argument('--data_dir', type=str,
+                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/Dataset3_merge',
                         help='file need to be tested')
-    parser.add_argument('--which_dataset', type=str, default='test', metavar='N',
+    parser.add_argument('--which_dataset', type=str, default='Dataset3', metavar='N',
                         help='experiment version to record reslut')
-    parser.add_argument('--exp_name', type=str, default='STN_16_2048_100_steptogether_10cate', metavar='N',
+    parser.add_argument('--exp_name', type=str, default='STN_16_2048_100', metavar='N',
                         help='experiment version to record reslut')
     parser.add_argument('--training', type=int, default=1,
                         help='evaluate the model')
@@ -503,7 +504,7 @@ if __name__ == "__main__":
                         help='factor of loss_cluster')
     parser.add_argument('--test_batch_size', type=int, default=16, metavar='batch_size',
                         help='Size of batch)')
-    parser.add_argument('--epochs', type=int, default=400, metavar='N',
+    parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of episode to train ')
     parser.add_argument('--use_class_weight', type=float, default=0,
                         help='enables using class weights(0 represents not using \
@@ -609,7 +610,7 @@ if __name__ == "__main__":
     os.system('cp util.py ' + path + '/' + 'util.py.backup')
     os.system('cp model_rotation.py ' + path + '/' + 'model_rotation.py.backup')
     os.system('cp dataloader.py ' + path + '/' + 'dataloader.py.backup')
-    os.system('cp train.sh ' + path + '/' + 'train.sh.backup')
+    os.system('cp train.sh ' + path + '/' + 'train.sh.backup')  # 保存设置与模型
 
     # ans=torch.cuda.is_available()
     args.cuda = not args.no_cuda and torch.cuda.is_available()

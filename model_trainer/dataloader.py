@@ -191,8 +191,8 @@ def find_goals_kmeans(points__, target__):  # [bs,n_points,C] [bs,n_points]
 
         index_bottom = target == 4
         points5 = points[index_bottom, :]
-        _, c5 = kmeans(X=points5, num_clusters=goals_[4], distance='euclidean', device=torch.device('cuda'))
-        dis5 = square_distance(points5.unsqueeze(0).float(), c5.unsqueeze(0).float())
+        _, c5 = kmeans(X=points5, num_clusters=goals_[4], distance='euclidean0', device=torch.device('cuda'))
+        dis5 = square_distance(points5.unsqueeze(0).float(), c5.unsqueeze(0) .float())
         index5 = dis5.squeeze(0).min(dim=0, keepdim=False)[1]
         added5 = index_points(points5.unsqueeze(0), index5.unsqueeze(0))
         #######################
@@ -317,6 +317,7 @@ class MotorDataset(Dataset):
         self.labelweights = labelweights / np.sum(labelweights)
         ############################################################################################
 
+        # TODO: Question: 每类少则多读几次。既然后面已经有goto 1 这个操作为啥还要有这一步
         #############caculate the index for choose of points from the motor according to the number of points of a specific motor#########
         sample_prob_eachmotor = num_points_eachmotor / np.sum(
             num_points_eachmotor)  # probability for choosing from a specific motor
@@ -430,7 +431,7 @@ class MotorDataset_validation(Dataset):
         # normalized_points=pc_normalize(points)      #normalize the points
 
         ########################have a randow choose of points from points cloud#######################
-        choice = np.random.choice(points.shape[0], self.num_points, replace=True)
+        choice = np.random.choice(points.shape[0], self.num_points, replace=True)  # goto 1
         chosed_points = points[choice, :]
         chosed_labels = labels[choice]
 
