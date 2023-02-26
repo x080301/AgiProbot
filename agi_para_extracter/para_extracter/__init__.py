@@ -1,5 +1,4 @@
-"""Generic (shallow and deep) copying operations.
-Extract screw position and further parameters of small motor and its components from scaned pointcloud data(pcd) using deep learning
+"""Extract screw position and further parameters of small motor and its components from scaned pointcloud data(pcd) using deep learning
 
 Interface summary:
 
