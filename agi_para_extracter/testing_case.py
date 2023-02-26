@@ -1,6 +1,6 @@
 import numpy as np
 import open3d as o3d
-from para_extracter.para_extracter import ParaExtracter
+from para_extracter import ParaExtracter
 import copy
 
 import matplotlib.pyplot as plt
@@ -99,6 +99,12 @@ def test_find_screws_direction(with_cover=True):
 
     bolt_positions, cover_screw_normal, bolt_num, bolt_piont_clouds = extracter.find_screws()
 
+    print('**************************')
+    print(type(bolt_positions))
+    print(type(cover_screw_normal))
+    print(type(bolt_num))
+    print(type(bolt_piont_clouds))
+
     print(bolt_positions)
     print(bolt_num)
     print(bolt_piont_clouds)
@@ -155,7 +161,7 @@ def pipline_example():
     # pipline example
     # ***************************************
     # import package ParaExtracter
-    from para_extracter.para_extracter import ParaExtracter
+    from para_extracter import ParaExtracter
 
     # Define the object and provide necessary information
     extracter = ParaExtracter()
@@ -168,10 +174,11 @@ def pipline_example():
     # get what you need
     segementation_prediction = extracter.get_segmentation_prediction()
     classification_prediction = extracter.get_classification_prediction()
+
     if extracter.if_cover_existence():
         bolt_positions, cover_screw_normal, bolt_num, bolt_piont_clouds = extracter.find_screws()
     else:
-        gear_piont_clouds, gearpositions = extracter.find_gears()
+        gear_piont_clouds, gear_positions = extracter.find_gears()
 
     # further data
     extracter.load_pcd_data('D:/Jupyter/AgiProbot/GUI_agi-master/pcdfile/B1_17_gear.pcd')
@@ -185,7 +192,7 @@ if __name__ == '__main__':
     # print(test_load_pretrained_model(expected_return=True))
     # print(test_load_pretrained_model(expected_return=False))
     #
-    test_load_data()
+    # test_load_data()
     # test_prediction()
     #
     # test_if_cover_existence(with_cover=True)
@@ -194,8 +201,8 @@ if __name__ == '__main__':
     # test_find_screws_position(with_cover=True)
     # test_find_screws_position(with_cover=False)
     #
-    # test_find_screws_direction(with_cover=True)
-    # test_find_screws_direction(with_cover=False)
+    test_find_screws_direction(with_cover=True)
+    test_find_screws_direction(with_cover=False)
     #
     # test_find_gear_position(with_cover=True)
     # test_find_gear_position(with_cover=False)

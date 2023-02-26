@@ -99,6 +99,16 @@ class ParaExtracter:
         self.model = nn.DataParallel(self.model)
 
     def load_pcd_data(self, point_cloud_input_file_name):  # find_action_load
+        """
+        load_pcd_data(point_cloud_input_file_name)
+        Function to load pointcloud data from file
+
+        Args:
+            point_cloud_input_file_name (str): Path to pcd file.
+
+        Returns:
+            read point cloud and number of points, which are raised for debugging only.
+        """
 
         # read point cloud data
         point_cloud = o3d.io.read_point_cloud(point_cloud_input_file_name,
@@ -118,6 +128,16 @@ class ParaExtracter:
         return self.point_cloud, num_points
 
     def load_model(self, model_file_dir='not defined'):
+        """
+        load_model(model_file_dir='not defined')
+        Function to load trained model from file
+
+        Args:
+            model_file_dir (str, optional, default='not defined'): Path to trained model. When not specified or set as ``not defined``, the model is read from file './merge_model.pth'.
+
+        Returns:
+            None
+        """
 
         if model_file_dir == 'not defined':
             model_file_dir = os.path.dirname(__file__) + '/merge_model.pth'
@@ -186,15 +206,45 @@ class ParaExtracter:
         return motor_points_forecast, self.type
 
     def run(self):
+        """
+        run()
+        Function to run the predition of the model. Relevant data are calculated and stored automatically.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         self.segementation_prediction, self.classification_prediction = self.predict(self.point_cloud)
 
         self.segementation_prediction_in_robot = self.transfer_to_robot_coordinate(self.segementation_prediction)
         self._cover_existence, self.covers, self.normal = find_covers(self.segementation_prediction_in_robot)
 
     def get_segmentation_prediction(self):
+        """
+        get_segmentation_prediction()
+        Function to get the segmentation results of the model.
+        return segementation prediction, with type numpy.ndarray and with shape (Num_points, 4)
+        Dimension1 of the return: 4 = [x, y, z, segemention_predition]
+
+        Args:
+            None
+        Returns:
+            numpy.ndarray with shape (Num_points, 4)
+        """
+
         return self.segementation_prediction
 
     def get_classification_prediction(self):
+        """
+        get_classification_prediction()
+        Function to get the classification results of the model.
+
+        Args:
+            None
+        Returns:
+            classification (numpy.int64)
+        """
         return self.classification_prediction
 
     def transfer_to_robot_coordinate(self, motor_points_forecast):
@@ -317,7 +367,20 @@ class ParaExtracter:
                     csv_writer.writerow(head)
 
     def find_screws(self):  # find_action_bolts_position
+        """
+        find_screws()
+        Function to get information of the cover crews.
+        return: (None when no screws is found)
+                bolt_positions          # numpy.ndarray with shape (cover_crew_num,3). The dimension1 is center of the crew [x,y,z]
+                cover_screw_normal      # numpy.ndarray with shape (cover_crew_num,3). The dimension1 is normal of the crew
+                bolt_num                # int, number of cover crews
+                bolt_piont_clouds       # numpy.ndarray with shape (points_num,3).
 
+        Args:
+            None
+        Returns:
+            bolt_positions, cover_screw_normal, bolt_num, bolt_piont_clouds
+        """
         if self._cover_existence <= 0:
             warnings.warn("Cover has been removed\nno cover screw found", UserWarning)
             return None, None, None, None
@@ -335,6 +398,18 @@ class ParaExtracter:
             return False
 
     def find_gears(self):  # find_actionGear_position
+        """
+        find_gears()
+        Function to get information of the gears.
+        return:
+                gear_piont_clouds          # numpy.ndarray with shape (points_num,3). return None when no gear is found
+                gearpositions              # numpy.ndarray with shape (gear_num,3). The dimension1 is center of the gears [x,y,z]. return None when no gear is found
+
+        Args:
+            None
+        Returns:
+            gear_piont_clouds, gearpositions
+        """
         if self._cover_existence > 0:
             warnings.warn("\nCover has not been removed\nno gear found", UserWarning)
             return None, None

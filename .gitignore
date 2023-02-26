@@ -19,3 +19,4 @@ agi_para_extracter/para_extracter/cover.pcd
 
 model_trainer/data/date_set/*
 model_trainer/data/check_points/*
+semantic-segmentation-editor-master/
