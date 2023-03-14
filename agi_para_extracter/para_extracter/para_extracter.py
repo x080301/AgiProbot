@@ -75,9 +75,9 @@ class ParaExtracter:
                  "bottom": [255, 165, 0],
                  "bolts": [255, 0, 0],
                  "side_bolts": [255, 0, 255],
-                 "upgear_a": [224, 255, 255],
-                 "lowgear_a": [255, 228, 255],
-                 "gear_b": [230, 230, 255]}
+                 "upgear_a": [224, 255, 255],#
+                 "lowgear_a": [255, 228, 255],#
+                 "gear_b": [230, 230, 255]}#
 
     def __init__(self):
         parser = argparse.ArgumentParser(description='Point Cloud Semantic Segmentation')

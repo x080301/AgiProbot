@@ -82,3 +82,6 @@ class MotorDataset(Dataset):
         # goals?何意
 
         return point_cloud, segmentation_label, classification_label
+
+if __name__ == "__main__":
+    pass
