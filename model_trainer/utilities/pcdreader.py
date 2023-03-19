@@ -1,17 +1,51 @@
 import numpy as np
 import open3d
 
-rgb_dic = {'Void': [207, 207, 207],
-           'Background': [0, 0, 128],
-           'Gear': [165, 205, 255],
-           'Connector': [0, 255, 0],
-           'Screws': [255, 0, 0],
-           'Solenoid': [255, 165, 0],
-           'Electrical Connector': [255, 255, 0],
-           'Main Housing': [0, 100, 0],
-           'Noise': [223, 200, 200]}
 labels = ['Void', 'Background', 'Gear', 'Connector', 'Screws', 'Solenoid', 'Electrical Connector', 'Main Housing',
           'Noise']
+rgb_dic = {'Void': [207, 207, 207],
+           'Background': [0, 0, 128],
+           'Gear': [120, 152, 225],
+           'Connector': [118, 218, 145],
+           'Screws': [247, 77, 77],
+           'Solenoid': [239, 166, 102],
+           'Electrical Connector': [153, 135, 206],
+           'Main Housing': [99, 178, 238],
+           'Noise': [223, 200, 200]}
+# full_scaned3
+'''
+{'Void': [207, 207, 207],
+           'Background': [0, 0, 128],
+           'Gear': [59, 98, 142],
+           'Connector': [125, 152, 71],
+           'Screws': [247, 77, 77],
+           'Solenoid': [201, 121, 55],
+           'Electrical Connector': [255, 255, 0],
+           'Main Housing': [56, 132, 152],
+           'Noise': [223, 200, 200]}
+'''
+# full_scaned2
+'''
+{'Void': [207, 207, 207],
+           'Background': [0, 0, 128],
+           'Gear': [12, 132, 198],
+           'Connector': [0, 255, 0],
+           'Screws': [247, 77, 77],
+           'Solenoid': [255, 165, 16],
+           'Electrical Connector': [255, 255, 0],
+           'Main Housing': [65, 183, 172],
+           'Noise': [223, 200, 200]}
+'''
+# full_scaned
+'''{'Void': [207, 207, 207],
+'Background': [0, 0, 128],
+'Gear': [165, 205, 255],
+'Connector': [0, 255, 0],
+'Screws': [255, 0, 0],
+'Solenoid': [255, 165, 0],
+'Electrical Connector': [255, 255, 0],
+'Main Housing': [0, 100, 0],
+'Noise': [223, 200, 200]}'''
 
 
 def read_pcd(pcd_file):
@@ -38,7 +72,7 @@ def read_pcd(pcd_file):
 
             point_label = labels[int(label)]
             if point_label != 'Noise':
-                points.append(np.array([x, y, z]))
+                points.append(np.array([float(x)+1.0, float(y)+10.0, float(z)+10.0]))
                 point_color = rgb_dic[point_label]
                 colors.append(np.array([a / 255.0 for a in point_color]))
 
@@ -49,7 +83,7 @@ def read_pcd(pcd_file):
 
 
 if __name__ == "__main__":
-    points, colors = read_pcd('C:/Users/Lenovo/Desktop/MotorClean.plz.pcd')
+    points, colors = read_pcd('C:/Users/Lenovo/Desktop/MotorClean.plz.pcd')  # 006_labelled0 (1).pcd')
     print(points.shape)
     print(colors.shape)
 
@@ -58,7 +92,7 @@ if __name__ == "__main__":
     point_cloud.points = open3d.utility.Vector3dVector(points)
     point_cloud.colors = open3d.utility.Vector3dVector(colors)
 
-    open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/MotorClean.plz_color.pcd', point_cloud)
+    open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/MotorClean.plz_plus1.pcd', point_cloud)
     open3d.visualization.draw_geometries([point_cloud])
 
     '''points = np.empty([0])
