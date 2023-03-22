@@ -46,16 +46,16 @@ def ply_2_pcd(file_dir, save_dir):
 
 if __name__ == "__main__":
     # check_color_one_pcd('E:/datasets/agiprobot/agi_large_motor_dataset/03_05_22/0/0scan_Motor_0001.pcd')
-    # check_color_all('E:/datasets/agiprobot/agi_large_motor_dataset')
+    check_color_all('E:/datasets/agiprobot/agi_large_motor_dataset')
 
     # ply_2_pcd('E:/datasets/agiprobot/TScan Schulung/MotorClean.plz.ply',
     #           'E:/datasets/agiprobot/TScan Schulung/MotorClean.plz.pcd')
 
-    point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/TScan Schulung/MotorClean.plz.pcd',
-                                          remove_nan_points=True, remove_infinite_points=True,
-                                          print_progress=True)
-    colors = np.asarray(point_cloud.colors)
-    print(colors.shape)
+    # point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/TScan Schulung/MotorClean.plz.pcd',
+    #                                       remove_nan_points=True, remove_infinite_points=True,
+    #                                       print_progress=True)
+    # colors = np.asarray(point_cloud.colors)
+    # print(colors.shape)
     #print(np.unique(colors, axis=0))
 
     pass

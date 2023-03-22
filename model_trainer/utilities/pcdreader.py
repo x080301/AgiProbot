@@ -5,13 +5,25 @@ labels = ['Void', 'Background', 'Gear', 'Connector', 'Screws', 'Solenoid', 'Elec
           'Noise']
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
-           'Gear': [120, 152, 225],
-           'Connector': [118, 218, 145],
+           'Gear': [102,140,255],#[102, 179, 255],  # [102,140,255],#[102, 204, 255],
+           # [153, 221, 255],  # [12, 132, 198],#[204, 255, 255],  # [59, 98, 142],#[165, 205, 255],
+           'Connector': [102, 255, 102],  # [0, 255, 0],
            'Screws': [247, 77, 77],
-           'Solenoid': [239, 166, 102],
-           'Electrical Connector': [153, 135, 206],
-           'Main Housing': [99, 178, 238],
+           'Solenoid': [0, 100, 0],  #[255, 165, 0]
+           'Electrical Connector': [255, 255, 0],
+           'Main Housing': [255, 165, 0],  #[0, 100, 0]
            'Noise': [223, 200, 200]}
+#
+
+''' {'Void': [207, 207, 207],
+        'Background': [0, 0, 128],
+        'Gear': [120, 152, 225],
+        'Connector': [118, 218, 145],
+        'Screws': [247, 77, 77],
+        'Solenoid': [239, 166, 102],
+        'Electrical Connector': [153, 135, 206],
+        'Main Housing': [99, 178, 238],
+        'Noise': [223, 200, 200]}'''
 # full_scaned3
 '''
 {'Void': [207, 207, 207],
@@ -68,11 +80,11 @@ def read_pcd(pcd_file):
             if not oneline:
                 break
 
-            x, y, z, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+            x, y, z,_, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
 
             point_label = labels[int(label)]
             if point_label != 'Noise':
-                points.append(np.array([float(x)+1.0, float(y)+10.0, float(z)+10.0]))
+                points.append(np.array([x, y, z]))
                 point_color = rgb_dic[point_label]
                 colors.append(np.array([a / 255.0 for a in point_color]))
 
@@ -83,7 +95,8 @@ def read_pcd(pcd_file):
 
 
 if __name__ == "__main__":
-    points, colors = read_pcd('C:/Users/Lenovo/Desktop/MotorClean.plz.pcd')  # 006_labelled0 (1).pcd')
+    points, colors = read_pcd(
+        'C:/Users/Lenovo/Desktop/006_labelled0 (1).pcd')  # MotorClean.plz.pcd')  # 006_labelled0 (1).pcd')
     print(points.shape)
     print(colors.shape)
 
@@ -92,7 +105,7 @@ if __name__ == "__main__":
     point_cloud.points = open3d.utility.Vector3dVector(points)
     point_cloud.colors = open3d.utility.Vector3dVector(colors)
 
-    open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/MotorClean.plz_plus1.pcd', point_cloud)
+    open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/t (1)_c.pcd', point_cloud)
     open3d.visualization.draw_geometries([point_cloud])
 
     '''points = np.empty([0])
