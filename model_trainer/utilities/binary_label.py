@@ -316,9 +316,10 @@ if __name__ == "__main__":
         pcd_to_binary3(files_direction, 'C:/Users/Lenovo/Desktop/big_motor_blendar_binlabel')'''
 
     # pcd_to_binary4(r'E:\datasets\agiprobot\Video snippets\one_view.pcd', r'C:\Users\Lenovo\Desktop\one_view_bin.pcd')
-    get_motor_pcd(r'E:\datasets\agiprobot\binlabel\one_view_bin.pcd',
+
+    '''get_motor_pcd(r'E:\datasets\agiprobot\binlabel\one_view_bin.pcd',
                   r'E:\datasets\agiprobot\binlabel\one_view_motor_only.pcd')
     get_motor_pcd(r'E:\datasets\agiprobot\binlabel\big_motor_blendar_binlabel\02_05_22_n1_0scan_Motor_0001.pcd',
-                  r'E:\datasets\agiprobot\binlabel\02_05_22_n1_0scan_Motor_0001_motor_only.pcd')
+                  r'E:\datasets\agiprobot\binlabel\02_05_22_n1_0scan_Motor_0001_motor_only.pcd')'''
 
     pass
