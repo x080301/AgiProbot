@@ -175,6 +175,9 @@ def pipline_point2plane_test(target_point_cloud, source_point_cloud):
     registered = point2plane_test(coarse_registered, registered, max_correspondence_distance=0.1)
     # registered = point2plane_test(coarse_registered, registered, max_correspondence_distance=0.05)
 
+    # print('Hausdorff\n')
+    # print(hausdorff_distance(registered, target_point_cloud))
+
     visualization(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd', source_point_cloud=registered,
                   target_point_cloud_with_background=coarse_registered,
                   save=True)
@@ -199,17 +202,29 @@ def point2plane(target_point_cloud, source_point_cloud, max_correspondence_dista
     print(reg.transformation)
     print(reg)
 
-    rotation_matrix = np.linalg.inv(reg.transformation[0:3, 0:3])
+    '''rotation_matrix = np.linalg.inv(reg.transformation[0:3, 0:3])
     translation_vector = reg.transformation[0:3, 3] * (-1)
     transformation_matrix = np.zeros((4, 4))
     transformation_matrix[0:3, 0:3] = rotation_matrix
     transformation_matrix[0:3, 3] = translation_vector
-    transformation_matrix[3, 3] = 1.
-
-    print(transformation_matrix)
+    transformation_matrix[3, 3] = 1.'''
 
     result_point_cloud = copy.deepcopy(source_point_cloud)
-    result_point_cloud = result_point_cloud.transform(transformation_matrix)
+    # result_point_cloud = result_point_cloud.transform(transformation_matrix)
+
+    # Transform
+    # https://de.mathworks.com/matlabcentral/answers/321703-how-can-i-calculate-the-reverse-of-a-rotation-and-translation-that-maps-a-cloud-of-points-c1-to-an
+    rotation_matrix = np.asarray(reg.transformation[0:3, 0:3])
+    translation_vector = reg.transformation[0:3, 3]
+
+    result_points = np.asarray(result_point_cloud.points)
+    result_points = (result_points - translation_vector).reshape((-1, 3, 1))
+
+    # print(np.linalg.inv(rotation_matrix).shape)
+    # print(result_points.shape)
+    result_points = (np.linalg.inv(rotation_matrix) @ result_points).reshape((-1, 3))
+
+    result_point_cloud.points = o3d.utility.Vector3dVector(result_points)
 
     return result_point_cloud
 
@@ -236,6 +251,36 @@ def pipline_point2plane(target_point_cloud, source_point_cloud):
                   save=True)
 
 
+def hausdorff_distance(target_point_cloud, source_point_cloud):  # 参考knn DGCNN
+    tar = np.array(target_point_cloud.points)
+    src = np.array(source_point_cloud.points)
+
+    tar_num = tar.shape[0]
+    src_num = src.shape[0]
+
+    tar = tar.transpose(1, 0)
+    src = src.transpose(1, 0)
+
+    tar = tar.reshape((3, 1, -1))
+    src = src.reshape((3, -1, 1))
+
+    tar = tar.repeat(tar_num, axis=1)
+    src = src.repeat(src_num, axis=2)
+
+    distance = np.power(tar - src, 2)
+    distance = np.sum(distance, axis=0)
+    distance = np.power(distance, 0.5)
+    distance = np.where(distance > 0, distance, 99999)
+
+    mindistance1 = distance.min(axis=0)
+    h1 = np.sort(mindistance1)[-50000]
+
+    mindistance2 = distance.min(axis=1)
+    h2 = np.sort(mindistance2)[-50000]
+
+    return max(h1, h2)
+
+
 if __name__ == "__main__":
     target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/binlabel/one_view_motor_only.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,
@@ -245,8 +290,8 @@ if __name__ == "__main__":
                                                  remove_nan_points=True, remove_infinite_points=True,
                                                  print_progress=True)
 
-    # pipline_point2point(target_point_cloud, source_point_cloud)
+    pipline_point2point(target_point_cloud, source_point_cloud)
 
-    pipline_point2plane_test(target_point_cloud, source_point_cloud)
+    # pipline_point2plane_test(target_point_cloud, source_point_cloud)
 
-    # pipline_point2plane(target_point_cloud, source_point_cloud) # TODO: unsolved error in z-direction
+    # pipline_point2plane(target_point_cloud, source_point_cloud)

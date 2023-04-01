@@ -300,6 +300,42 @@ def get_motor_pcd(pcd_file, save_name):
     print(np.array(colors_new_file).shape[0])
 
 
+def recolor(pcd_file_dir):
+    rgb_dic = {'Background': [0, 0, 128],  #
+               'Gear': [102, 140, 255],  # [102, 179, 255],  # [102,140,255],#[102, 204, 255],
+               # [153, 221, 255],  # [12, 132, 198],#[204, 255, 255],  # [59, 98, 142],#[165, 205, 255],
+               'Connector': [102, 255, 102],  # [0, 255, 0],
+               'Screws': [247, 77, 77],
+               'Solenoid': [0, 100, 0],  # [255, 165, 0]
+               'Electrical Connector': [255, 255, 0],
+               'Main Housing': [255, 165, 0],  # [0, 100, 0]
+               'Noise': [223, 200, 200]}
+    # 蓝，黄，绿
+
+def recolor_registered(pcd_files_dir):
+    for file_name in os.listdir(pcd_files_dir):
+        source = o3d.io.read_point_cloud(pcd_files_dir + '/' + file_name,
+                                      remove_nan_points=True, remove_infinite_points=True,
+                                      print_progress=True)
+
+        points_array = np.array(source.points)
+        colors_array = np.array(source.colors)
+        print(colors_array.shape)
+
+        points_new_file = []
+        colors_new_file = []
+
+        for i in range(colors_array.shape[0]):
+            if colors_array[i, 0] == 1. and colors_array[i, 1] == 1.:
+                points_new_file.append(points_array[i, :])
+                colors_new_file.append(colors_array[i, :])
+
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points_new_file)
+        pcd.colors = o3d.utility.Vector3dVector(colors_new_file)
+        o3d.io.write_point_cloud(pcd_files_dir + '/full_model_only_' + file_name, pcd, write_ascii=True)
+
+
 if __name__ == "__main__":
     '''files_direction_list = ['E:/datasets/agiprobot/agi_large_motor_dataset/02_05_22_n1',
                             'E:/datasets/agiprobot/agi_large_motor_dataset/02_05_22_n2',
@@ -321,5 +357,7 @@ if __name__ == "__main__":
                   r'E:\datasets\agiprobot\binlabel\one_view_motor_only.pcd')
     get_motor_pcd(r'E:\datasets\agiprobot\binlabel\big_motor_blendar_binlabel\02_05_22_n1_0scan_Motor_0001.pcd',
                   r'E:\datasets\agiprobot\binlabel\02_05_22_n1_0scan_Motor_0001_motor_only.pcd')'''
+
+    recolor_registered('E:/datasets/agiprobot/registration/results')
 
     pass
