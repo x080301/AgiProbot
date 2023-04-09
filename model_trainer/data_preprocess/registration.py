@@ -1,6 +1,7 @@
 import numpy as np
 import open3d as o3d
 import copy
+import time
 
 
 def point2plane_test(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
@@ -73,10 +74,11 @@ def visualization(transformation=None, target_point_cloud_with_background=None, 
                                    [0., 0., 1., 0.],
                                    [0., 0., 0., 1.]])
     if target_point_cloud_with_background is None:
-        target_point_cloud_with_background = o3d.io.read_point_cloud('E:/datasets/agiprobot/binlabel/one_view_bin.pcd',
-                                                                     remove_nan_points=True,
-                                                                     remove_infinite_points=True,
-                                                                     print_progress=True)
+        target_point_cloud_with_background = o3d.io.read_point_cloud(
+            'E:/datasets/agiprobot/registration/one_view_bin.pcd',
+            remove_nan_points=True,
+            remove_infinite_points=True,
+            print_progress=True)
     if source_point_cloud is None:
         source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/binlabel/full_model.pcd',
                                                      remove_nan_points=True, remove_infinite_points=True,
@@ -281,17 +283,74 @@ def hausdorff_distance(target_point_cloud, source_point_cloud):  # 参考knn DGC
     return max(h1, h2)
 
 
+def data_generation():
+    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    '''target_point_cloud_with_BG=o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_bin.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    coarse_registered = coarse_registration(target_point_cloud, source_point_cloud)
+
+    pipreg = o3d.pipelines.registration
+    reg = pipreg.registration_icp(target_point_cloud, coarse_registered,
+                                  max_correspondence_distance=100,
+                                  estimation_method=
+                                  # pipreg.TransformationEstimationPointToPlane())
+                                  # pipreg.TransformationEstimationForGeneralizedICP())
+                                  # pipreg.TransformationEstimationForColoredICP())
+                                  pipreg.TransformationEstimationPointToPoint())
+    print(reg)
+
+    visualization(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd', source_point_cloud=coarse_registered,
+                  target_point_cloud_with_background=target_point_cloud_with_BG,
+                  save=False)'''
+
+
+def running_time():
+
+    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    coarse_registered = coarse_registration(target_point_cloud, source_point_cloud)
+
+    T = time.perf_counter()
+
+    registered = point2plane(target_point_cloud, coarse_registered, max_correspondence_distance=10)
+    registered = point2plane(target_point_cloud, registered, max_correspondence_distance=1)
+    registered = point2plane(target_point_cloud, registered, max_correspondence_distance=0.1)  # point2plane#point2point
+
+    print(time.perf_counter())
+
+    visualization(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd', source_point_cloud=registered,
+                  # target_point_cloud_with_background=coarse_registered,
+                  save=True)
+
+
 if __name__ == "__main__":
-    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/binlabel/one_view_motor_only.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/binlabel/full_model.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    pipline_point2point(target_point_cloud, source_point_cloud)
+    # data_generation()
 
     # pipline_point2plane_test(target_point_cloud, source_point_cloud)
+    '''target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
 
-    # pipline_point2plane(target_point_cloud, source_point_cloud)
+    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    result_point_cloud = pipline_point2point(target_point_cloud, source_point_cloud)
+    hausdorff_distance(target_point_cloud, result_point_cloud)
+'''
+    running_time()

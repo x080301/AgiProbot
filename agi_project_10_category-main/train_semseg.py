@@ -48,7 +48,7 @@ def train(args, io):
     NUM_POINT = args.npoints
     print("start loading training data ...")
     TRAIN_DATASET = MotorDataset(split='train', data_root=args.data_dir, num_class=NUM_CLASS, num_points=NUM_POINT,
-                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)  # TODO
+                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)
     print("start loading test data ...")
     VALIDATION_SET = MotorDataset_validation(split='test', data_root=args.data_dir, num_class=NUM_CLASS,
                                              num_points=NUM_POINT, test_area=args.validation_symbol, sample_rate=1.0,
@@ -65,7 +65,7 @@ def train(args, io):
     if args.model == 'PCT':
         model = PCT_semseg(args).to(device)
     elif args.model == 'PCT_patch':
-        model = PCT_patch_semseg(args).to(device)  # TODO
+        model = PCT_patch_semseg(args).to(device)
     else:
         raise Exception("Not implemented")
     # summary(model,input_size=(3,4096),batch_size=1,device='cuda')
@@ -127,8 +127,8 @@ def train(args, io):
     criterion2 = mean_loss
     best_iou = 0
     best_bolts_iou = 0
-    weights = torch.Tensor(TRAIN_DATASET.labelweights).cuda()  # TODO
-    persentige = torch.Tensor(TRAIN_DATASET.persentage).cuda()  # TODO
+    weights = torch.Tensor(TRAIN_DATASET.labelweights).cuda()
+    persentige = torch.Tensor(TRAIN_DATASET.persentage).cuda()
     io.cprint(persentige)
     scale = weights * persentige
     scale = 1 / scale.sum()
@@ -156,7 +156,6 @@ def train(args, io):
             points, target, type_label, goals, masks = points.to(device), target.to(device), type_label.to(
                 device), goals.to(device), masks.to(
                 device)  # (batch_size, num_points, features)    (batch_size, num_points)
-            # TODO:goals? masks?
             points = normalize_data(points)
             # Visuell_PointCloud_per_batch_according_to_label(points,target)
             if args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]

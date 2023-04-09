@@ -37,6 +37,7 @@ def find_covers(seg_motor, cover_file_dir=None):
     if cover_file_dir is None:
         cover_file_dir = os.path.dirname(__file__) + '/cover.pcd'
 
+
     open3d_save_pcd(bottom, cover_file_dir)
     pcd = o3d.io.read_point_cloud(cover_file_dir)
     downpcd = pcd.voxel_down_sample(voxel_size=0.002)  # 下采样滤波，体素边长为0.002m

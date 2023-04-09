@@ -55,10 +55,5 @@ def get_neighbors(x, k=20):
     return feature
 
 
-def calculate_mIoU(motor_points_forecast, ground_truth):
-    # TODO
-    return 1
-
-
 if __name__ == '__main__':
     pass
