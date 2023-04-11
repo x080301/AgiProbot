@@ -133,7 +133,8 @@ def _pipline_point2plane_test(target_point_cloud, source_point_cloud):
                               save=True)
 
 
-def _point2plane(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
+def _point2plane(target_point_cloud, source_point_cloud, max_correspondence_distance=10,
+                 evaluate_coarse_registraion_min_correspindence=None):
     radius = 1  # 5  # 1 # 0.5 # 0.1 # 0.01  # max search radius
     max_nn = 30  # max points in the search sphere
     source_point_cloud.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius, max_nn))
@@ -149,34 +150,33 @@ def _point2plane(target_point_cloud, source_point_cloud, max_correspondence_dist
                                   # pipreg.TransformationEstimationPointToPoint()
                                   )
 
-    print(reg.transformation)
     print(reg)
 
-    '''rotation_matrix = np.linalg.inv(reg.transformation[0:3, 0:3])
-    translation_vector = reg.transformation[0:3, 3] * (-1)
-    transformation_matrix = np.zeros((4, 4))
-    transformation_matrix[0:3, 0:3] = rotation_matrix
-    transformation_matrix[0:3, 3] = translation_vector
-    transformation_matrix[3, 3] = 1.'''
+    if evaluate_coarse_registraion_min_correspindence is not None \
+            and np.array(reg.correspondence_set).shape[0] < evaluate_coarse_registraion_min_correspindence:
 
-    result_point_cloud = source_point_cloud  # copy.deepcopy(source_point_cloud)
-    # result_point_cloud = result_point_cloud.transform(transformation_matrix)
+        return None
 
-    # Transform
-    # https://de.mathworks.com/matlabcentral/answers/321703-how-can-i-calculate-the-reverse-of-a-rotation-and-translation-that-maps-a-cloud-of-points-c1-to-an
-    rotation_matrix = np.asarray(reg.transformation[0:3, 0:3])
-    translation_vector = reg.transformation[0:3, 3]
+    else:
 
-    result_points = np.asarray(result_point_cloud.points)
-    result_points = (result_points - translation_vector).reshape((-1, 3, 1))
+        result_point_cloud = source_point_cloud  # copy.deepcopy(source_point_cloud)
+        # result_point_cloud = result_point_cloud.transform(transformation_matrix)
 
-    # print(np.linalg.inv(rotation_matrix).shape)
-    # print(result_points.shape)
-    result_points = (np.linalg.inv(rotation_matrix) @ result_points).reshape((-1, 3))
+        # Transform
+        # https://de.mathworks.com/matlabcentral/answers/321703-how-can-i-calculate-the-reverse-of-a-rotation-and-translation-that-maps-a-cloud-of-points-c1-to-an
+        rotation_matrix = np.asarray(reg.transformation[0:3, 0:3])
+        translation_vector = reg.transformation[0:3, 3]
 
-    result_point_cloud.points = o3d.utility.Vector3dVector(result_points)
+        result_points = np.asarray(result_point_cloud.points)
+        result_points = (result_points - translation_vector).reshape((-1, 3, 1))
 
-    return result_point_cloud
+        # print(np.linalg.inv(rotation_matrix).shape)
+        # print(result_points.shape)
+        result_points = (np.linalg.inv(rotation_matrix) @ result_points).reshape((-1, 3))
+
+        result_point_cloud.points = o3d.utility.Vector3dVector(result_points)
+
+        return result_point_cloud
 
 
 def _pipline_point2plane(target_point_cloud, source_point_cloud):
@@ -241,6 +241,16 @@ def get_motor_only_pcd(target_point_cloud):
     return motor_only_point_cloud
 
 
+class CoarseRegistrationExceptin(Exception):
+    "this is user's Exception for unsuccessful coarse registration "
+
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        print("coarse registration failed")
+
+
 def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_multi_step', visualization=False):
     '''
 
@@ -251,28 +261,46 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
     :return: registered point cloud
     '''
 
-    target_point_cloud = get_motor_only_pcd(target_point_cloud)
-
-    # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-    registered = global_registration(target_point_cloud, source_point_cloud)
-
     if visualization:
-        visualization_point_cloud(source_point_cloud=registered,
-                                  target_point_cloud_with_background=target_point_cloud,
-                                  save=False)
         time.perf_counter()
+    target_point_cloud = get_motor_only_pcd(target_point_cloud)
 
     if algorithm == 'point2plane_multi_step':
         registration_algorithm = _point2plane
     elif algorithm == 'point2point_multi_step':
         registration_algorithm = _point2point
 
-    registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=5)
-    registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)
+    for i in range(5):
+        # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
+        registered = global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
+
+        registered.paint_uniform_color([1, 1, 0])
+
+        if visualization:
+            print("coarse_registration")
+            visualization_point_cloud(source_point_cloud=registered,
+                                      target_point_cloud_with_background=target_point_cloud,
+                                      save=False)
+
+        # When the coarse registration give an unsuitable,
+        # the correspindence set of the fine registration will be too small.
+        # The size of correspindence set is checked here,
+        # too small -> registration_algorithm() returns None
+
+        registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=5,
+                                            evaluate_coarse_registraion_min_correspindence=100000)
+
+        if registered is not None:
+            break
+    else:
+        raise CoarseRegistrationExceptin
+
+    # registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)
     registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=0.2)
 
     if visualization:
         print(time.perf_counter())
+        print("fine_registration")
         visualization_point_cloud(source_point_cloud=registered,
                                   target_point_cloud_with_background=target_point_cloud,
                                   save=False)
@@ -293,7 +321,7 @@ if __name__ == "__main__":
                                                  print_progress=True)
 
     # _running_time()
-    registration(target_point_cloud, source_point_cloud, visualization=True)
+    registration(target_point_cloud, source_point_cloud)
 '''
     target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,

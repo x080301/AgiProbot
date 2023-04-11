@@ -174,7 +174,6 @@ def visualization_point_cloud(transformation=None, target_point_cloud_with_backg
     srcDraw.transform(transformation)
     o3d.visualization.draw_geometries([srcDraw, tarDraw])
 
-
 if __name__ == "__main__":
     data3d = np.random.normal(size=(1000, 3))
     draw_3d_histogram(data3d, 10)
