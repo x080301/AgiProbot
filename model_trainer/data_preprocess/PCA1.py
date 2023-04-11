@@ -13,7 +13,7 @@ def read_mesh(file_dir=r"C:\Users\Lenovo\Desktop\Alignment\Alignment\Motor_001.s
     '''
     mesh = o3d.io.read_triangle_mesh(file_dir)
 
-    pcd = mesh.sample_points_uniformly(number_of_points=600000)  # 10000
+    pcd = mesh.sample_points_uniformly(number_of_points=200000)  # 600000
 
     return pcd
 
