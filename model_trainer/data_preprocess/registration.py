@@ -4,7 +4,7 @@ import copy
 import time
 
 from utilities.data_visualization import visualization_point_cloud
-from global_registration import global_registration
+from data_preprocess.global_registration import global_registration
 
 
 def _point2plane_test(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
@@ -321,7 +321,9 @@ if __name__ == "__main__":
                                                  print_progress=True)
 
     # _running_time()
+    time.perf_counter()
     registration(target_point_cloud, source_point_cloud)
+    print(time.perf_counter())
 '''
     target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,

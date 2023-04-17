@@ -174,6 +174,19 @@ def visualization_point_cloud(transformation=None, target_point_cloud_with_backg
     srcDraw.transform(transformation)
     o3d.visualization.draw_geometries([srcDraw, tarDraw])
 
+
+def draw_box(center):
+    length = 200
+    mesh_box = o3d.geometry.TriangleMesh.create_box(width=length, height=length, depth=0.1)
+    # mesh_box.compute_vertex_normals()
+    mesh_box.paint_uniform_color([1, 1, 0])
+    # o3d.visualization.draw_geometries([mesh_box])
+    mesh_box.translate([-0.5 * length, -0.5 * length, 0])
+    mesh_box.translate(-center, relative=True)
+
+    return mesh_box
+
+
 if __name__ == "__main__":
     data3d = np.random.normal(size=(1000, 3))
     draw_3d_histogram(data3d, 10)

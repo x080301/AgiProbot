@@ -4,18 +4,7 @@ import numpy as np
 
 from sklearn.decomposition import PCA
 
-
-def read_mesh(file_dir=r"C:\Users\Lenovo\Desktop\Alignment\Alignment\Motor_001.stl"):
-    '''
-
-    :param file_dir: direction of *.stl file
-    :return: point cloud
-    '''
-    mesh = o3d.io.read_triangle_mesh(file_dir)
-
-    pcd = mesh.sample_points_uniformly(number_of_points=200000)  # 600000
-
-    return pcd
+from utilities.point_cloud_operation import read_mesh
 
 
 def implement_pca(pcd, visualization=False, save_dir=None):
