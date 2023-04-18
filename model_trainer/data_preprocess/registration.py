@@ -266,10 +266,11 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
     target_point_cloud = get_motor_only_pcd(target_point_cloud)
 
     if algorithm == 'point2plane_multi_step':
-        registration_algorithm = _point2plane
+        fine_registration = _point2plane
     elif algorithm == 'point2point_multi_step':
-        registration_algorithm = _point2point
+        fine_registration = _point2point
 
+    # global registration and first fine registration
     for i in range(5):
         # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
         registered = global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
@@ -287,8 +288,8 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         # The size of correspindence set is checked here,
         # too small -> registration_algorithm() returns None
 
-        registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=5,
-                                            evaluate_coarse_registraion_min_correspindence=100000)
+        registered = fine_registration(target_point_cloud, registered, max_correspondence_distance=5,
+                                       evaluate_coarse_registraion_min_correspindence=100000)
 
         if registered is not None:
             break
@@ -296,7 +297,7 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         raise CoarseRegistrationExceptin
 
     # registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)
-    registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=0.2)
+    registered = fine_registration(target_point_cloud, registered, max_correspondence_distance=0.2)
 
     if visualization:
         print(time.perf_counter())
@@ -322,8 +323,12 @@ if __name__ == "__main__":
 
     # _running_time()
     time.perf_counter()
-    registration(target_point_cloud, source_point_cloud)
+    registered_pcd = registration(target_point_cloud, source_point_cloud)
     print(time.perf_counter())
+
+    visualization_point_cloud(source_point_cloud=registered_pcd,
+                              target_point_cloud_with_background=target_point_cloud,
+                              save=False)
 '''
     target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,
