@@ -1,11 +1,7 @@
 from torch.utils.data import Dataset
 import torch
-from pathlib import Path
-from skimage.io import imread
-from skimage.color import gray2rgb
+
 import numpy as np
-import torchvision as tv
-import os
 
 
 def data_preloading(data_pandas_csv):
