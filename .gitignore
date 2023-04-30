@@ -7,6 +7,7 @@ _my_test.py
 run.log
 *.pyc
 
+
 副本/
 .idea/
 agi_project_10_category-main/.idea/
@@ -20,3 +21,5 @@ agi_para_extracter/para_extracter/cover.pcd
 model_trainer/data/date_set/*
 model_trainer/data/check_points/*
 semantic-segmentation-editor-master/
+
+agi_project_10_category-main/outputs

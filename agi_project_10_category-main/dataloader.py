@@ -310,6 +310,7 @@ class MotorDataset(Dataset):
         ####reversed order
         label_num_eachtype[-1] /= bolt_weights
         labelweights = label_num_eachtype / np.sum(label_num_eachtype)
+
         labelweights = np.power(np.max(labelweights) / labelweights, 1 / 3)
         ##########################
         self.num_eachtype__ = label_num_eachtype__

@@ -51,9 +51,9 @@ def train(args, io):
     VALIDATION_SET = MotorDataset_validation(split='test', data_root=args.data_dir, num_class=NUM_CLASS,
                                              num_points=NUM_POINT, test_area=args.validation_symbol, sample_rate=1.0,
                                              transform=None)
-    train_loader = DataLoader(TRAIN_DATASET, num_workers=8, batch_size=args.batch_size, shuffle=True, drop_last=True,
+    train_loader = DataLoader(TRAIN_DATASET, num_workers=0, batch_size=args.batch_size, shuffle=True, drop_last=True,
                               worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
-    validation_loader = DataLoader(VALIDATION_SET, num_workers=8, batch_size=args.test_batch_size, shuffle=True,
+    validation_loader = DataLoader(VALIDATION_SET, num_workers=0, batch_size=args.test_batch_size, shuffle=True,
                                    drop_last=False)
 
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -484,7 +484,9 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=3, metavar='batch_size',
                         help='Size of batch)')
     parser.add_argument('--data_dir', type=str,
-                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/Dataset3_merge',
+                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/test_training',
+                        # Dataset3_merge
+                        # test_training
                         help='file need to be tested')
     parser.add_argument('--which_dataset', type=str, default='Dataset3', metavar='N',
                         help='experiment version to record reslut')
@@ -504,7 +506,7 @@ if __name__ == "__main__":
                         help='factor of loss_cluster')
     parser.add_argument('--test_batch_size', type=int, default=16, metavar='batch_size',
                         help='Size of batch)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
+    parser.add_argument('--epochs', type=int, default=3, metavar='N',
                         help='number of episode to train ')
     parser.add_argument('--use_class_weight', type=float, default=0,
                         help='enables using class weights(0 represents not using \

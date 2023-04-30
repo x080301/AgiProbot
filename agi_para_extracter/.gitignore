@@ -1,0 +1,11 @@
+*.ckp
+*.lnk
+my_test.py
+todo.py
+_todo.py
+_my_test.py
+run.log
+*.pyc
+
+副本/
+.idea/
