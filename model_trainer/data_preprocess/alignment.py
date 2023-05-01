@@ -156,6 +156,9 @@ def get_mainhousing_cylinder_axis(normals, pcd=None, visualization=False):
 
     [a, b, c, d] = plane_model
 
+    cylinder_axis = np.array([a, b, c])
+    cylinder_axis = cylinder_axis / np.linalg.norm(cylinder_axis)
+
     if visualization:
         print(f"Plane equation: {a:.2f}x + {b:.2f}y + {c:.2f}z + {d:.2f} = 0")
 
@@ -189,13 +192,11 @@ def get_mainhousing_cylinder_axis(normals, pcd=None, visualization=False):
             vis.add_geometry(outlier_cloud)
             vis.run()
 
-    cylinder_axis = np.array([a, b, c])
-    cylinder_axis = cylinder_axis / np.linalg.norm(cylinder_axis)
-
     return cylinder_axis
 
 
 def pointcloud_alignment(solenoid_pcd, main_housing_pcd, connector_pcd, segmented_pcd):
+    # get z and y axis of the point cloud
     z, y = get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd)
 
     # translate the point cloud center to the origin
