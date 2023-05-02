@@ -4,7 +4,7 @@ import os
 
 
 def resave_binary_labelled_pcd(read_directory, save_directory):
-    for file_name in os.listdir(read_directory):
+    for i, file_name in enumerate(os.listdir(read_directory)):
         point_cloud = o3d.io.read_point_cloud(os.path.join(read_directory, file_name), remove_nan_points=True,
                                               remove_infinite_points=True, print_progress=True)
 
@@ -21,7 +21,12 @@ def resave_binary_labelled_pcd(read_directory, save_directory):
 
         point_cloud = np.column_stack((point_cloud, label))
 
-        np.save(os.path.join(save_directory, file_name), point_cloud)
+        if i % 5 == 0:
+            save_name = 'Validation_' + file_name.split('.')[0]
+        else:
+            save_name = 'Training_' + file_name.split('.')[0]
+
+        np.save(os.path.join(save_directory, save_name), point_cloud)
 
 
 if __name__ == "__main__":

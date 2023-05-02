@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
-from dataloader import MotorDataset, MotorDataset_validation, MotorDataset_patch
+from dataloader import MotorDataset
 from model_rotation import PCT_semseg, PCT_patch_semseg
 import numpy as np
 from torch.utils.data import DataLoader
@@ -155,6 +155,7 @@ def train(args, io):
                 device), goals.to(device), masks.to(
                 device)  # (batch_size, num_points, features)    (batch_size, num_points)
             # TODO:goals? masks?
+
             points = normalize_data(points)
             # Visuell_PointCloud_per_batch_according_to_label(points,target)
             if args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
@@ -347,132 +348,6 @@ def train(args, io):
     io.close()
 
 
-def test(args, io):
-    NUM_POINT = args.npoints
-    print("start loading test data ...")
-    TEST_DATASET = MotorDataset_patch(split='Validation', data_root=args.data_dir, num_points=NUM_POINT,
-                                      test_area=args.test_symbol, sample_rate=1.0, transform=None)
-    test_loader = DataLoader(TEST_DATASET, num_workers=8, batch_size=args.test_batch_size, shuffle=True,
-                             drop_last=False)
-
-    device = torch.device("cuda" if args.cuda else "cpu")
-
-    # Try to load models
-
-    if args.model == 'PCT':
-        model = PCT_semseg(args).to(device)
-    elif args.model == 'pointnet':
-        model = PCT_patch_semseg(args).to(device)
-    else:
-        raise Exception("Not implemented")
-
-    model = nn.DataParallel(model)
-    print("Let's test and use", torch.cuda.device_count(), "GPUs!")
-
-    try:
-        if args.finetune:
-            if os.path.exists(str(
-                    BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"):
-                model_path = str(
-                    BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"
-                checkpoint = torch.load(model_path)
-                model.load_state_dict(checkpoint['model_state_dict'])
-        else:
-            inter = str(
-                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth"
-            checkpoint = torch.load(inter)
-        model.load_state_dict(checkpoint['model_state_dict'])
-    except:
-        print('No existing model, a trained model is needed')
-        exit(-1)
-
-    criterion = cal_loss
-    ####################
-    # Test
-    ####################
-    with torch.no_grad():
-        num_batches = len(test_loader)
-        total_correct = 0
-        total_seen = 0
-        loss_sum = 0
-        total_correct_classification = 0
-        total_seen_classification = 0
-        labelweights = np.zeros(NUM_CLASS)
-        total_seen_class = [0 for _ in range(NUM_CLASS)]
-        total_correct_class = [0 for _ in range(NUM_CLASS)]
-        total_iou_deno_class = [0 for _ in range(NUM_CLASS)]
-        cla_seen_class = [0 for _ in range(5)]
-        cla_correct_class = [0 for _ in range(5)]
-        cla_iou_deno_class = [0 for _ in range(5)]
-        model = model.eval()
-        for i, (data, seg, type_label_) in tqdm(enumerate(test_loader), total=len(test_loader), smoothing=0.9):
-            data, seg, type_label_ = data.to(device), seg.to(device), type_label_.to(device)
-            data = normalize_data(data)
-            data_ = data
-            data, GT = rotate_per_batch(data, None)
-            data = data.permute(0, 2, 1)
-            batch_size = data.size()[0]
-            seg_pred, trans, class_pred_, _, = model(data, seg)
-            # save the predicted result
-
-            batch_type_label_ = type_label_.view(-1, 1)[:, 0].cpu().data.numpy()
-            pred_class_choice_ = class_pred_.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
-            correct_class_ = np.sum(pred_class_choice_ == batch_type_label_)
-            total_correct_classification += correct_class_
-            total_seen_classification += (batch_size)
-            seg_pred = seg_pred.permute(0, 2, 1).contiguous()
-            batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
-            # loss = criterion(seg_pred.view(-1, NUM_CLASS), seg.view(-1,1).squeeze(),weights,using_weight=args.use_class_weight)     #a scalar
-            seg_pred = seg_pred.contiguous().view(-1, NUM_CLASS)  # (batch_size*num_points , num_class)
-            pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
-            ##########vis
-            points = data_.view(-1, 3).cpu().data.numpy()
-            pred_choice_ = np.reshape(pred_choice, (-1, 1))
-            points = np.hstack((points, pred_choice_))
-            # vis(points)
-
-            correct = np.sum(pred_choice == batch_label)
-            total_correct += correct
-            total_seen += (batch_size * NUM_POINT)
-            # loss_sum+=loss
-            tmp, _ = np.histogram(batch_label, range(NUM_CLASS + 1))
-            labelweights += tmp
-
-            for l in range(NUM_CLASS):
-                total_seen_class[l] += np.sum((batch_label == l))
-                total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
-                total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
-
-            ####### calculate without Background ##############
-            for l in range(NUM_CLASS_MOTOR):
-                cla_seen_class[l] += np.sum((batch_type_label_ == l))
-                cla_correct_class[l] += np.sum((pred_class_choice_ == l) & (batch_type_label_ == l))
-                cla_iou_deno_class[l] += np.sum(((pred_class_choice_ == l) | (batch_type_label_ == l)))
-
-        labelweights = labelweights.astype(np.float32) / np.sum(labelweights.astype(np.float32))
-        mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
-
-        cla_mIoU = np.mean(np.array(cla_correct_class) / (np.array(cla_iou_deno_class, dtype=np.float64) + 1e-6))
-
-        outstr = 'Test : mIoU %.6f,  Test point acc %.6f, Test avg class acc %.6f' % (mIoU,
-                                                                                      (total_correct / float(
-                                                                                          total_seen)), (np.mean(
-            np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
-        io.cprint(outstr)
-
-        iou_per_class_str = '------- IoU --------\n'
-        for l in range(NUM_CLASS):
-            iou_per_class_str += 'class %s percentage: %.4f, IoU: %.4f \n' % (
-                labels2categories[l] + ' ' * (16 - len(labels2categories[l])), labelweights[l],
-                total_correct_class[l] / float(total_iou_deno_class[l]))
-        io.cprint(iou_per_class_str)
-        iou_per_class_str_ = ''
-        for l in range(NUM_CLASS_MOTOR):
-            iou_per_class_str_ += 'class %s,claffification IoU: %.4f \n' % (
-                labels2type_[l] + ' ' * (16 - len(labels2type_[l])),
-                cla_correct_class[l] / float(cla_iou_deno_class[l]))
-        io.cprint(iou_per_class_str_)
-        io.cprint("\n\n")
 
 
 if __name__ == "__main__":

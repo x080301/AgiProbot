@@ -29,7 +29,33 @@ def _point2plane_test(target_point_cloud, source_point_cloud, max_correspondence
     return result_point_cloud
 
 
-def _point2point(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
+def _translation(target_point_cloud, source_point_cloud):
+    translation_vector = target_point_cloud.get_center() - source_point_cloud.get_center()
+
+    source_point_cloud.translate(translation_vector, relative=True)
+
+    return source_point_cloud
+
+
+def _rotation(source_point_cloud):
+    rotated_point_cloud = copy.deepcopy(source_point_cloud)
+
+    euler_angle = rotated_point_cloud.get_rotation_matrix_from_xyz((-np.pi * 30. / 180., np.pi * 3 / 4., 0))
+    rotated_point_cloud.rotate(euler_angle)
+
+    return rotated_point_cloud
+
+
+def _coarse_registration_hard_coding(target_point_cloud, source_point_cloud):
+    translated_piont_cloud = _translation(target_point_cloud, source_point_cloud)
+    rotated_point_cloud = _rotation(translated_piont_cloud)
+
+    result_piont_cloud = rotated_point_cloud
+
+    return result_piont_cloud
+
+
+def point2point(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
     pipreg = o3d.pipelines.registration
 
     reg = pipreg.registration_icp(source_point_cloud, target_point_cloud,
@@ -50,91 +76,8 @@ def _point2point(target_point_cloud, source_point_cloud, max_correspondence_dist
     return result_point_cloud
 
 
-def translation(target_point_cloud, source_point_cloud):
-    translation_vector = target_point_cloud.get_center() - source_point_cloud.get_center()
-
-    source_point_cloud.translate(translation_vector, relative=True)
-
-    return source_point_cloud
-
-
-def _rotation(source_point_cloud):
-    rotated_point_cloud = copy.deepcopy(source_point_cloud)
-
-    euler_angle = rotated_point_cloud.get_rotation_matrix_from_xyz((-np.pi * 30. / 180., np.pi * 3 / 4., 0))
-    rotated_point_cloud.rotate(euler_angle)
-
-    return rotated_point_cloud
-
-
-def _coarse_registration_hard_coding(target_point_cloud, source_point_cloud):
-    translated_piont_cloud = translation(target_point_cloud, source_point_cloud)
-    rotated_point_cloud = _rotation(translated_piont_cloud)
-
-    result_piont_cloud = rotated_point_cloud
-
-    return result_piont_cloud
-
-
-def _pipline_point2point(target_point_cloud, source_point_cloud):
-    coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-
-    '''visualization(save_dir='E:/datasets/agiprobot/binlabel/coarse_registered_pcd.pcd',
-                  source_point_cloud=coarse_registered,
-                  save=True)'''
-
-    registered = _point2point(target_point_cloud, coarse_registered, max_correspondence_distance=10)
-    registered = _point2point(target_point_cloud, registered, max_correspondence_distance=1)
-    registered = _point2point(target_point_cloud, registered, max_correspondence_distance=0.1)
-    # registered = point2point(target_point_cloud, registered, max_correspondence_distance=0.05)
-
-    visualization_point_cloud(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd',
-                              source_point_cloud=registered,
-                              # target_point_cloud_with_background=target_point_cloud,
-                              save=True)
-
-
-def _pipline_point2plane_test(target_point_cloud, source_point_cloud):
-    '''
-    target and source are swapped, since target is full model and computation of its normal is easier.
-
-
-    :param target_point_cloud:
-    :param source_point_cloud:
-    :return:
-    '''
-
-    coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-
-    '''visualization(save_dir='E:/datasets/agiprobot/binlabel/coarse_registered_pcd.pcd',
-                  source_point_cloud=coarse_registered,
-                  save=True)'''
-
-    radius = 1  # 5  # 1 # 0.5 # 0.1 # 0.01  # max search radius
-    max_nn = 30  # max points in the search sphere
-    coarse_registered.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius, max_nn))
-
-    '''o3d.visualization.draw_geometries([coarse_registered], window_name="normal estimation",
-                                      point_show_normal=True,
-                                      width=800,
-                                      height=600)'''
-
-    registered = _point2plane_test(coarse_registered, target_point_cloud, max_correspondence_distance=10)
-    registered = _point2plane_test(coarse_registered, registered, max_correspondence_distance=1)
-    registered = _point2plane_test(coarse_registered, registered, max_correspondence_distance=0.1)
-    # registered = point2plane_test(coarse_registered, registered, max_correspondence_distance=0.05)
-
-    # print('Hausdorff\n')
-    # print(hausdorff_distance(registered, target_point_cloud))
-
-    visualization_point_cloud(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd',
-                              source_point_cloud=registered,
-                              target_point_cloud_with_background=coarse_registered,
-                              save=True)
-
-
-def _point2plane(target_point_cloud, source_point_cloud, max_correspondence_distance=10,
-                 evaluate_coarse_registraion_min_correspindence=None):
+def point2plane(target_point_cloud, source_point_cloud, max_correspondence_distance=10,
+                evaluate_coarse_registraion_min_correspindence=None):
     radius = 1  # 5  # 1 # 0.5 # 0.1 # 0.01  # max search radius
     max_nn = 30  # max points in the search sphere
     source_point_cloud.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius, max_nn))
@@ -179,55 +122,6 @@ def _point2plane(target_point_cloud, source_point_cloud, max_correspondence_dist
         return result_point_cloud
 
 
-def _pipline_point2plane(target_point_cloud, source_point_cloud):
-    coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-
-    '''visualization(save_dir='E:/datasets/agiprobot/binlabel/coarse_registered_pcd.pcd',
-                  source_point_cloud=coarse_registered,
-                  save=True)'''
-
-    '''o3d.visualization.draw_geometries([coarse_registered], window_name="normal estimation",
-                                      point_show_normal=True,
-                                      width=800,
-                                      height=600)'''
-
-    registered = _point2plane(target_point_cloud, coarse_registered, max_correspondence_distance=10)
-    registered = _point2plane(target_point_cloud, registered, max_correspondence_distance=1)
-    registered = _point2plane(target_point_cloud, registered, max_correspondence_distance=0.1)
-    # registered = point2plane(coarse_registered, registered, max_correspondence_distance=0.05)
-
-    visualization_point_cloud(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd',
-                              source_point_cloud=registered,
-                              # target_point_cloud_with_background=coarse_registered,
-                              save=True)
-
-
-def _running_time():
-    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-
-    T = time.perf_counter()
-
-    registered = _point2plane(target_point_cloud, coarse_registered, max_correspondence_distance=10)
-    registered = _point2plane(target_point_cloud, registered, max_correspondence_distance=1)
-    registered = _point2plane(target_point_cloud, registered,
-                              max_correspondence_distance=0.1)  # point2plane#point2point
-
-    print(time.perf_counter())
-
-    visualization_point_cloud(save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd',
-                              source_point_cloud=registered,
-                              # target_point_cloud_with_background=coarse_registered,
-                              save=True)
-
-
 def get_motor_only_pcd(target_point_cloud):
     colors = np.array(target_point_cloud.colors)
     points = np.array(target_point_cloud.points)
@@ -266,20 +160,20 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
     target_point_cloud = get_motor_only_pcd(target_point_cloud)
 
     if algorithm == 'point2plane_multi_step':
-        fine_registration = _point2plane
+        fine_registration = point2plane
     elif algorithm == 'point2point_multi_step':
-        fine_registration = _point2point
+        fine_registration = point2point
 
     # global registration and first fine registration
     for i in range(5):
         # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
-        registered = global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
+        registered_point_cloud = global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
 
-        registered.paint_uniform_color([1, 1, 0])
+        registered_point_cloud.paint_uniform_color([1, 1, 0])
 
         if visualization:
             print("coarse_registration")
-            visualization_point_cloud(source_point_cloud=registered,
+            visualization_point_cloud(source_point_cloud=registered_point_cloud,
                                       target_point_cloud_with_background=target_point_cloud,
                                       save=False)
 
@@ -288,25 +182,27 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         # The size of correspindence set is checked here,
         # too small -> registration_algorithm() returns None
 
-        registered = fine_registration(target_point_cloud, registered, max_correspondence_distance=5,
-                                       evaluate_coarse_registraion_min_correspindence=100000)
+        registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
+                                                   max_correspondence_distance=5,
+                                                   evaluate_coarse_registraion_min_correspindence=100000)
 
-        if registered is not None:
+        if registered_point_cloud is not None:
             break
     else:
         raise CoarseRegistrationExceptin
 
     # registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)
-    registered = fine_registration(target_point_cloud, registered, max_correspondence_distance=0.2)
+    registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
+                                               max_correspondence_distance=0.2)
 
     if visualization:
         print(time.perf_counter())
         print("fine_registration")
-        visualization_point_cloud(source_point_cloud=registered,
+        visualization_point_cloud(source_point_cloud=registered_point_cloud,
                                   target_point_cloud_with_background=target_point_cloud,
                                   save=False)
 
-    return registered
+    return registered_point_cloud
 
 
 if __name__ == "__main__":

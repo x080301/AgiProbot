@@ -151,7 +151,7 @@ def train(args, io):
         args.training = True
         total_correct_class__ = [0 for _ in range(NUM_CLASS)]
         total_iou_deno_class__ = [0 for _ in range(NUM_CLASS)]
-        for i, (points, target, type_label, goals, masks, type) in tqdm(enumerate(train_loader),
+        for i, (points, target, type_label, goals, masks, cover_exitence_for_each_motor) in tqdm(enumerate(train_loader),
                                                                         total=len(train_loader), smoothing=0.9):
             points, target, type_label, goals, masks = points.to(device), target.to(device), type_label.to(
                 device), goals.to(device), masks.to(
@@ -485,7 +485,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=3, metavar='batch_size',
                         help='Size of batch)')
     parser.add_argument('--data_dir', type=str,
-                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/Dataset3_merge',
+                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/test_training',
                         # Dataset3_merge',
                         # test_training
                         help='file need to be tested')
