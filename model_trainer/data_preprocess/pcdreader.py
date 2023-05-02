@@ -15,8 +15,9 @@ rgb_dic = {'Void': [207, 207, 207],
            'Electrical Connector': [255, 255, 0],
            'Main Housing': [0, 100, 0],
            'Noise': [223, 200, 200],
-           'Inner Gear': [255, 20, 147]
-           # [175, 238, 238]  # [255, 105, 180]  # [255, 182, 193]  # [107, 218, 250]  # [219, 112 ,147]
+           'Inner Gear': [107, 218, 250]
+           # [255, 20, 147] 玫红
+           # [175, 238, 238]浅篮  # [255, 105, 180]  # [255, 182, 193]  # [107, 218, 250]  # [219, 112 ,147]
            # [221, 160, 221]  # [255, 182, 193]  # [199, 21, 133]
            }
 #
@@ -116,5 +117,5 @@ class PcdReader:
 if __name__ == "__main__":
     pcd_reader = PcdReader()
 
-    pcd_reader.read_pcd_ASCII('C:/Users/Lenovo/Desktop/large_motor_inside (1).pcd')
+    pcd_reader.read_pcd_ASCII('C:/Users/Lenovo/Desktop/large_motor_inside.pcd')
     pcd_reader.save_pcd('C:/Users/Lenovo/Desktop/large_motor_inside_labeled.pcd')

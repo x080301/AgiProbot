@@ -192,7 +192,7 @@ def find_goals_kmeans(points__, target__):  # [bs,n_points,C] [bs,n_points]
         index_bottom = target == 4
         points5 = points[index_bottom, :]
         _, c5 = kmeans(X=points5, num_clusters=goals_[4], distance='euclidean0', device=torch.device('cuda'))
-        dis5 = square_distance(points5.unsqueeze(0).float(), c5.unsqueeze(0) .float())
+        dis5 = square_distance(points5.unsqueeze(0).float(), c5.unsqueeze(0).float())
         index5 = dis5.squeeze(0).min(dim=0, keepdim=False)[1]
         added5 = index_points(points5.unsqueeze(0), index5.unsqueeze(0))
         #######################
@@ -334,17 +334,20 @@ class MotorDataset(Dataset):
 
         points = self.motors_points[self.motors_indes[index]][:, 0:3]  # initialize the parameter
         labels = self.motors_labels[self.motors_indes[index]]
-        type_for_each_motor = self.type_for_each_motor[self.motors_indes[index]]
+        motor_type_classification_labels = self.type_for_each_motor[self.motors_indes[index]]
         cover_exitence_for_each_motor = self.cover_exitence_for_each_motor[self.motors_indes[index]]
         ########################have a randow choose of points from points cloud#######################
         choice = np.random.choice(points.shape[0], self.num_points, replace=True)
-        chosed_points = points[choice, :]
-        chosed_labels = labels[choice]
+        points = points[choice, :]
+        segmentation_labels = labels[choice]
         ###############################################################################################
 
         # return chosed_points,chosed_labels,class_for_each_motor,cover_exitence_for_each_motor
-        return chosed_points, chosed_labels, type_for_each_motor, self.goals[self.motors_indes[index]], self.mask[
-            self.motors_indes[index]], cover_exitence_for_each_motor
+        # return chosed_points, chosed_labels, type_for_each_motor, self.goals[self.motors_indes[index]], self.mask[
+        #     self.motors_indes[index]], cover_exitence_for_each_motor
+        return points, segmentation_labels, motor_type_classification_labels, self.goals[self.motors_indes[index]], \
+               self.mask[self.motors_indes[index]], cover_exitence_for_each_motor
+        # (points, target, type_label, goals, masks, type)
 
     def __len__(self):
         return len(self.motors_indes)

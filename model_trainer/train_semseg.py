@@ -27,7 +27,7 @@ classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 's
 types = ['TypeA0', 'TypeA1', 'TypeA2', 'TypeB0', 'TypeB1']
 labels2type_ = {i: cls for i, cls in enumerate(types)}
 labels2categories = {i: cls for i, cls in enumerate(classes)}  # dictionary for labels2categories
-NUM_CLASS = 10
+NUM_CLASS = 2#10
 NUM_CLASS_MOTOR = 5
 
 
