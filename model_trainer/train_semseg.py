@@ -12,8 +12,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
-from dataloader import MotorDataset
-from model_rotation import PCT_semseg, PCT_patch_semseg
+from data_preprocess.data_loader import MotorDataset
+from model.pct import PCT_semseg, PCT_patch_semseg
 import numpy as np
 from torch.utils.data import DataLoader
 from util import cal_loss, mean_loss, normalize_data, rotate_per_batch, feature_transform_reguliarzer, PrintLog
@@ -373,7 +373,7 @@ if __name__ == "__main__":
                         help='evaluate the model')
     parser.add_argument('--finetune', type=int, default=0, metavar='N',
                         help='if we finetune the model')
-    parser.add_argument('--num_segmentation_type', type=int, default=10, metavar='num_segmentation_type',
+    parser.add_argument('--num_segmentation_type', type=int, default=2, metavar='num_segmentation_type',
                         help='num_segmentation_type)')
     parser.add_argument('--kernel_loss_weight', type=float, default=0.05, metavar='F',
                         help='factor of loss_cluster')
@@ -485,8 +485,8 @@ if __name__ == "__main__":
     os.system('cp train_semseg_rotation_step1.py ' + path + '/' + 'train_semseg_rotation_step1.py.backup')
     os.system('cp train_semseg_rotation_step2.py ' + path + '/' + 'train_semseg_rotation_step2.py.backup')
     os.system('cp util.py ' + path + '/' + 'util.py.backup')
-    os.system('cp model_rotation.py ' + path + '/' + 'model_rotation.py.backup')
-    os.system('cp dataloader.py ' + path + '/' + 'dataloader.py.backup')
+    os.system('cp pct.py ' + path + '/' + 'pct.py.backup')
+    os.system('cp data_loader.py ' + path + '/' + 'data_loader.py.backup')
     os.system('cp train.sh ' + path + '/' + 'train.sh.backup')  # 保存设置与模型
 
     # ans=torch.cuda.is_available()

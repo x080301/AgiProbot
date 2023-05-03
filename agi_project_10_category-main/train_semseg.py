@@ -611,8 +611,8 @@ if __name__ == "__main__":
     os.system('cp train_semseg_rotation_step1.py ' + path + '/' + 'train_semseg_rotation_step1.py.backup')
     os.system('cp train_semseg_rotation_step2.py ' + path + '/' + 'train_semseg_rotation_step2.py.backup')
     os.system('cp util.py ' + path + '/' + 'util.py.backup')
-    os.system('cp model_rotation.py ' + path + '/' + 'model_rotation.py.backup')
-    os.system('cp dataloader.py ' + path + '/' + 'dataloader.py.backup')
+    os.system('cp pct.py ' + path + '/' + 'pct.py.backup')
+    os.system('cp data_loader.py ' + path + '/' + 'data_loader.py.backup')
     os.system('cp train.sh ' + path + '/' + 'train.sh.backup')
 
     # ans=torch.cuda.is_available()

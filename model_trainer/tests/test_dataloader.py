@@ -1,5 +1,5 @@
 import unittest
-from dataloader import MotorDataset
+from data_preprocess.data_loader import MotorDataset
 from torch.utils.data import DataLoader
 import numpy as np
 import time

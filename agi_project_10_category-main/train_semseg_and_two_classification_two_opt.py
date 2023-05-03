@@ -685,8 +685,8 @@ if __name__ == "__main__":
 
     os.system('cp train_semseg_rotation_multi_task.py '+path+'/'+'train_semseg_rotation_multi_task.py.backup')
     os.system('cp util.py '+path+'/'+'util.py.backup')
-    os.system('cp model_rotation.py '+path+'/'+'model_rotation.py.backup')
-    os.system('cp dataloader.py '+path+'/'+'dataloader.py.backup')
+    os.system('cp pct.py '+path+'/'+'pct.py.backup')
+    os.system('cp data_loader.py '+path+'/'+'data_loader.py.backup')
     os.system('cp train.sh '+path+'/'+'train.sh.backup')
 
 

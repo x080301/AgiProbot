@@ -502,32 +502,6 @@ class MultiHeadAttention(nn.Module):
         return res
 
 
-class SA_Layer_Single_Head(nn.Module):
-    def __init__(self, channels):
-        super(SA_Layer_Single_Head, self).__init__()
-        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
-        self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
-        self.v_conv = nn.Conv1d(channels, channels, 1)
-        self.trans_conv = nn.Conv1d(channels, channels, 1)
-        self.after_norm = nn.BatchNorm1d(channels)
-        self.act = nn.ReLU()
-        self.softmax = nn.Softmax(dim=-1)
-
-    def forward(self, x):
-        x = x.permute(0, 2, 1)
-        x_q = self.q_conv(x).permute(0, 2, 1)  # b, n, c
-        x_k = self.k_conv(x)  # b, c, n
-        x_v = self.v_conv(x)
-        energy = x_q @ x_k  # b, n, n
-        attention = self.softmax(energy)
-        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))
-        x_r = x_v @ attention  # b, c, n
-        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))
-        x = x + x_r
-        x = x.permute(0, 2, 1)
-        return x
-
-
 class SA_Layer_Multi_Head(nn.Module):
     def __init__(self, args, num_features):  # input [bs,n_points,num_features]
         super(SA_Layer_Multi_Head, self).__init__()

@@ -6,13 +6,7 @@
 @File: model.py
 @Time: 2022/1/15 17:11 PM
 """
-import math
-import re
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
+from model.pct import SA_Layer_Single_Head
 from util import *
 from torch.autograd import Variable
 # from display import *
