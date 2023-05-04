@@ -6,6 +6,7 @@ DATA:
   npoints: 2048
 
 TRAIN:
+  titel: 'binary_segmentation'
   train_stamp: 'hello_world'
   model: 'dgcnn_patch'
   train_batch_size: 3

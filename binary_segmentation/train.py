@@ -32,11 +32,16 @@ class BinarySegmentation:
         # ******************* #
         # make directions
         # ******************* #
-        direction = 'outputs/' + str(datetime.date.today()) + '/' + self.args.train_stamp
+        if self.is_local:
+            direction = 'outputs/' + str(datetime.date.today()) + '/' + self.args.train_stamp
+        else:
+            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + str(
+                datetime.date.today()) + '/' + self.args.train_stamp
         if not os.path.exists(direction + '/checkpoints'):
             os.makedirs(direction + '/checkpoints')
         if not os.path.exists(direction + '/train_log'):
             os.makedirs(direction + '/train_log')
+        self.checkpoints_direction = direction + '/checkpoints/'
 
         # ******************* #
         # save mode and parameters
@@ -48,7 +53,11 @@ class BinarySegmentation:
         # ******************* #
         # load data set
         # ******************* #
-        data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug' if self.is_local else self.args.data_dir
+        if self.is_local:
+            data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+        else:
+            data_set_direction = self.args.data_dir
+
         print("start loading training data ...")
         train_dataset = MotorDataset(mode='train',
                                      data_dir=data_set_direction,
@@ -65,10 +74,12 @@ class BinarySegmentation:
                                        shuffle=True,
                                        drop_last=True,
                                        worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
+        self.num_train_batch = len(self.train_loader)
         self.validation_loader = DataLoader(validation_set, num_workers=para_workers,
                                             batch_size=self.args.test_batch_size,
                                             shuffle=True,
                                             drop_last=False)
+        self.num_valid_batch = len(self.validation_loader)
 
         # ******************* #
         # load ML model
@@ -96,7 +107,7 @@ class BinarySegmentation:
         self.scheduler = scheduler
 
         # ******************* #
-        ## if finetune is true, the the best.pth will be cosidered first
+        # if finetune is true, the the best.pth will be cosidered first
         # ******************* #
         if self.args.finetune:
             if os.path.exists(direction + '/checkpoints/best.pth'):
@@ -127,9 +138,10 @@ class BinarySegmentation:
                 weights[i] = 1
         self.weights = weights
 
+        self.best_iou = 0
         self.model = model
 
-    def train_epoch(self):
+    def train_epoch(self, epoch):
 
         self.model = self.model.train()
         self.args.training = True
@@ -140,6 +152,7 @@ class BinarySegmentation:
         total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
         total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
 
+        print('-----train-----')
         for i, (points, target) in tqdm(enumerate(self.train_loader), total=len(self.train_loader), smoothing=0.9):
 
             # ******************* #
@@ -149,15 +162,17 @@ class BinarySegmentation:
             points = util.normalize_data(points)
 
             if self.args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
-                points, _, GT = util.rotate_per_batch(points, None)  # TODO What's GT?
+                points, _ = util.rotate_per_batch(points, None)
             else:
-                points, _, GT = util.rotate_per_batch(points, None)
+                points, _ = util.rotate_per_batch(points, None)
 
             points = points.permute(0, 2, 1).float()
             batch_size = points.size()[0]
             self.opt.zero_grad()
 
             seg_pred, trans = self.model(points.float())
+            print(seg_pred)
+            print(seg_pred.shape)
 
             # ******************* #
             # backwards
@@ -198,22 +213,83 @@ class BinarySegmentation:
                 for param_group in self.opt.param_groups:
                     param_group['lr'] = 1e-5
 
-        outstr = 'Segmentation:Train %d, loss: %.6f, train acc: %.6f ' % (
-            epoch, (loss_sum / num_batches), (total_correct / float(total_seen)))
-        outstr = 'Classification:Train %d, loss: %.6f, train acc: %.6f ' % (
-            epoch, (loss_class / num_batches), (total_correct_classification / float(total_seen_classification)))
-        io.cprint(outstr)
-        writer.add_scalar('Training loss', (loss_sum / num_batches), epoch)
-        writer.add_scalar('Training accuracy', (total_correct / float(total_seen)), epoch)
-        writer.add_scalar('Training mean ioU', (mIoU__), epoch)
-        writer.add_scalar('Training loU of bolt', (total_correct_class__[5] / float(total_iou_deno_class__[5])),
-                          epoch)
+        print('Segmentation:Train %d, loss: %.6f, train acc: %.6f ' % (
+            epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
+        print('Training mean ioU %.6f' % mIoU__)
+
+    def valid_epoch(self, epoch):
+        with torch.no_grad():
+            total_correct = 0
+            total_seen = 0
+
+            loss_sum = 0
+            labelweights = np.zeros(self.args.num_segmentation_type)
+            total_seen_class = [0 for _ in range(self.args.num_segmentation_type)]
+            total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
+            total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
+
+            self.model = self.model.eval()
+            self.args.training = False
+
+            print('-----valid-----')
+            for i, (points, seg) in tqdm(enumerate(self.validation_loader), total=len(self.validation_loader),
+                                         smoothing=0.9):
+                points, seg = points.to(self.device), seg.to(self.device)
+                points = util.normalize_data(points)
+                points, _ = util.rotate_per_batch(points, None)
+                points = points.permute(0, 2, 1)
+                batch_size = points.size()[0]
+
+                seg_pred, trans = self.model(points.float())
+
+                seg_pred = seg_pred.permute(0, 2, 1).contiguous()
+                batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
+                loss = self.criterion(seg_pred.view(-1, self.args.num_segmentation_type), seg.view(-1, 1).squeeze(),
+                                      self.weights, using_weight=self.args.use_class_weight)  # a scalar
+                loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+                seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
+                pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                correct = np.sum(pred_choice == batch_label)
+                total_correct += correct
+                total_seen += (batch_size * self.args.npoints)
+                loss_sum += loss
+                tmp, _ = np.histogram(batch_label, range(self.args.num_segmentation_type + 1))
+                labelweights += tmp
+
+                for l in range(self.args.num_segmentation_type):
+                    total_seen_class[l] += np.sum((batch_label == l))
+                    total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
+                    total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
+            mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
+
+            outstr = 'Validation ----epoch: %d,  eval loss %.6f,  eval mIoU %.6f,  eval point acc %.6f, eval avg class acc %.6f' % (
+                epoch, (loss_sum / self.num_valid_batch), mIoU,
+                (total_correct / float(total_seen)),
+                (np.mean(np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
+            print(outstr)
+
+            if mIoU >= self.best_iou:
+                self.best_iou = mIoU
+                if self.args.finetune:
+                    savepath = self.checkpoints_direction + str(mIoU) + '_best_finetune.pth'
+                else:
+                    savepath = self.checkpoints_direction + str(mIoU) + 'best_m.pth'
+
+                state = {'epoch': epoch,
+                         'model_state_dict': self.model.state_dict(),
+                         'optimizer_state_dict': self.opt.state_dict(), }
+                print('Saving best model at %s' % savepath)
+                torch.save(state, savepath)
+
+            print('\n')
 
     def train(self):
 
-        end_epoch = 3 if self.is_local else self.args.epochs
+        end_epoch = 2 if self.is_local else self.args.epochs
         for epoch in range(self.start_epoch, end_epoch):
-            self.train_epoch()
+            self.train_epoch(epoch)
+            self.valid_epoch(epoch)
 
 
 if __name__ == '__main__':
