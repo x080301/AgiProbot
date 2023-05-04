@@ -10,20 +10,27 @@ import os
 import argparse
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
-from dataloader import MotorDataset, MotorDataset_validation
-from model import DGCNN_semseg, DGCNN_patch_semseg
+from dataloader import MotorDataset, MotorDataset_validation, MotorDataset_patch
+from model_rotation import PCT_semseg, PCT_patch_semseg
 import numpy as np
 from torch.utils.data import DataLoader
-from util import cal_loss, mean_loss, normalize_data, feature_transform_reguliarzer, rotate_per_batch, PrintLog
+from util import cal_loss, mean_loss, normalize_data, rotate_per_batch, feature_transform_reguliarzer, PrintLog
 from torch.utils.tensorboard import SummaryWriter
 import time
 from tqdm import tqdm
+from visilize import visialize_cluster
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 'side_screw', 'cover_screw']
+classes = ['clamping_system', 'cover', 'gear_container', 'charger', 'bottom', 'side_bolt', 'cover_bolt', 'geara_up',
+           'geara_down', 'gearb']
+types = ['TypeA0', 'TypeA1', 'TypeA2', 'TypeB0', 'TypeB1']
+labels2type_ = {i: cls for i, cls in enumerate(types)}
 labels2categories = {i: cls for i, cls in enumerate(classes)}  # dictionary for labels2categories
+NUM_CLASS = 6
+NUM_CLASS_MOTOR = 5
 
 
 def _init_(add_string, exp_name):
@@ -40,25 +47,25 @@ def _init_(add_string, exp_name):
 def train(args, io):
     NUM_POINT = args.npoints
     print("start loading training data ...")
-    TRAIN_DATASET = MotorDataset(split='train', data_root=args.data_dir, num_points=NUM_POINT,
-                                 screw_weight=args.screw_weight, test_area=args.validation_symbol, sample_rate=1.0,
-                                 transform=None)
+    TRAIN_DATASET = MotorDataset(split='train', data_root=args.data_dir, num_class=NUM_CLASS, num_points=NUM_POINT,
+                                 test_area=args.validation_symbol, sample_rate=1.0, transform=None)
     print("start loading test data ...")
-    TEST_DATASET = MotorDataset_validation(split='test', data_root=args.data_dir, num_points=NUM_POINT,
-                                           test_area=args.validation_symbol, sample_rate=1.0, transform=None)
-    train_loader = DataLoader(TRAIN_DATASET, num_workers=8, batch_size=args.batch_size, shuffle=True, drop_last=True,
+    VALIDATION_SET = MotorDataset_validation(split='test', data_root=args.data_dir, num_class=NUM_CLASS,
+                                             num_points=NUM_POINT, test_area=args.validation_symbol, sample_rate=1.0,
+                                             transform=None)
+    train_loader = DataLoader(TRAIN_DATASET, num_workers=0, batch_size=args.batch_size, shuffle=True, drop_last=True,
                               worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
-    test_loader = DataLoader(TEST_DATASET, num_workers=8, batch_size=args.test_batch_size, shuffle=True,
-                             drop_last=False)
+    validation_loader = DataLoader(VALIDATION_SET, num_workers=0, batch_size=args.test_batch_size, shuffle=True,
+                                   drop_last=False)
 
     device = torch.device("cuda" if args.cuda else "cpu")
     io.cprint(args)
     # Try to load models
     tmp = torch.cuda.max_memory_allocated()
-    if args.model == 'dgcnn':
-        model = DGCNN_semseg(args).to(device)
-    elif args.model == 'dgcnn_patch':
-        model = DGCNN_patch_semseg(args).to(device)
+    if args.model == 'PCT':
+        model = PCT_semseg(args).to(device)
+    elif args.model == 'PCT_patch':
+        model = PCT_patch_semseg(args).to(device)
     else:
         raise Exception("Not implemented")
     # summary(model,input_size=(3,4096),batch_size=1,device='cuda')
@@ -97,8 +104,8 @@ def train(args, io):
             exit(-1)
         if not os.path.exists(str(
                 BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + add_string + "/models/best_finetune.pth") and os.path.exists(
-                str(
-                        BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
+            str(
+                BASE_DIR) + "/outputs/" + args.model + '/' + args.which_dataset + '/' + args.exp_name + "/models/best.pth"):
             start_epoch = 0
         else:
             start_epoch = checkpoint['epoch']
@@ -144,9 +151,8 @@ def train(args, io):
         args.training = True
         total_correct_class__ = [0 for _ in range(NUM_CLASS)]
         total_iou_deno_class__ = [0 for _ in range(NUM_CLASS)]
-        for i, (points, target, type_label, goals, masks, cover_exitence_for_each_motor) in tqdm(
-                enumerate(train_loader),
-                total=len(train_loader), smoothing=0.9):
+        for i, (points, target, type_label, goals, masks, cover_exitence_for_each_motor) in tqdm(enumerate(train_loader),
+                                                                        total=len(train_loader), smoothing=0.9):
             points, target, type_label, goals, masks = points.to(device), target.to(device), type_label.to(
                 device), goals.to(device), masks.to(
                 device)  # (batch_size, num_points, features)    (batch_size, num_points)
@@ -160,6 +166,7 @@ def train(args, io):
             points = points.permute(0, 2, 1)  # (batch_size,features,numpoints)
             batch_size = points.size()[0]
             opt.zero_grad()
+
             seg_pred, trans, class_pred, result = model(points.float(),
                                                         target)  # (batch_size, class_categories, num_points)
 
@@ -190,6 +197,7 @@ def train(args, io):
             for l in range(NUM_CLASS):
                 total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
                 total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
         mIoU__ = np.mean(np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6))
 
         if args.scheduler == 'cos':
@@ -505,7 +513,7 @@ if __name__ == "__main__":
                         help='number of episode to train ')
     parser.add_argument('--use_class_weight', type=float, default=0,
                         help='enables using class weights(0 represents not using \
-                            the class weight and 1 represent using the class weights')
+                        the class weight and 1 represent using the class weights')
     parser.add_argument('--screw_weight', type=float, default=1.0, metavar='F',
                         help='weight for screw')
     parser.add_argument('--use_sgd', type=bool, default=True,

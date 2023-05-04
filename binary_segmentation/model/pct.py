@@ -295,8 +295,7 @@ class PCT_semseg(nn.Module):
         self.dp3 = nn.Dropout(p=args.dropout)
         self.linear3 = nn.Linear(256, 5)
 
-    def forward(self, x, input_for_alignment_all_structure):
-        batch_size = x.size(0)
+    def forward(self, x):
         num_points = x.size(2)
         x = x.float()
 
@@ -327,7 +326,6 @@ class PCT_semseg(nn.Module):
         x = x.permute(0, 2, 1)
         x__ = x
         x = self.conv__(x)  # (batch_size, 512, num_points)->(batch_size, 1024, num_points)
-        x_class = x
         x = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 1024, num_points) -> (batch_size, 1024)
         x = x.unsqueeze(-1).repeat(1, 1, num_points)  # (batch_size, 1024)->(batch_size, 1024, num_points)
         x = torch.cat((x, x__),
