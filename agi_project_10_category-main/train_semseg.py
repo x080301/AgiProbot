@@ -485,7 +485,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=3, metavar='batch_size',
                         help='Size of batch)')
     parser.add_argument('--data_dir', type=str,
-                        default='D:/Jupyter/AgiProbot/model_trainer/data/date_set/test_training',
+                        default='D:/Jupyter/AgiProbot/binary_segmentation/data/date_set/test_training',
                         # Dataset3_merge',
                         # test_training
                         help='file need to be tested')

@@ -300,9 +300,9 @@ class PCT_semseg(nn.Module):
         num_points = x.size(2)
         x = x.float()
 
-        trans = self.s3n(x)
+        transform_matrix = self.s3n(x)
         x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
-        x = torch.bmm(x, trans)
+        x = torch.bmm(x, transform_matrix)
         # Visuell_PointCloud_per_batch(x,target)
         x = x.permute(0, 2, 1)
 
@@ -335,17 +335,6 @@ class PCT_semseg(nn.Module):
         x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 3036,num_points)-> (batch_size, 512,num_points)
         x = self.dp5(x)
         x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
-        x = self.conv7(x)  # # (batch_size, 256,num_points) ->(batch_size,6,num_points)
+        segmentation_labels = self.conv7(x)  # # (batch_size, 256,num_points) ->(batch_size,6,num_points)
 
-        y1 = F.adaptive_max_pool1d(x_class, 1).view(batch_size,
-                                                    -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
-        y2 = F.adaptive_avg_pool1d(x_class, 1).view(batch_size,
-                                                    -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
-        y = torch.cat((y1, y2), 1)  # (batch_size, emb_dims*2)
-
-        y = F.leaky_relu(self.bn9(self.linear1(y)), negative_slope=0.2)  # (batch_size, emb_dims*2) -> (batch_size, 512)
-        y = self.dp2(y)
-        y = F.leaky_relu(self.bn10(self.linear2(y)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
-        y = self.dp3(y)
-        y = self.linear3(y)  # (batch_size, 256) -> (batch_size, 5)
-        return x, trans, y, None
+        return segmentation_labels, transform_matrix

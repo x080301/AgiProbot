@@ -18,8 +18,8 @@ model_trainer/.idea/
 
 agi_para_extracter/para_extracter/cover.pcd
 
-model_trainer/data/date_set/*
-model_trainer/data/check_points/*
+binary_segmentation/data/date_set/*
+binary_segmentation/outputs/*
 semantic-segmentation-editor-master/
 
 agi_project_10_category-main/outputs

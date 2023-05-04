@@ -7,13 +7,13 @@ import torch
 from tqdm import tqdm
 
 print("start loading training data ...")
-train_dataset = MotorDataset(split='train',
-                             data_root='E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy',
+train_dataset = MotorDataset(mode='train',
+                             data_dir='E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy',
                              num_class=2, num_points=1024,  # 4096
                              test_area='Validation', sample_rate=1.0)
 print("start loading test data ...")
-validation_set = MotorDataset(split='test',
-                              data_root='E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy',
+validation_set = MotorDataset(mode='test',
+                              data_dir='E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy',
                               num_class=2, num_points=1024,  # 4096
                               test_area='Validation', sample_rate=1.0)
 train_loader = DataLoader(train_dataset, num_workers=0, batch_size=4, shuffle=True,
@@ -25,8 +25,8 @@ validation_loader = DataLoader(validation_set, num_workers=0, batch_size=4, shuf
 device = torch.device("cuda")
 # Try to load models
 
-weights = torch.Tensor(train_dataset.labelweights).cuda()
-persentige = torch.Tensor(train_dataset.persentage).cuda()
+weights = torch.Tensor(train_dataset.label_weights).cuda()
+persentige = torch.Tensor(train_dataset.persentage_each_type).cuda()
 
 scale = weights * persentige
 scale = 1 / scale.sum()
@@ -60,8 +60,8 @@ init_flag = True
 
 class TestMotorDataset(unittest.TestCase):
 
-    def setUp(self):
-        super().setUp()
+    # def setUp(self):
+    #     super().setUp()
 
     # @unittest.skip('pass')
     def test_pipline_01(self):
@@ -83,5 +83,5 @@ class TestMotorDataset(unittest.TestCase):
         print(weights.shape)
         print(weights)
 
-    def tearDown(self):
-        super().tearDown()
+    # def tearDown(self):
+    #     super().tearDown()

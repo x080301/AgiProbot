@@ -1,7 +1,7 @@
 """
 @Author: bixuelei
 @Contact: bxueleibi@gmial.com
-@File: train_semseg.py
+@File: train_binary_segmentation.py
 @Time: 2022/1/10 7:49 PM
 """
 

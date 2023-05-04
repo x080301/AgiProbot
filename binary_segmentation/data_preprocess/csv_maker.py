@@ -16,4 +16,4 @@ def csv_maker(data_source_dir, destination_csv_dir):
 
 if __name__ == "__main__":
     csv_maker('/data/date_set/Dataset3_merge',
-              'D:/Jupyter/AgiProbot/model_trainer/data/dataset.csv')
+              '//data/dataset.csv')
