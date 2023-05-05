@@ -9,7 +9,7 @@ TRAIN:
   titel: 'binary_segmentation'
   train_stamp: 'hello_server'
   model: 'pct'
-  train_batch_size: 3
+  train_batch_size: 8
   training: 1
   finetune: 0
   test: 0
