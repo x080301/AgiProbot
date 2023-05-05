@@ -1,15 +1,19 @@
+import platform
 
-from data_preprocess import alignment
-point_cloud_alignment = alignment.pointcloud_alignment
+system_type = platform.system().lower()  # 'windows' or 'linux'
+if system_type == 'windows':
+    from data_preprocess import alignment
 
-from data_preprocess import registration
+    point_cloud_alignment = alignment.pointcloud_alignment
 
-registration = registration.registration
-'''
+    from data_preprocess import registration
 
-    :param target_point_cloud: 
-    :param source_point_cloud: 
-    :param algorithm: (string, optimal) 'point2plane_multi_step' or 'point2point_multi_step' 
-    :param visualization: 
-    :return: registered point cloud
-'''
+    registration = registration.registration
+    '''
+    
+        :param target_point_cloud: 
+        :param source_point_cloud: 
+        :param algorithm: (string, optimal) 'point2plane_multi_step' or 'point2point_multi_step' 
+        :param visualization: 
+        :return: registered point cloud
+    '''
