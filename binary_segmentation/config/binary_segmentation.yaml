@@ -7,7 +7,7 @@ DATA:
 
 TRAIN:
   titel: 'binary_segmentation'
-  train_stamp: 'hello_server'
+  train_stamp: 'train_on_sim'
   model: 'pct'
   train_batch_size: 8
   training: 1
@@ -15,7 +15,7 @@ TRAIN:
   test: 0
   kernel_loss_weight: 0.05
   stn_loss_weight: 0.01
-  epochs: 400
+  epochs: 100
   use_class_weight: True
   screw_weight: 1.0
   use_sgd: 0

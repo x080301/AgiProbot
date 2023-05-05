@@ -33,10 +33,10 @@ class BinarySegmentation:
         # make directions
         # ******************* #
         if self.is_local:
-            direction = 'outputs/' + str(datetime.date.today()) + '/' + self.args.train_stamp
+            direction = 'outputs/' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M') + '/' + self.args.train_stamp
         else:
-            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + str(
-                datetime.date.today()) + '/' + self.args.train_stamp
+            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + datetime.datetime.now().strftime(
+                '%Y_%m_%d_%H_%M') + '/' + self.args.train_stamp
         if not os.path.exists(direction + '/checkpoints'):
             os.makedirs(direction + '/checkpoints')
         if not os.path.exists(direction + '/train_log'):
@@ -94,18 +94,15 @@ class BinarySegmentation:
         # opt
         # ******************* #
         if self.args.use_sgd:
-            opt = torch.optim.SGD([{'params': model.parameters(), 'initial_lr': self.args.lr}], lr=self.args.lr,
-                                  momentum=self.args.momentum, weight_decay=1e-4)
+            self.opt = torch.optim.SGD([{'params': model.parameters(), 'initial_lr': self.args.lr}], lr=self.args.lr,
+                                       momentum=self.args.momentum, weight_decay=1e-4)
         else:
-            opt = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
+            self.opt = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
         if self.args.scheduler == 'cos':
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.args.epochs, eta_min=1e-5)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, self.args.epochs, eta_min=1e-5)
         elif self.args.scheduler == 'step':
-            scheduler = torch.optim.lr_scheduler.StepLR(opt, 20, 0.1, self.args.epochs)
-
-        self.opt = opt
-        self.scheduler = scheduler
+            self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, 20, 0.1, self.args.epochs)
 
         # ******************* #
         # if finetune is true, the the best.pth will be cosidered first
