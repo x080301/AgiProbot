@@ -1,5 +1,5 @@
 DATA:
-  data_dir: '/home/bi/study/thesis/data/training_6'
+  data_dir: '/data/users/fu/big_motor_blendar_binlabel_npy'
   which_dataset: 'Motor_Dataset4'
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 2
@@ -7,8 +7,8 @@ DATA:
 
 TRAIN:
   titel: 'binary_segmentation'
-  train_stamp: 'hello_world'
-  model: 'dgcnn_patch'
+  train_stamp: 'hello_server'
+  model: 'pct'
   train_batch_size: 3
   training: 1
   finetune: 0
