@@ -288,6 +288,8 @@ class BinarySegmentation:
     def train(self):
 
         end_epoch = 2 if self.is_local else self.args.epochs
+
+        print('train %d epochs' % (end_epoch - self.start_epoch))
         for epoch in range(self.start_epoch, end_epoch):
             self.train_epoch(epoch)
             self.valid_and_save(epoch)
