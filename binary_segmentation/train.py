@@ -63,12 +63,12 @@ class BinarySegmentation:
         train_dataset = MotorDataset(mode='train',
                                      data_dir=data_set_direction,
                                      num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                     test_area='Validation', sample_rate=1.0, drop_last=True)
+                                     test_area='Validation', sample_rate=1.0)
         print("start loading test data ...")
         validation_set = MotorDataset(mode='valid',
                                       data_dir=data_set_direction,
                                       num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                      test_area='Validation', sample_rate=1.0, drop_last=True)
+                                      test_area='Validation', sample_rate=1.0)
 
         para_workers = 0 if self.is_local else 8
         self.train_loader = DataLoader(train_dataset, num_workers=para_workers, batch_size=self.args.train_batch_size,
@@ -79,7 +79,7 @@ class BinarySegmentation:
         self.validation_loader = DataLoader(validation_set, num_workers=para_workers,
                                             batch_size=self.args.test_batch_size,
                                             shuffle=True,
-                                            drop_last=False)
+                                            drop_last=True)
         self.num_valid_batch = len(self.validation_loader)
 
         # ******************* #
