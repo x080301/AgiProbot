@@ -55,7 +55,7 @@ class MotorDataset(Dataset):
         print(persentage)
         ####reversed order
         label_weights = label_num_eachtype / np.sum(label_num_eachtype)
-        label_weights = np.power(np.max(label_weights) / label_weights, 1 / 3)
+        label_weights = np.power(np.max(label_weights) / label_weights, 1)#1 / 3)
         label_weights = label_weights / np.sum(label_weights)
         ############################################################################################
 

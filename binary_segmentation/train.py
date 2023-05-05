@@ -46,7 +46,8 @@ class BinarySegmentation:
         # ******************* #
         # save mode and parameters
         # ******************* #
-        files_to_save = ['train.py', 'config/binary_segmentation.yaml', 'model/pct.py']
+        files_to_save = ['train.py', 'config/binary_segmentation.yaml', 'model/pct.py',
+                         'data_preprocess/data_loader.py']
         for file_name in files_to_save:
             shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
 
@@ -129,11 +130,14 @@ class BinarySegmentation:
         self.criterion = util.cal_loss
 
         weights = torch.Tensor(train_dataset.label_weights).cuda()
+        # print(weights)
         persentige = torch.Tensor(train_dataset.persentage_each_type).cuda()
         scale = weights * persentige
         scale = 1 / scale.sum()
+        # print(scale)
         weights *= scale
-        if self.args.use_class_weight == 0:
+        # print(weights)
+        if not self.args.use_class_weight:
             for i in range(self.args.num_segmentation_type):
                 weights[i] = 1
         self.weights = weights
@@ -171,8 +175,7 @@ class BinarySegmentation:
             self.opt.zero_grad()
 
             seg_pred, trans = self.model(points.float())
-            print(seg_pred)
-            print(seg_pred.shape)
+            # print(seg_pred)
 
             # ******************* #
             # backwards
@@ -213,11 +216,11 @@ class BinarySegmentation:
                 for param_group in self.opt.param_groups:
                     param_group['lr'] = 1e-5
 
-        print('Segmentation:Train %d, loss: %.6f, train acc: %.6f ' % (
+        print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
             epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
-        print('Training mean ioU %.6f' % mIoU__)
+        print('Train mean ioU %.6f' % mIoU__)
 
-    def valid_epoch(self, epoch):
+    def valid_and_save(self, epoch):
         with torch.no_grad():
             total_correct = 0
             total_seen = 0
@@ -263,11 +266,12 @@ class BinarySegmentation:
 
             mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
 
-            outstr = 'Validation ----epoch: %d,  eval loss %.6f,  eval mIoU %.6f,  eval point acc %.6f, eval avg class acc %.6f' % (
-                epoch, (loss_sum / self.num_valid_batch), mIoU,
+            outstr = 'Epoch %d,  eval loss %.6f, eval point acc %.6f, eval avg class acc %.6f' % (
+                epoch, (loss_sum / self.num_valid_batch),
                 (total_correct / float(total_seen)),
                 (np.mean(np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6))))
             print(outstr)
+            print('Valid mean ioU %.6f' % mIoU)
 
             if mIoU >= self.best_iou:
                 self.best_iou = mIoU
@@ -289,7 +293,7 @@ class BinarySegmentation:
         end_epoch = 2 if self.is_local else self.args.epochs
         for epoch in range(self.start_epoch, end_epoch):
             self.train_epoch(epoch)
-            self.valid_epoch(epoch)
+            self.valid_and_save(epoch)
 
 
 if __name__ == '__main__':
