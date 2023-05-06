@@ -134,8 +134,8 @@ def global_registration(target_point_cloud, source_point_cloud, visualization=Fa
     if visualization:
         print(time.perf_counter())
         visualization_point_cloud(source_point_cloud=source_point_cloud,
-                      target_point_cloud_with_background=target_point_cloud,
-                      save=False)
+                                  target_point_cloud_with_background=target_point_cloud,
+                                  save=False)
 
     return source_point_cloud
 

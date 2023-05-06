@@ -1,10 +1,3 @@
-"""
-@Author: bixuelei
-@Contact: bxueleibi@gmial.com
-@File: train_binary_segmentation.py
-@Time: 2022/1/10 7:49 PM
-"""
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -43,15 +36,6 @@ def cal_loss(pred, gold, weights, smoothing=False, using_weight=False):
     return loss
 
 
-def mean_loss(input, target, mask):
-    mse_loss = nn.MSELoss(reduction='none')
-    loss = mse_loss(input, target)
-    loss = torch.sum(loss, dim=1)
-    mask = torch.flatten(mask)
-    loss = torch.sum(loss * mask) / torch.sum(mask)
-    return loss
-
-
 def normalize_data(batch_data):
     """ Normalize the batch data, use coordinates of the block centered at origin,
         Input:
@@ -68,67 +52,6 @@ def normalize_data(batch_data):
         pc = pc / m
         batch_data[b] = pc
     return batch_data
-
-
-def rotate_180_z(data):
-    """ 
-        Input:
-          BXNx6 array, original batch of point clouds and point normals
-        Return:
-          BXNx3 array, rotated batch of point clouds
-    """
-    data = data.float()
-    rotated_data = torch.zeros(data.shape, dtype=torch.float32)
-    rotated_data = rotated_data.cuda()
-    angles = [0, 0, np.pi]
-    angles = np.array(angles)
-    for k in range(data.shape[0]):
-        Rx = np.array([[1, 0, 0],
-                       [0, np.cos(angles[0]), -np.sin(angles[0])],
-                       [0, np.sin(angles[0]), np.cos(angles[0])]])
-        Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
-                       [0, 1, 0],
-                       [-np.sin(angles[1]), 0, np.cos(angles[1])]])
-        Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
-                       [np.sin(angles[2]), np.cos(angles[2]), 0],
-                       [0, 0, 1]])
-        R = np.dot(Rz, np.dot(Ry, Rx))
-        R = torch.from_numpy(R).float().cuda()
-        rotated_data[k, :, :] = torch.matmul(data[k, :, :], R)
-    return rotated_data
-
-
-def rotate(data, angle_clip=np.pi * 0.25):
-    """ Randomly perturb the point clouds by small rotations
-        Input:
-          BXNx6 array, original batch of point clouds and point normals
-        Return:
-          BXNx3 array, rotated batch of point clouds
-    """
-    data = data.float()
-    rotated_data = torch.zeros(data.shape, dtype=torch.float32)
-    rotated_data = rotated_data.cuda()
-    angles = []
-    batch_size = data.shape[0]
-    rotation_matrix = torch.zeros((batch_size, 3, 3), dtype=torch.float32).cuda()
-    for i in range(3):
-        angles.append(random.uniform(-angle_clip, angle_clip))
-    angles = np.array(angles)
-    for k in range(data.shape[0]):
-        Rx = np.array([[1, 0, 0],
-                       [0, np.cos(angles[0]), -np.sin(angles[0])],
-                       [0, np.sin(angles[0]), np.cos(angles[0])]])
-        Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
-                       [0, 1, 0],
-                       [-np.sin(angles[1]), 0, np.cos(angles[1])]])
-        Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
-                       [np.sin(angles[2]), np.cos(angles[2]), 0],
-                       [0, 0, 1]])
-        R = np.dot(Rz, np.dot(Ry, Rx))
-        R = torch.from_numpy(R).float().cuda()
-        rotated_data[k, :, :] = torch.matmul(data[k, :, :], R)
-        rotation_matrix[k, :, :] = R
-    return rotated_data, rotation_matrix
 
 
 def rotate_per_batch(data, goals, angle_clip=np.pi * 1):
@@ -205,32 +128,6 @@ def feature_transform_reguliarzer(trans, GT=None):
     else:
         loss = torch.mean(torch.norm(trans - GT, dim=(1, 2)))
     return loss
-
-
-def get_parameter_number(net):
-    total = 0
-    times = 0
-    for p in net.parameters():
-        inter = p.numel()
-        times = times + 1
-        total = total + inter
-    total_num = sum(p.numel() for p in net.parameters())
-    trainable_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    return {'Total': total_num, 'Trainable': trainable_num}
-
-
-def timeit(tag, t):
-    print("{}: {}s".format(tag, time() - t))
-    return time()
-
-
-def pc_normalize(pc):
-    l = pc.shape[0]
-    centroid = np.mean(pc, axis=0)
-    pc = pc - centroid
-    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
-    pc = pc / m
-    return pc
 
 
 def square_distance(src, dst):
@@ -332,30 +229,6 @@ def knn(x, k):
     return idx
 
 
-def farthest_point_sample(xyz, npoint):
-    """
-    Input:
-        xyz: pointcloud data, [B, N, 3]
-        npoint: number of samples
-    Return:
-        centroids: sampled pointcloud index, [B, npoint]
-    """
-    device = xyz.device
-    B, N, C = xyz.shape
-    centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
-    distance = torch.ones(B, N).to(device) * 1e10
-    farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
-    batch_indices = torch.arange(B, dtype=torch.long).to(device)
-    for i in range(npoint):
-        centroids[:, i] = farthest
-        centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
-        dist = torch.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest = torch.max(distance, -1)[1]
-    return centroids
-
-
 def init_weights(m):
     if type(m) == nn.Conv2d:
         torch.nn.init.kaiming_normal_(m.weight)
@@ -403,44 +276,8 @@ def create_conv3d_serials(channel_list, num_points, dim):
     return conv3d_serials
 
 
-def create_rFF(channel_list, input_dim):
-    rFF = nn.ModuleList([nn.Conv2d(in_channels=channel_list[i],
-                                   out_channels=channel_list[i + 1],
-                                   kernel_size=(1, 1)) for i in range(len(channel_list) - 1)])
-    rFF.insert(0, nn.Conv2d(in_channels=1,
-                            out_channels=channel_list[0],
-                            kernel_size=(input_dim, 1)))
-
-    return rFF
-
-
-def create_rFF3d(channel_list, num_points, dim):
-    rFF = nn.ModuleList([nn.Conv3d(in_channels=channel_list[i],
-                                   out_channels=channel_list[i + 1],
-                                   kernel_size=(1, 1, 1)) for i in range(len(channel_list) - 1)])
-    rFF.insert(0, nn.Conv3d(in_channels=1,
-                            out_channels=channel_list[0],
-                            kernel_size=(1, num_points, dim)))
-
-    return rFF
-
-
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
-
-
-class PrintLog():
-    def __init__(self, path):
-        self.f = open(path, 'a')  # 'a' is used to add some contents at end  of current file
-
-    def cprint(self, text):
-        print(text)
-        text = str(text)
-        self.f.write(text + '\n')
-        self.f.flush()  # to ensure the line will be wroten and the content in buffer will get deleted
-
-    def close(self):
-        self.f.close()
 
 
 class Attention(nn.Module):
@@ -453,53 +290,6 @@ class Attention(nn.Module):
         output = attn @ v  # [bs,4,4096,16]
 
         return output, attn
-
-
-class MultiHeadAttention(nn.Module):
-    ''' Multi-Head Attention module '''
-
-    def __init__(self, n_head, d_model_q, d_model_kv, d_k, d_v):
-        super().__init__()
-
-        self.n_head = n_head
-        self.d_k = d_k
-        self.d_v = d_v
-
-        self.w_qs = nn.Linear(d_model_q, n_head * d_k, bias=False)
-        self.w_ks = nn.Linear(d_model_kv, n_head * d_k, bias=False)
-        self.w_vs = nn.Linear(d_model_kv, n_head * d_v, bias=False)
-        self.fc = nn.Linear(n_head * d_v, d_model_q, bias=False)
-
-        self.attention = Attention()
-
-        self.layer_norm1 = nn.LayerNorm(n_head * d_v, eps=1e-6)
-        self.layer_norm2 = nn.LayerNorm(d_model_q, eps=1e-6)
-        self.bn = nn.BatchNorm1d(64)
-
-    def forward(self, q, k, v):  # [bs,n_points,features]
-
-        d_k, d_v, n_head = self.d_k, self.d_v, self.n_head  # d_k dimention of every key     d_v: dimention of every value
-        b_size, n_q, n_k = q.size(0), q.size(1), k.size(
-            1)  # n_q  target features dimention     n_k:source features dimention
-
-        residual = q
-
-        q = self.w_qs(q).view(-1, n_q, n_head, d_k)  # [bs,4096,4,16]
-        k = self.w_ks(k).view(-1, n_k, n_head, d_k)  # [bs,4096,4,16]
-        v = self.w_vs(v).view(-1, n_k, n_head, d_v)  # [bs,4096,4,16]
-
-        q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1,
-                                                                    2)  # [bs,4,4096,16] [bs,4,4096,16]  [bs,4,4096,16]
-
-        # get b x n x k x dv
-        q, _ = self.attention(q, k, v)  # [bs,4,4096,16]
-
-        # b x k x ndv
-        q = q.transpose(1, 2).contiguous().view(b_size, n_q, -1)  # [bs,4096,64]
-        s = self.layer_norm1(q)  # [bs,4096,64]
-        res = self.layer_norm2(residual + self.fc(s))  # [bs,4096,features]
-
-        return res
 
 
 class SA_Layer_Multi_Head(nn.Module):
@@ -555,15 +345,6 @@ class SA_Layers(nn.Module):
         for i in range(self.num_layers):
             x = self.layers[i](x)
         return x
-
-
-class Mish(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        # inlining this saves 1 second per epoch (V100 GPU) vs having a temp x and then returning x(!)
-        return x * (torch.tanh(F.softplus(x)))
 
 
 class PTransformerDecoderLayer(nn.Module):

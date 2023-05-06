@@ -12,7 +12,7 @@ from tqdm import tqdm
 from data_preprocess.data_loader import MotorDataset
 from utilities.config import get_parser
 from model.pct import PCT_semseg
-import util
+from utilities import util
 
 
 class BinarySegmentation:
