@@ -28,7 +28,16 @@ class BinarySegmentation:
         # load arguments
         # ******************* #
         self.args = get_parser()
+        self.device = torch.device("cuda")
 
+        # ******************* #
+        # load ML model
+        # ******************* #
+        self.model = PCT_semseg(self.args).to(self.device)
+        self.model = nn.DataParallel(self.model)
+        print("use", torch.cuda.device_count(), "GPUs for training")
+
+    def init_training(self):
         # ******************* #
         # make directions
         # ******************* #
@@ -83,21 +92,13 @@ class BinarySegmentation:
         self.num_valid_batch = len(self.validation_loader)
 
         # ******************* #
-        # load ML model
-        # ******************* #
-        self.device = torch.device("cuda")
-        model = PCT_semseg(self.args).to(self.device)
-        model = nn.DataParallel(model)
-        print("use", torch.cuda.device_count(), "GPUs for training")
-
-        # ******************* #
         # opt
         # ******************* #
         if self.args.use_sgd:
-            self.opt = torch.optim.SGD([{'params': model.parameters(), 'initial_lr': self.args.lr}], lr=self.args.lr,
+            self.opt = torch.optim.SGD([{'params': self.model.parameters(), 'initial_lr': self.args.lr}], lr=self.args.lr,
                                        momentum=self.args.momentum, weight_decay=1e-4)
         else:
-            self.opt = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
+            self.opt = torch.optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
         if self.args.scheduler == 'cos':
             self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, self.args.epochs, eta_min=1e-5)
@@ -116,7 +117,7 @@ class BinarySegmentation:
                 exit(-1)
 
             self.start_epoch = checkpoint['epoch']
-            model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.load_state_dict(checkpoint['model_state_dict'])
 
         else:
             self.start_epoch = 0
@@ -140,7 +141,6 @@ class BinarySegmentation:
         self.weights = weights
 
         self.best_iou = 0
-        self.model = model
 
     def train_epoch(self, epoch):
 
@@ -217,7 +217,7 @@ class BinarySegmentation:
             epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
         print('Train mean ioU %.6f' % mIoU__)
 
-    def valid_and_save(self, epoch):
+    def valid_and_save_epoch(self, epoch):
         with torch.no_grad():
             total_correct = 0
             total_seen = 0
@@ -287,12 +287,14 @@ class BinarySegmentation:
 
     def train(self):
 
+        self.init_training()
+
         end_epoch = 2 if self.is_local else self.args.epochs
 
         print('train %d epochs' % (end_epoch - self.start_epoch))
         for epoch in range(self.start_epoch, end_epoch):
             self.train_epoch(epoch)
-            self.valid_and_save(epoch)
+            self.valid_and_save_epoch(epoch)
 
 
 if __name__ == '__main__':
