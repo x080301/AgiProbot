@@ -18,7 +18,8 @@ from utilities.config import get_parser
 
 
 class BinarySegmentation:
-    files_to_save = ['train.py', 'config/binary_segmentation.yaml', 'model/pct.py', 'data_preprocess/data_loader.py']
+    # 'config/binary_segmentation.yaml' should be at the end. It can be changed latter.
+    files_to_save = ['train.py', 'model/pct.py', 'data_preprocess/data_loader.py', 'config/binary_segmentation.yaml']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
 
@@ -31,7 +32,8 @@ class BinarySegmentation:
         # ******************* #
         # load arguments
         # ******************* #
-        self.args = get_parser(config_dir=config_dir)
+        self.config_dir = config_dir
+        self.args = get_parser(config_dir=self.config_dir)
         self.device = torch.device("cuda")
         if self.is_local:
             self.args.npoints = 1024
@@ -63,6 +65,7 @@ class BinarySegmentation:
         # ******************* #
         # save mode and parameters
         # ******************* #
+        self.files_to_save[-1] = self.config_dir
         for file_name in self.files_to_save:
             shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
         self.writer = SummaryWriter(direction + '/tensorboard_log')
