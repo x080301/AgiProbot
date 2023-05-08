@@ -3,13 +3,13 @@ import numpy as np
 
 from tqdm import tqdm  # used to display the circulation position, to see where the code is running at
 from torch.utils.data import Dataset
-import open3d as o3d
 import random
 
 
 class MotorDatasetTest(Dataset):
     def __init__(self, point_cloud_dir='directory to training data', num_class=2, num_points=4096):
         super().__init__()
+        import open3d as o3d
 
         self.num_points = num_points
         self.num_class = num_class
