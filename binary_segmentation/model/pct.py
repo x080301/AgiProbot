@@ -329,8 +329,8 @@ class PCT_semseg(nn.Module):
         x = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 1024, num_points) -> (batch_size, 1024)
         x = x.unsqueeze(-1).repeat(1, 1, num_points)  # (batch_size, 1024)->(batch_size, 1024, num_points)
         x = torch.cat((x, x__),
-                      dim=1)  # (batch_size,2048,num_points)+(batch_size, 1024,num_points) ->(batch_size, 3036,num_points)
-        x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 3036,num_points)-> (batch_size, 512,num_points)
+                      dim=1)  # (batch_size,1024,num_points)+(batch_size, 512,num_points) ->(batch_size, 1536,num_points)
+        x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 1536,num_points)-> (batch_size, 512,num_points)
         x = self.dp5(x)
         x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
         segmentation_labels = self.conv7(x)  # # (batch_size, 256,num_points) ->(batch_size,6,num_points)

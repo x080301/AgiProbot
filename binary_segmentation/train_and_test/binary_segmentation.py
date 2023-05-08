@@ -9,6 +9,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
 from model.pct import PCT_semseg
@@ -17,7 +18,9 @@ from utilities.config import get_parser
 
 
 class BinarySegmentation:
-    def __init__(self):
+    files_to_save = ['train.py', 'config/binary_segmentation.yaml', 'model/pct.py', 'data_preprocess/data_loader.py']
+
+    def __init__(self, config_dir='config/binary_segmentation.yaml'):
 
         # ******************* #
         # local or server?
@@ -28,8 +31,10 @@ class BinarySegmentation:
         # ******************* #
         # load arguments
         # ******************* #
-        self.args = get_parser()
+        self.args = get_parser(config_dir=config_dir)
         self.device = torch.device("cuda")
+        if self.is_local:
+            self.args.npoints = 1024
 
         # ******************* #
         # load ML model
@@ -43,23 +48,24 @@ class BinarySegmentation:
         # make directions
         # ******************* #
         if self.is_local:
-            direction = 'outputs/' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M') + '/' + self.args.train_stamp
+            direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
         else:
             direction = '/data/users/fu/' + self.args.titel + '_outputs/' + datetime.datetime.now().strftime(
-                '%Y_%m_%d_%H_%M') + '/' + self.args.train_stamp
+                '%Y_%m_%d_%H_%M')
         if not os.path.exists(direction + '/checkpoints'):
             os.makedirs(direction + '/checkpoints')
         if not os.path.exists(direction + '/train_log'):
             os.makedirs(direction + '/train_log')
+        if not os.path.exists(direction + '/tensorboard_log'):
+            os.makedirs(direction + '/tensorboard_log')
         self.checkpoints_direction = direction + '/checkpoints/'
 
         # ******************* #
         # save mode and parameters
         # ******************* #
-        files_to_save = ['train.py', 'config/binary_segmentation.yaml', 'model/pct.py',
-                         'data_preprocess/data_loader.py']
-        for file_name in files_to_save:
+        for file_name in self.files_to_save:
             shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+        self.writer = SummaryWriter(direction + '/tensorboard_log')
 
         # ******************* #
         # load data set
@@ -73,7 +79,7 @@ class BinarySegmentation:
         train_dataset = MotorDataset(mode='train',
                                      data_dir=data_set_direction,
                                      num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                     test_area='Validation', sample_rate=1.0)
+                                     test_area='Validation', sample_rate=2.0)
         print("start loading test data ...")
         validation_set = MotorDataset(mode='valid',
                                       data_dir=data_set_direction,
@@ -137,7 +143,7 @@ class BinarySegmentation:
         # print(scale)
         weights *= scale
         # print(weights)
-        if not self.args.use_class_weight:
+        if self.args.use_class_weight == 0:
             for i in range(self.args.num_segmentation_type):
                 weights[i] = 1
         self.weights = weights
@@ -203,8 +209,15 @@ class BinarySegmentation:
                 total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
                 total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
 
-        mIoU__ = np.mean(
-            np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6))
+        IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
+        mIoU = np.mean(IoUs)
+
+        self.writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
+        self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
+        self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
+        self.writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
+        self.writer.add_scalar('IoU_background/train_IoU_background', IoUs[0], epoch)
+        self.writer.add_scalar('IoU_motor/train_IoU_motor', IoUs[1], epoch)
 
         if self.args.scheduler == 'cos':
             self.scheduler.step()
@@ -217,7 +230,7 @@ class BinarySegmentation:
 
         print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
             epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
-        print('Train mean ioU %.6f' % mIoU__)
+        print('Train mean ioU %.6f' % mIoU)
 
     def valid_and_save_epoch(self, epoch):
         with torch.no_grad():
@@ -263,7 +276,16 @@ class BinarySegmentation:
                     total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
                     total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
 
-            mIoU = np.mean(np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6))
+            IoUs = np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6)
+            mIoU = np.mean(IoUs)
+
+            self.writer.add_scalar('loss/eval_loss', loss_sum / self.num_valid_batch, epoch)
+            self.writer.add_scalar('point_acc/eval_point_acc', total_correct / float(total_seen), epoch)
+            self.writer.add_scalar('point_acc/eval_class_acc', np.mean(
+                np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6)), epoch)
+            self.writer.add_scalar('mIoU/eval_mIoU', mIoU, epoch)
+            self.writer.add_scalar('IoU_background/eval_IoU_background', IoUs[0], epoch)
+            self.writer.add_scalar('IoU_motor/eval_IoU_motor', IoUs[1], epoch)
 
             outstr = 'Epoch %d,  eval loss %.6f, eval point acc %.6f, eval avg class acc %.6f' % (
                 epoch, (loss_sum / self.num_valid_batch),
@@ -292,10 +314,80 @@ class BinarySegmentation:
         checkpoint = torch.load(check_points_file_dir)
         self.model.load_state_dict(checkpoint['model_state_dict'])
 
-    def test(self, point_cloud_dir, save_pcd_dir=None):
-        for file_name in os.listdir(point_cloud_dir):
+    def test(self, point_cloud_dir, save_dir=None, save_pcd_dir=None):
+        import pandas
+
+        file_dir = []
+        mIoU = []
+        test_loss = []
+        test_point_acc = []
+        test_avg_class_acc = []
+        for file_name in tqdm(os.listdir(point_cloud_dir)):
             test_data = MotorDatasetTest(point_cloud_dir=point_cloud_dir + '/' + file_name, num_class=2,
                                          num_points=4096)
+            test_loader = DataLoader(test_data, num_workers=0,
+                                     batch_size=self.args.test_batch_size,
+                                     shuffle=True,
+                                     drop_last=False)
+
+            with torch.no_grad():
+                total_correct = 0
+                total_seen = 0
+
+                loss_sum = 0
+                labelweights = np.zeros(self.args.num_segmentation_type)
+                total_seen_class = [0 for _ in range(self.args.num_segmentation_type)]
+                total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
+                total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
+
+                self.model = self.model.eval()
+                self.args.training = False
+
+                for i, (points, seg) in enumerate(test_loader):
+                    points, seg = points.to(self.device), seg.to(self.device)
+                    points = util.normalize_data(points)
+                    points, _ = util.rotate_per_batch(points, None)
+                    points = points.permute(0, 2, 1)
+                    batch_size = points.size()[0]
+
+                    seg_pred, trans = self.model(points.float())
+
+                    seg_pred = seg_pred.permute(0, 2, 1).contiguous()
+                    batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
+                    loss = self.criterion(seg_pred.view(-1, self.args.num_segmentation_type), seg.view(-1, 1).squeeze(),
+                                          self.weights, using_weight=self.args.use_class_weight)  # a scalar
+                    loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+                    seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
+                    pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                    correct = np.sum(pred_choice == batch_label)
+                    total_correct += correct
+                    total_seen += (batch_size * self.args.npoints)
+                    loss_sum += loss
+                    tmp, _ = np.histogram(batch_label, range(self.args.num_segmentation_type + 1))
+                    labelweights += tmp
+
+                    for l in range(self.args.num_segmentation_type):
+                        total_seen_class[l] += np.sum((batch_label == l))
+                        total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
+                        total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
+                file_dir.append(point_cloud_dir + '/' + file_name)
+                mIoU.append(np.mean(
+                    np.array(total_correct_class) / (np.array(total_iou_deno_class, dtype=np.float64) + 1e-6)))
+                test_loss.append(loss_sum / self.num_valid_batch)
+                test_point_acc.append(total_correct / float(total_seen))
+                test_avg_class_acc.append(np.mean(
+                    np.array(total_correct_class) / (np.array(total_seen_class, dtype=np.float64) + 1e-6)))
+
+        if save_dir is not None:
+            destination_csv_dir = save_dir + '/' + 'results.csv'
+            if os.path.isfile(destination_csv_dir):
+                print('csv exists. overwrite!')
+
+            data_frame = pandas.DataFrame(
+                {'file': file_dir, 'mIoU': mIoU, 'test_loss': test_loss, 'test_point_acc': test_point_acc,
+                 'test_avg_class_acc': test_avg_class_acc})
+            data_frame.to_csv(destination_csv_dir, index=False)
 
     def train(self):
 

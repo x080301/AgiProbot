@@ -5,11 +5,16 @@ import os
 
 def resave_binary_labelled_pcd(read_directory, save_directory):
     for i, file_name in enumerate(os.listdir(read_directory)):
+
+
         point_cloud = o3d.io.read_point_cloud(os.path.join(read_directory, file_name), remove_nan_points=True,
                                               remove_infinite_points=True, print_progress=True)
 
         colors = np.asarray(point_cloud.colors)
         points = np.asarray(point_cloud.points)
+
+
+
         point_cloud = np.concatenate([points, colors], axis=-1)
 
         point_cloud[:, 3] *= 225

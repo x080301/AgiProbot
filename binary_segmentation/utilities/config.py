@@ -161,15 +161,9 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
     )
 
 
-def _assert_with_logging(cond, msg):
-    if not cond:
-        logger.debug(msg)
-    assert cond, msg
-
-
-def get_parser():
+def get_parser(config_dir='config/binary_segmentation.yaml'):
     parser = argparse.ArgumentParser(description='PyTorch Binary Segmentation')
-    parser.add_argument('--config', type=str, default='config/binary_segmentation.yaml', help='config file')
+    parser.add_argument('--config', type=str, default=config_dir, help='config file')
     args = parser.parse_args()
     cfg = load_cfg_from_cfg_file(args.config)
     return cfg
