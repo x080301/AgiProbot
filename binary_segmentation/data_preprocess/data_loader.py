@@ -1,15 +1,80 @@
-"""
-@Author: bixuelei
-@Contact: bxueleibi@gmial.com
-@File: data_loader.py
-@Time: 2022/1/16 3:49 PM
-"""
-
 import os
 import numpy as np
 
 from tqdm import tqdm  # used to display the circulation position, to see where the code is running at
 from torch.utils.data import Dataset
+import open3d as o3d
+import random
+
+
+class MotorDatasetTest(Dataset):
+    def __init__(self, point_cloud_dir='directory to training data', num_class=2, num_points=4096):
+        super().__init__()
+
+        self.num_points = num_points
+        self.num_class = num_class
+
+        # ******************* #
+        # load the file
+        # ******************* #
+        if point_cloud_dir.split('.')[-1] == 'npy':
+            motor_data = np.load(point_cloud_dir)
+            self.points = motor_data[:, 0:6]
+            self.labels = motor_data[:, 6]
+        elif point_cloud_dir.split('.')[-1] == 'pcd':
+            point_cloud = o3d.io.read_point_cloud(point_cloud_dir,
+                                                  remove_nan_points=True, remove_infinite_points=True,
+                                                  print_progress=True)
+            self.points = np.asarray(point_cloud.points)
+            self.labels = None
+        else:
+            print('unkonwn filename extension')
+            exit(-1)
+
+        # ******************* #
+        # prepare index list to chose
+        # ******************* #
+        # if points.shape[0] % num_points != 0, the last sublist should be padded. And this padding should be marked.
+        duplicate_data_mark = [0] * self.points.shape[0]
+        self.duplicate_data_mark_to_choose = []
+
+        points_index = range(self.points.shape[0])
+        random.shuffle(points_index)
+        start = 0
+        self.points_index_to_choose = []
+        while True:
+            end = start + self.num_points
+            if end >= self.points.shape[0]:
+                self.points_index_to_choose.append(points_index[start:])
+                self.duplicate_data_mark_to_choose.append(duplicate_data_mark[start:])
+                break
+            else:
+                self.points_index_to_choose.append(points_index[start:end])
+                self.duplicate_data_mark_to_choose.append(duplicate_data_mark[start:end])
+                start = end
+
+        # ******************* #
+        # handle sublist, whose size < num_points
+        # ******************* #
+        size_last_sublist = len(self.points_index_to_choose[-1])
+        if size_last_sublist != self.num_points:
+            self.points_index_to_choose[-1].extend(points_index[0:(self.num_points - size_last_sublist)])
+            self.duplicate_data_mark_to_choose[-1].extend(([1] * self.num_points - size_last_sublist))
+
+    def __getitem__(self, index):
+        points = self.points[self.points_index_to_choose[index], :]
+
+        if self.labels is None:
+            labels = None
+        else:
+            labels = self.labels[self.points_index_to_choose[index]]
+
+        duplicate_data_mark = self.duplicate_data_mark_to_choose[index]
+
+        return points, labels, duplicate_data_mark
+
+    def __len__(self):
+        return len(self.points_index_to_choose)
 
 
 class MotorDataset(Dataset):
@@ -55,7 +120,7 @@ class MotorDataset(Dataset):
         print(persentage)
         ####reversed order
         label_weights = label_num_eachtype / np.sum(label_num_eachtype)
-        label_weights = np.power(np.max(label_weights) / label_weights, 1)#1 / 3)
+        label_weights = np.power(np.max(label_weights) / label_weights, 1)  # 1 / 3)
         label_weights = label_weights / np.sum(label_weights)
         ############################################################################################
 
