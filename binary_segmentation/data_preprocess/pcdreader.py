@@ -1,78 +1,36 @@
 import numpy as np
 import open3d
 
-# labels = ['Void', 'Background', 'Gear', 'Connector', 'Screws', 'Solenoid', 'Electrical Connector', 'Main Housing',
-#           'Noise', 'Inner Gear']
-
-# https://www.sioe.cn/yingyong/yanse-rgb-16/
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
-           'Gear': [102, 140, 255],  # [102, 179, 255],  # [102,140,255],#[102, 204, 255],
-           # [153, 221, 255],  # [12, 132, 198],#[204, 255, 255],  # [59, 98, 142],#[165, 205, 255],
-           'Connector': [102, 255, 102],  # [0, 255, 0],
+           'Gear': [102, 140, 255],
+           'Connector': [102, 255, 102],
            'Screws': [247, 77, 77],
            'Solenoid': [255, 165, 0],
            'Electrical Connector': [255, 255, 0],
            'Main Housing': [0, 100, 0],
            'Noise': [223, 200, 200],
            'Inner Gear': [107, 218, 250]
-           # [255, 20, 147] 玫红
-           # [175, 238, 238]浅篮  # [255, 105, 180]  # [255, 182, 193]  # [107, 218, 250]  # [219, 112 ,147]
-           # [221, 160, 221]  # [255, 182, 193]  # [199, 21, 133]
            }
-#
-
-''' {'Void': [207, 207, 207],
-        'Background': [0, 0, 128],
-        'Gear': [120, 152, 225],
-        'Connector': [118, 218, 145],
-        'Screws': [247, 77, 77],
-        'Solenoid': [239, 166, 102],
-        'Electrical Connector': [153, 135, 206],
-        'Main Housing': [99, 178, 238],
-        'Noise': [223, 200, 200]}'''
-# full_scaned3
-'''
-{'Void': [207, 207, 207],
-           'Background': [0, 0, 128],
-           'Gear': [59, 98, 142],
-           'Connector': [125, 152, 71],
-           'Screws': [247, 77, 77],
-           'Solenoid': [201, 121, 55],
-           'Electrical Connector': [255, 255, 0],
-           'Main Housing': [56, 132, 152],
-           'Noise': [223, 200, 200]}
-'''
-# full_scaned2
-'''
-{'Void': [207, 207, 207],
-           'Background': [0, 0, 128],
-           'Gear': [12, 132, 198],
-           'Connector': [0, 255, 0],
-           'Screws': [247, 77, 77],
-           'Solenoid': [255, 165, 16],
-           'Electrical Connector': [255, 255, 0],
-           'Main Housing': [65, 183, 172],
-           'Noise': [223, 200, 200]}
-'''
-# full_scaned
-'''{'Void': [207, 207, 207],
-'Background': [0, 0, 128],
-'Gear': [165, 205, 255],
-'Connector': [0, 255, 0],
-'Screws': [255, 0, 0],
-'Solenoid': [255, 165, 0],
-'Electrical Connector': [255, 255, 0],
-'Main Housing': [0, 100, 0],
-'Noise': [223, 200, 200]}'''
 
 
 class PcdReader:
+    points = None
+    colors = None
 
-    def read_pcd_ASCII(self, pcd_file):
+    def read_pcd_ASCII(self, pcd_file_dir):
+        '''
+        read the output pcd file of the segmentation tool
+
+        :param pcd_file_dir: direction of the .pcd file
+        :return:
+            points: N×3 numpy array, x,y,z position of the points
+            colors: N×3 numpy array, normalized r,g,b of the points. The colour is chosen according to rgb_dic.
+        '''
+
         points = []
         colors = []
-        with open(pcd_file, 'r') as f:
+        with open(pcd_file_dir, 'r') as f:
 
             head_flag = True
             while True:
@@ -105,17 +63,29 @@ class PcdReader:
 
         return self.points, self.colors
 
-    def save_pcd(self, save_dir):
+    def save_and_visual_pcd(self, save_dir=None, visualization=False):
+        '''
+        save the file as *.pcd for further usage and visualization
+
+        :param save_dir: direction to save this file
+        :return:
+        '''
+
+        assert self.points is not None, 'read pcd file first!'
+
         point_cloud = open3d.geometry.PointCloud()
         point_cloud.points = open3d.utility.Vector3dVector(self.points)
         point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
 
-        open3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
-        open3d.visualization.draw_geometries([point_cloud])
+        if save_dir is not None:
+            open3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
+
+        if visualization:
+            open3d.visualization.draw_geometries([point_cloud])
 
 
 if __name__ == "__main__":
     pcd_reader = PcdReader()
-
-    pcd_reader.read_pcd_ASCII('C:/Users/Lenovo/Desktop/large_motor_inside.pcd')
-    pcd_reader.save_pcd('C:/Users/Lenovo/Desktop/large_motor_inside_labeled.pcd')
+    points, colors = pcd_reader.read_pcd_ASCII('C:/Users/Lenovo/Desktop/large_motor_inside.pcd')
+    pcd_reader.save_and_visual_pcd(save_dir='C:/Users/Lenovo/Desktop/large_motor_inside_labeled.pcd',
+                                   visualization=True)

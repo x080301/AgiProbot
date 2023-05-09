@@ -24,19 +24,20 @@ class BinarySegmentation:
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
 
         # ******************* #
-        # local or server?
-        # ******************* #
-        system_type = platform.system().lower()  # 'windows' or 'linux'
-        self.is_local = True if system_type == 'windows' else False
-
-        # ******************* #
         # load arguments
         # ******************* #
         self.config_dir = config_dir
         self.args = get_parser(config_dir=self.config_dir)
         self.device = torch.device("cuda")
+
+        # ******************* #
+        # local or server?
+        # ******************* #
+        system_type = platform.system().lower()  # 'windows' or 'linux'
+        self.is_local = True if system_type == 'windows' else False
         if self.is_local:
             self.args.npoints = 1024
+            self.args.sample_rate = 1.
 
         # ******************* #
         # load ML model
@@ -82,7 +83,7 @@ class BinarySegmentation:
         train_dataset = MotorDataset(mode='train',
                                      data_dir=data_set_direction,
                                      num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                     test_area='Validation', sample_rate=2.0)
+                                     test_area='Validation', sample_rate=self.args.sample_rate)
         print("start loading test data ...")
         validation_set = MotorDataset(mode='valid',
                                       data_dir=data_set_direction,
