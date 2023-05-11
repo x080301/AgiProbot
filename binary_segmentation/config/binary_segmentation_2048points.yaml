@@ -3,7 +3,7 @@ DATA:
   which_dataset: 'Motor_Dataset4'
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 2
-  npoints: 4096
+  npoints: 2048
 
 TRAIN:
   titel: 'binary_segmentation_syn'
