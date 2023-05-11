@@ -4,6 +4,7 @@ DATA:
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 2
   npoints: 1024
+  sample_rate: 2
 
 TRAIN:
   titel: 'binary_segmentation_syn'
