@@ -1,5 +1,0 @@
-from train_and_test.binary_segmentation import BinarySegmentation
-
-
-binarysegmentation = BinarySegmentation(config_dir='config/binary_segmentation_4096points_400epoch.yaml')
-binarysegmentation.train()

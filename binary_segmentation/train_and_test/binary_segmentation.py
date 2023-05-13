@@ -113,7 +113,8 @@ class BinarySegmentation:
             self.opt = torch.optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
         if self.args.scheduler == 'cos':
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, self.args.epochs, eta_min=1e-5)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, self.args.epochs,
+                                                                        eta_min=self.args.end_lr)
         elif self.args.scheduler == 'step':
             self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, 20, 0.1, self.args.epochs)
 
@@ -121,8 +122,8 @@ class BinarySegmentation:
         # if finetune is true, the the best.pth will be cosidered first
         # ******************* #
         if self.args.finetune:
-            if os.path.exists(direction + '/checkpoints/best.pth'):
-                checkpoint = torch.load(direction + '/checkpoints/best.pth')
+            if os.path.exists('best_m.pth'):
+                checkpoint = torch.load('best_m.pth')
                 print('Use pretrain finetune model to finetune')
             else:
                 print('no exiting pretrained model to finetune')
