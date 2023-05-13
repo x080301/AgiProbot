@@ -134,7 +134,11 @@ class BinarySegmentation:
             self.end_epoch = self.start_epoch
             self.end_epoch += 2 if self.is_local else self.args.epochs
 
-            print('train begin at %dth epoch' % self.start_epoch)
+            if 'mIoU' in checkpoint:
+                print('train begin at %dth epoch with mIoU %.6f' % (self.start_epoch, checkpoint['mIoU']))
+            else:
+                print('train begin with %dth epoch' % self.start_epoch)
+
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
 
