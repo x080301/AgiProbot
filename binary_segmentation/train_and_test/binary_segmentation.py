@@ -130,6 +130,7 @@ class BinarySegmentation:
                 exit(-1)
 
             self.start_epoch = checkpoint['epoch']
+            print('train begin at %dth epoch' % self.start_epoch)
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
         else:

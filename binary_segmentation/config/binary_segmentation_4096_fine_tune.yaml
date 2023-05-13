@@ -11,7 +11,7 @@ TRAIN:
   model: 'pct'
   train_batch_size: 8
   training: 1
-  finetune: 0
+  finetune: 1
   test: 0
   kernel_loss_weight: 0.05
   stn_loss_weight: 0.01
