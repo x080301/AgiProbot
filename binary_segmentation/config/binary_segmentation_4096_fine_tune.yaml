@@ -37,7 +37,6 @@ TRAIN:
   after_stn_as_kernel_neighbor_query: 1
 
 TEST:
-  test_symbol: 'Train'
   test_batch_size: 4
 
 

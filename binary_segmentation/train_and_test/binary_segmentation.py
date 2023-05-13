@@ -130,11 +130,15 @@ class BinarySegmentation:
                 exit(-1)
 
             self.start_epoch = checkpoint['epoch']
+            self.end_epoch = self.args.epochs + self.start_epoch
+
             print('train begin at %dth epoch' % self.start_epoch)
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
+
         else:
             self.start_epoch = 0
+            self.end_epoch = self.args.epochs
 
         # ******************* #
         # loss function and weights
@@ -399,9 +403,9 @@ class BinarySegmentation:
 
         self.init_training()
 
-        end_epoch = 2 if self.is_local else self.args.epochs
+        self.end_epoch = 2 if self.is_local else self.args.epochs
 
-        print('train %d epochs' % (end_epoch - self.start_epoch))
-        for epoch in range(self.start_epoch, end_epoch):
+        print('train %d epochs' % (self.end_epoch - self.start_epoch))
+        for epoch in range(self.start_epoch, self.end_epoch):
             self.train_epoch(epoch)
             self.valid_and_save_epoch(epoch)
