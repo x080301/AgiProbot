@@ -19,8 +19,8 @@ TRAIN:
   use_class_weight: 1
   screw_weight: 1.0
   use_sgd: 0
-  lr: 0.0005
-  end_lr: 0.000005
+  lr: 0.0002
+  end_lr: 0.000002
   momentum: 0.9
   scheduler: 'cos'
   no_cuda: 0

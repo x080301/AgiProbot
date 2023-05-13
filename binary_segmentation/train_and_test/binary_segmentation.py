@@ -315,7 +315,9 @@ class BinarySegmentation:
 
                 state = {'epoch': epoch,
                          'model_state_dict': self.model.state_dict(),
-                         'optimizer_state_dict': self.opt.state_dict(), }
+                         'optimizer_state_dict': self.opt.state_dict(),
+                         'mIoU': mIoU
+                         }
                 print('Saving best model at %s' % savepath)
                 torch.save(state, savepath)
 
