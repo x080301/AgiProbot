@@ -141,10 +141,9 @@ class BinarySegmentation:
 
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
-
         else:
             self.start_epoch = 0
-            self.end_epoch = self.args.epochs
+            self.end_epoch = 2 if self.is_local else self.args.epochs
 
         # ******************* #
         # loss function and weights

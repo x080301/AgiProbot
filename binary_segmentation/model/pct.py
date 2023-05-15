@@ -229,6 +229,9 @@ class SA_Layer_Single_Head(nn.Module):
         self.after_norm = nn.BatchNorm1d(channels)
         self.act = nn.ReLU()
         self.softmax = nn.Softmax(dim=-1)
+        self.feed_forward_cov1 = nn.Conv1d(128, 512, 1)
+        self.relu = nn.ReLU()
+        self.feed_forward_cov2 = nn.Conv1d(512, 128, 1)
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
@@ -241,7 +244,15 @@ class SA_Layer_Single_Head(nn.Module):
         x_r = x_v @ attention  # b, c, n
         x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))
         x = x + x_r
+
+        # feed forward
+        x_bypass = x
+        x = self.relu(self.feed_forward_cov1(x))
+        x = self.feed_forward_cov2(x)
+        x += x_bypass
+
         x = x.permute(0, 2, 1)
+
         return x
 
 
@@ -321,7 +332,7 @@ class PCT_semseg(nn.Module):
         x1 = self.sa1(x)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)  50MB
         x2 = self.sa2(x1)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
         x3 = self.sa3(x2)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x4 = self.sa4(x3)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
+        x4 = self.sa4(x3)  # (batch_size, 64*2, num_points) -> (batch_size, 64*2, num_points)
         x = torch.cat((x1, x2, x3, x4), dim=-1)  # (batch_size, 64*2, num_points)*4->(batch_size, 512, num_points)
         x = x.permute(0, 2, 1)
         x__ = x
@@ -333,6 +344,6 @@ class PCT_semseg(nn.Module):
         x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 1536,num_points)-> (batch_size, 512,num_points)
         x = self.dp5(x)
         x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
-        segmentation_labels = self.conv7(x)  # # (batch_size, 256,num_points) ->(batch_size,6,num_points)
+        segmentation_labels = self.conv7(x)  # (batch_size, 256,num_points) ->(batch_size,6,num_points)
 
         return segmentation_labels, transform_matrix
