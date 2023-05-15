@@ -8,9 +8,7 @@
 """
 from utilities.util import *
 from torch.autograd import Variable
-
-
-# from display import *
+import torch.nn.init as init
 
 
 def knn(x, k):
@@ -67,6 +65,54 @@ def get_neighbors(x, k=20):
     return feature
 
 
+class TransformNet(nn.Module):
+    def __init__(self):
+        super(TransformNet, self).__init__()
+
+        self.bn1 = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(128)
+        self.bn3 = nn.BatchNorm1d(1024)
+
+        self.conv1 = nn.Sequential(nn.Conv2d(6, 64, kernel_size=1, bias=False),
+                                   self.bn1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv2 = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1, bias=False),
+                                   self.bn2,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv3 = nn.Sequential(nn.Conv1d(128, 1024, kernel_size=1, bias=False),
+                                   self.bn3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+
+        self.linear1 = nn.Linear(1024, 512, bias=False)
+        self.bn3 = nn.BatchNorm1d(512)
+        self.linear2 = nn.Linear(512, 256, bias=False)
+        self.bn4 = nn.BatchNorm1d(256)
+
+        self.transform = nn.Linear(256, 3 * 3)
+        init.constant_(self.transform.weight, 0)
+        init.eye_(self.transform.bias.view(3, 3))
+
+    def forward(self, x):
+        batch_size = x.size(0)
+
+        x = self.conv1(x)  # _                      (batch_size, 3*2, num_points, k) -> (batch_size, 64, num_points, k)
+        x = self.conv2(x)  # _                      (batch_size, 64, num_points, k) -> (batch_size, 128, num_points, k)
+        x = x.max(dim=-1, keepdim=False)[0]  # _    (batch_size, 128, num_points, k) -> (batch_size, 128, num_points)
+
+        x = self.conv3(x)  # _                      (batch_size, 128, num_points) -> (batch_size, 1024, num_points)
+        x = x.max(dim=-1, keepdim=False)[0]  # _    (batch_size, 1024, num_points) -> (batch_size, 1024)
+
+        x = F.leaky_relu(self.bn3(self.linear1(x)), negative_slope=0.2)
+        # _                                         (batch_size, 1024) -> (batch_size, 512)
+        x = F.leaky_relu(self.bn4(self.linear2(x)), negative_slope=0.2)
+        # _                                         (batch_size, 512) -> (batch_size, 256)
+
+        x = self.transform(x)  # _                  (batch_size, 256) -> (batch_size, 3*3)
+        x = x.view(batch_size, 3, 3)  # _           (batch_size, 3*3) -> (batch_size, 3, 3)
+
+        return x
+
+
 class STN3d(nn.Module):
     def __init__(self, channel):
         super(STN3d, self).__init__()
@@ -105,120 +151,6 @@ class STN3d(nn.Module):
         return x
 
 
-class ball_query_sample_with_goal(nn.Module):  # top1(ball) to approach
-    def __init__(self, args, num_feats, input_dims, actv_fn=F.relu, top_k=16):
-        """This function returns a sorted Tensor of Points. The Points are sorted
-
-        """
-        super(ball_query_sample_with_goal, self).__init__()
-        self.point_after = args.after_stn_as_input
-        self.args = args
-        self.num_heads = args.num_heads
-        self.num_layers = args.num_attention_layer
-        self.num_latent_feats_inencoder = args.self_encoder_latent_features
-        self.num_feats = num_feats
-        self.actv_fn = actv_fn
-        self.input_dims = input_dims
-
-        self.top_k = 32
-        self.d_model = 480
-        self.radius = 0.3
-        self.max_radius_points = 32
-
-        self.self_atn_layer = SA_Layer_Multi_Head(args, 256)
-        self.selfatn_layers = SA_Layers(self.num_layers, self.self_atn_layer)
-
-        self.loss_function = nn.MSELoss()
-
-        self.feat_channels_1d = [self.num_feats, 64, 64, 48]
-        self.feat_generator = create_conv1d_serials(self.feat_channels_1d)
-        self.feat_generator.apply(init_weights)
-        self.feat_bn = nn.ModuleList(
-            [
-                nn.BatchNorm1d(num_features=self.feat_channels_1d[i + 1])
-                for i in range(len(self.feat_channels_1d) - 1)
-            ]
-        )
-
-        self.feat_channels_3d = [128, 256, self.d_model]
-        self.radius_cnn = create_conv3d_serials(self.feat_channels_3d, self.max_radius_points, 3)
-        self.radius_cnn.apply(init_weights)
-        self.radius_bn = nn.ModuleList(
-            [
-                nn.BatchNorm3d(num_features=self.feat_channels_3d[i])
-                for i in range(len(self.feat_channels_3d))
-            ]
-        )
-
-    def forward(self, hoch_features, input, x_a_r, target):  # [bs,1,features,n_points]   [bs,C,n_points]
-
-        top_k = self.top_k  # 16
-        origial_hoch_features = hoch_features  # [bs,1,features,n_points]
-        feat_dim = input.shape[1]
-
-        hoch_features_att = hoch_features
-        #############################################################
-        # implemented by myself
-        #############################################################
-        hoch_features_att = hoch_features_att.permute(0, 2, 1)
-        hoch_features_att = self.selfatn_layers(hoch_features_att)
-        hoch_features_att = hoch_features_att.permute(0, 2, 1)
-
-        ##########################
-        #
-        ##########################
-        high_inter = hoch_features_att
-        for j, conv in enumerate(self.feat_generator):  # [bs,features,n_points]->[bs,10,n_points]
-            bn = self.feat_bn[j]
-            high_inter = self.actv_fn(bn(conv(high_inter)))
-        topk = torch.topk(high_inter, k=top_k, dim=-1)  # [bs,10,n_points]->[bs,10,n_superpoint]
-        indices_32 = topk.indices  # [bs,n_superpoints,top_k]->[bs,n_superpoints,top_k]
-        # indices_bolts=indices_32[:,8:16,:]
-        # visialize_cluster(input,indices_bolts)
-        # indices=indices[:,:,0]
-        # visialize_superpoints(input,indices)
-        indices = indices_32[:, :, 0]
-        result_net = torch.ones((1))
-        if not self.args.test and self.args.training:  # [bs,n_cluster,top_k]->[bs,n_cluster,top_k]
-            result_net = index_points(input.permute(0, 2, 1).float(), indices)
-
-        sorted_input = torch.zeros((origial_hoch_features.shape[0], feat_dim, top_k)).to(
-            input.device  # [bs,C,n_superpoint]
-        )
-
-        if top_k == 1:
-            indices = indices.unsqueeze(dim=-1)
-
-        sorted_input = index_points(input.permute(0, 2, 1).float(), indices).permute(0, 2,
-                                                                                     1)  # [bs,n_superpoint]->[bs,C,n_superpoint]
-
-        all_points = input.permute(0, 2, 1).float()  # [bs,C,n_points]->[bs,n_points,C]
-        query_points = sorted_input.permute(0, 2, 1)  # [bs,C,n_superpoint]->[bs,n_superpoint,C]
-
-        dis1 = square_distance(all_points, query_points)
-        radius_indices = torch.topk(-dis1, k=32, dim=-2).indices.permute(0, 2, 1)
-        # radius_indices = query_ball_point(                                       #idx=[bs,n_superpoint,n_sample]
-        #     self.radius,
-        #     self.max_radius_points,
-        #     all_points[:, :, :3],
-        #     query_points[:, :, :3],)
-
-        if self.point_after:
-            radius_points = index_points(x_a_r.permute(0, 2, 1), radius_indices)
-        else:
-            radius_points = index_points(all_points, radius_indices)  # [bs,n_superpoint,n_sample,C]
-        radius_points = radius_points.unsqueeze(dim=1)
-
-        for i, radius_conv in enumerate(self.radius_cnn):  # [bs,n_superpoint,n_sample+1,C]->[bs,512,n_superpoint,1,1]
-            bn = self.radius_bn[i]
-            radius_points = self.actv_fn(bn(radius_conv(radius_points)))
-
-        radius_points = radius_points.squeeze(dim=-1).squeeze(
-            dim=-1)  # [bs,512,n_superpoint,1,1]->[bs,512,n_superpoint]                                          #[bs,n_superpoint]
-        radius_points = torch.cat((radius_points, indices_32.permute(0, 2, 1)), dim=1)
-        return radius_points, result_net
-
-
 class SA_Layer_Single_Head(nn.Module):
     def __init__(self, channels):
         super(SA_Layer_Single_Head, self).__init__()
@@ -234,24 +166,29 @@ class SA_Layer_Single_Head(nn.Module):
         self.feed_forward_cov2 = nn.Conv1d(512, 128, 1)
 
     def forward(self, x):
-        x = x.permute(0, 2, 1)
-        x_q = self.q_conv(x).permute(0, 2, 1)  # b, n, c
-        x_k = self.k_conv(x)  # b, c, n
-        x_v = self.v_conv(x)
-        energy = x_q @ x_k  # b, n, n
-        attention = self.softmax(energy)
-        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))
-        x_r = x_v @ attention  # b, c, n
-        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))
-        x = x + x_r
+        # _                                                                         input (8,N,128)
+        x = x.permute(0, 2, 1)  # _                                                 (B,N,128) -> (B,128,N)
+        x_q = self.q_conv(x).permute(0, 2, 1)  # _                                  (B,128,N) -> (B,N,32)
+        x_k = self.k_conv(x)  # _                                                   (B,128,N) -> (B,32,N)
+        x_v = self.v_conv(x)  # _                                                   (B,128,N) -> (B,128,N)
+        energy = x_q @ x_k  # _                                                     (B,N,32) @ (B,32,N) -> (B,N,N)
+        attention = self.softmax(energy)  # _                                       (B,N,N) -> (B,N,N)
+
+        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))  # _   (B,N,N) -> (B,N,N)
+
+        x_r = x_v @ attention  # _                                                  (B,128,N) @ (B,N,N) -> (B,128,N)
+
+        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))  # _              (B,128,N) -> (B,128,N)
+
+        x = x + x_r  # _                                                            (B,128,N) + (B,128,N) -> (B,128,N)
 
         # feed forward
         x_bypass = x
-        x = self.relu(self.feed_forward_cov1(x))
-        x = self.feed_forward_cov2(x)
-        x += x_bypass
+        x = self.relu(self.feed_forward_cov1(x))  # _                               (B,128,N) -> (B,512,N)
+        x = self.feed_forward_cov2(x)  # _                                          (B,512,N) -> (B,128,N)
+        x += x_bypass  # _                                                          (B,128,N) + (B,128,N) -> (B,128,N)
 
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # _                                                 (B,128,N) -> (B,N,128)
 
         return x
 
@@ -261,7 +198,9 @@ class PCT_semseg(nn.Module):
         super(PCT_semseg, self).__init__()
         self.args = args
         self.k = args.k
-        self.s3n = STN3d(3)
+
+        self.stn3d = TransformNet()
+        # self.s3n = STN3d(3)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(64)
@@ -310,7 +249,8 @@ class PCT_semseg(nn.Module):
         num_points = x.size(2)
         x = x.float()
 
-        transform_matrix = self.s3n(x)
+        # transform_matrix = self.s3n(x)
+        transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
         x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
         x = torch.bmm(x, transform_matrix)
         # Visuell_PointCloud_per_batch(x,target)
