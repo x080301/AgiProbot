@@ -15,6 +15,7 @@ from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
 from model.pct import PCT_semseg
 from utilities import util
 from utilities.config import get_parser
+from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
 
 class BinarySegmentation:
@@ -113,10 +114,20 @@ class BinarySegmentation:
             self.opt = torch.optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=1e-4)
 
         if self.args.scheduler == 'cos':
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, self.args.epochs,
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, T_max=self.args.epochs,
                                                                         eta_min=self.args.end_lr)
         elif self.args.scheduler == 'step':
             self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, 20, 0.1, self.args.epochs)
+        elif self.args.scheduler == 'cos_warmupLR':
+            self.scheduler = CosineAnnealingWithWarmupLR(self.opt,
+                                                         T_max=self.args.epochs - self.args.cos_warmupLR.warmup_epochs,
+                                                         eta_min=self.args.end_lr,
+                                                         warmup_init_lr=self.args.end_lr,
+                                                         warmup_epochs=self.args.cos_warmupLR.warmup_epochs)
+
+        else:
+            print('no scheduler called' + self.args.scheduler)
+            exit(-1)
 
         # ******************* #
         # if finetune is true, the the best.pth will be cosidered first
@@ -242,6 +253,9 @@ class BinarySegmentation:
             if self.opt.param_groups[0]['lr'] < 1e-5:
                 for param_group in self.opt.param_groups:
                     param_group['lr'] = 1e-5
+        elif self.args.scheduler == 'cos_warmupLR':
+            # print(self.opt.param_groups[0]['lr'])
+            self.scheduler.step()
 
         print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
             epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
