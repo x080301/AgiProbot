@@ -217,7 +217,6 @@ class BinarySegmentation:
             loss = self.criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),
                                   self.weights, using_weight=self.args.use_class_weight)  # a scalar
 
-
             loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
             loss.backward()
             self.opt.step()
@@ -240,8 +239,6 @@ class BinarySegmentation:
         IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
         mIoU = np.mean(IoUs)
 
-        print('loss_sum: %.6f' % loss_sum)
-        print('num_train_batch: %.6f' % self.num_train_batch)
         self.writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
         self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
         self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
