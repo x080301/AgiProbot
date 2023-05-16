@@ -164,6 +164,7 @@ class SA_Layer_Single_Head(nn.Module):
         self.feed_forward_cov1 = nn.Conv1d(128, 512, 1)
         self.relu = nn.ReLU()
         self.feed_forward_cov2 = nn.Conv1d(512, 128, 1)
+        self.feed_forward_bn = nn.BatchNorm1d(128)
 
     def forward(self, x):
         # _                                                                         input (8,N,128)
@@ -183,10 +184,11 @@ class SA_Layer_Single_Head(nn.Module):
         x = x + x_r  # _                                                            (B,128,N) + (B,128,N) -> (B,128,N)
 
         # feed forward
-        x_bypass = x
-        x = self.relu(self.feed_forward_cov1(x))  # _                               (B,128,N) -> (B,512,N)
+        residual = x
+        x = self.relu(self.feed_forward_cov1(x))
+        # _                                                                         (B,128,N) -> (B,512,N)
         x = self.feed_forward_cov2(x)  # _                                          (B,512,N) -> (B,128,N)
-        x += x_bypass  # _                                                          (B,128,N) + (B,128,N) -> (B,128,N)
+        x = self.feed_forward_bn(residual + x)  # _                                 (B,128,N) + (B,128,N) -> (B,128,N)
 
         x = x.permute(0, 2, 1)  # _                                                 (B,128,N) -> (B,N,128)
 
@@ -247,43 +249,44 @@ class PCT_semseg(nn.Module):
 
     def forward(self, x):
         num_points = x.size(2)
-        x = x.float()
-
+        x = x.float()  # _                              input (B,3,N)
         # transform_matrix = self.s3n(x)
         transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
-        x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
-        x = torch.bmm(x, transform_matrix)
+        # _                                             (B,3,N) -> (B,3,3)
+        x = x.permute(0, 2, 1)  # _                     (B,3,N) -> (B,N,3)
+        x = torch.bmm(x, transform_matrix)  # _         (B,N,3) * (B,3,3) -> (B,N,3)
         # Visuell_PointCloud_per_batch(x,target)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # _                     (B,N,3) -> (B,3,N)
 
-        x = get_neighbors(x, k=self.k)  # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)
-        x = self.conv1(x)  # (batch_size, 3*2, num_points, k) -> (batch_size, 64, num_points, k)
-        x = self.conv2(x)  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points, k)
-        x1 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
+        x = get_neighbors(x, k=self.k)  # _             (B,3,N) -> (B,3*2,N,k)
+        x = self.conv1(x)  # _                          (B,3*2,N,k) -> (B,64,N,k)
+        x = self.conv2(x)  # _                          (B,64,N,k) -> (B,64,N,k)
+        x1 = x.max(dim=-1, keepdim=False)[0]  # _       (B,64,N,k) -> (B,64,N)
 
-        x = get_neighbors(x1, k=self.k)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
-        x = self.conv3(x)  # (batch_size, 64*2, num_points, k) -> (batch_size, 64, num_points, k)
-        x = self.conv4(x)  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points, k)
-        x2 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
+        x = get_neighbors(x1, k=self.k)  # _            (B,64,N) -> (B,64*2,N,k)
+        x = self.conv3(x)  # _                          (B,64*2,N,k) -> (B,64,N,k)
+        x = self.conv4(x)  # _                          (B,64,N,k) -> (B,64,N,k)
+        x2 = x.max(dim=-1, keepdim=False)[0]  # _       (B,64,N,k) -> (B,64,N)
 
-        x = torch.cat((x1, x2), dim=1)  # (batch_size, 64, num_points, k)*2 ->(batch_size, 128, num_points)
+        x = torch.cat((x1, x2), dim=1)  # _             (B,64,N)*2 -> (B,128,N)
 
-        x = x.permute(0, 2, 1)
-        x1 = self.sa1(x)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)  50MB
-        x2 = self.sa2(x1)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x3 = self.sa3(x2)  # (batch_size, 64*2, num_points)->(batch_size, 64*2, num_points)
-        x4 = self.sa4(x3)  # (batch_size, 64*2, num_points) -> (batch_size, 64*2, num_points)
-        x = torch.cat((x1, x2, x3, x4), dim=-1)  # (batch_size, 64*2, num_points)*4->(batch_size, 512, num_points)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # _                     (B,128,N) -> (B,N,128)
+        x1 = self.sa1(x)  # _                           (B,N,128) -> (B,N,128)
+        x2 = self.sa2(x1)  # _                          (B,N,128) -> (B,N,128)
+        x3 = self.sa3(x2)  # _                          (B,N,128) -> (B,N,128)
+        x4 = self.sa4(x3)  # _                          (B,N,128) -> (B,N,128)
+        x = torch.cat((x1, x2, x3, x4), dim=-1)  # _    (B,N,128)*4 -> (B,N,512)
+        x = x.permute(0, 2, 1)  # _                     (B,N,512) -> (B,512,N)
         x__ = x
-        x = self.conv__(x)  # (batch_size, 512, num_points)->(batch_size, 1024, num_points)
-        x = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 1024, num_points) -> (batch_size, 1024)
-        x = x.unsqueeze(-1).repeat(1, 1, num_points)  # (batch_size, 1024)->(batch_size, 1024, num_points)
-        x = torch.cat((x, x__),
-                      dim=1)  # (batch_size,1024,num_points)+(batch_size, 512,num_points) ->(batch_size, 1536,num_points)
-        x = self.relu(self.bn5(self.conv5(x)))  # (batch_size, 1536,num_points)-> (batch_size, 512,num_points)
-        x = self.dp5(x)
-        x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
-        segmentation_labels = self.conv7(x)  # (batch_size, 256,num_points) ->(batch_size,6,num_points)
+        x = self.conv__(x)  # _                         (B,512,N) -> (B,1024,N)
+        x = x.max(dim=-1, keepdim=False)[0]  # _        (B,1024,N) -> (B,1024)
+        x = x.unsqueeze(-1).repeat(1, 1, num_points)
+        # _                                             (B,1024) -> (B,1024,N)
+        x = torch.cat((x, x__), dim=1)
+        # _                                             (B,1024,N) + (B,512,N) -> (B,1536,N)
+        x = self.relu(self.bn5(self.conv5(x)))  # _     (B,1536,N) -> (B,512,N)
+        x = self.dp5(x)  # _                            (B,512,N) -> (B,512,N)
+        x = self.relu(self.bn6(self.conv6(x)))  # _     (B,512,N) -> (B,256,N)
+        segmentation_labels = self.conv7(x)  # _        (B,256,N) -> (B,segment_type,N)
 
         return segmentation_labels, transform_matrix
