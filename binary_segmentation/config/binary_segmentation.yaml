@@ -7,6 +7,11 @@ DATA:
   sample_rate: 2
 
 TRAIN:
+  ddp:
+    nodes: 1
+    gpus: 2 # num gpus per node
+    world_size: 2 # nodes×gpus
+    nr: 0 # rangking within the nodes
   titel: 'binary_segmentation_syn'
   model: 'pct'
   train_batch_size: 8
