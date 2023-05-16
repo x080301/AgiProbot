@@ -76,7 +76,7 @@ class BinarySegmentation:
         # load data set
         # ******************* #
         if self.is_local:
-            data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+            data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'  # 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy'
         else:
             data_set_direction = self.args.data_dir
 
@@ -238,6 +238,8 @@ class BinarySegmentation:
         IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
         mIoU = np.mean(IoUs)
 
+        print('loss_sum: %.6f' % loss_sum)
+        print('num_train_batch: %.6f' % self.num_train_batch)
         self.writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
         self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
         self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
