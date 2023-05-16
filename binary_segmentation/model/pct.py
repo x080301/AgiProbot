@@ -89,8 +89,8 @@ class TransformNet(nn.Module):
         self.bn4 = nn.BatchNorm1d(256)
 
         self.transform = nn.Linear(256, 3 * 3)
-        init.constant_(self.transform.weight, 0)
-        init.eye_(self.transform.bias.view(3, 3))
+        # init.constant_(self.transform.weight, 0)
+        # init.eye_(self.transform.bias.view(3, 3))
 
     def forward(self, x):
         batch_size = x.size(0)
@@ -246,13 +246,11 @@ class PCT_semseg(nn.Module):
         self.linear3 = nn.Linear(256, 5)
 
     def forward(self, x):
-        print('input')
-        print(x)
         num_points = x.size(2)
         x = x.float()
 
-        transform_matrix = self.s3n(x)
-        # transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
+        # transform_matrix = self.s3n(x)
+        transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
         x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
         x = torch.bmm(x, transform_matrix)
         # Visuell_PointCloud_per_batch(x,target)
@@ -288,6 +286,5 @@ class PCT_semseg(nn.Module):
         x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
         segmentation_labels = self.conv7(x)  # (batch_size, 256,num_points) ->(batch_size,6,num_points)
 
-        print('output')
         print(segmentation_labels)
         return segmentation_labels, transform_matrix
