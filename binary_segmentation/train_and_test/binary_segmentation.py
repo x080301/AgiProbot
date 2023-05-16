@@ -212,11 +212,16 @@ class BinarySegmentation:
             # backwards
             # ******************* #
             seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (batch_size,num_points, class_categories)
+            print('seg_pred')
+            print(seg_pred)
             batch_label = target.view(-1, 1)[:, 0].cpu().data.numpy()
             loss = self.criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),
                                   self.weights, using_weight=self.args.use_class_weight)  # a scalar
 
+            print('loss1: %.6f' % loss)
+
             loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+            print('loss2: %.6f' % loss)
             loss.backward()
             self.opt.step()
 
