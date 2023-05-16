@@ -246,6 +246,8 @@ class PCT_semseg(nn.Module):
         self.linear3 = nn.Linear(256, 5)
 
     def forward(self, x):
+        print('input')
+        print(x)
         num_points = x.size(2)
         x = x.float()
 
@@ -286,4 +288,6 @@ class PCT_semseg(nn.Module):
         x = self.relu(self.bn6(self.conv6(x)))  # (batch_size, 512,num_points) ->(batch_size,256,num_points)
         segmentation_labels = self.conv7(x)  # (batch_size, 256,num_points) ->(batch_size,6,num_points)
 
+        print('output')
+        print(segmentation_labels)
         return segmentation_labels, transform_matrix
