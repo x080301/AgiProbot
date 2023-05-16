@@ -200,7 +200,7 @@ class PCT_semseg(nn.Module):
         self.k = args.k
 
         self.stn3d = TransformNet()
-        # self.s3n = STN3d(3)
+        self.s3n = STN3d(3)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(64)
