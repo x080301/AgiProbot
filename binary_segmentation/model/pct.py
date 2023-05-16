@@ -251,8 +251,8 @@ class PCT_semseg(nn.Module):
         num_points = x.size(2)
         x = x.float()
 
-        # transform_matrix = self.s3n(x)
-        transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
+        transform_matrix = self.s3n(x)
+        # transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
         x = x.permute(0, 2, 1)  # (batch_size, 3, num_points)->(batch_size,  num_points,3)
         x = torch.bmm(x, transform_matrix)
         # Visuell_PointCloud_per_batch(x,target)
