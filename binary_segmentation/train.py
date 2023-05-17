@@ -1,6 +1,3 @@
-from train_and_test.binary_segmentation import BinarySegmentation
+from train_and_test.binary_segmentation_ddp import train_ddp
 
-config_dir = 'config/binary_segmentation.yaml'
-print(config_dir)
-binarysegmentation = BinarySegmentation(config_dir=config_dir)
-binarysegmentation.train()
+train_ddp()

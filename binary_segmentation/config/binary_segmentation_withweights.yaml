@@ -6,12 +6,12 @@ DATA:
   npoints: 2048
   sample_rate: 1
 
-TRAIN:
+train:
+  random_seed: 0 # 0->random choose a seed
   ddp:
     nodes: 1
     gpus: 2 # num gpus per node
     world_size: 2 # nodes×gpus
-    nr: 0 # rangking within the nodes
   titel: 'binary_segmentation_syn'
   model: 'pct'
   train_batch_size: 8
@@ -21,11 +21,11 @@ TRAIN:
   kernel_loss_weight: 0.05
   stn_loss_weight: 0.01
 
-  use_class_weight: 0
+  use_class_weight: 1
   screw_weight: 1.0
   use_sgd: 0
   lr: 0.001
-  end_lr: 0.00001
+  end_lr: 0.000001
   momentum: 0.9
   scheduler: 'cos_warmupLR'
   epochs: 300
@@ -44,7 +44,7 @@ TRAIN:
   after_stn_as_input: 1
   after_stn_as_kernel_neighbor_query: 1
 
-TEST:
+test:
   test_symbol: 'Train'
   test_batch_size: 4
 

@@ -10,6 +10,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import torch.multiprocessing as mp
+import torch.distributed as dist
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
 from model.pct import PCT_semseg
@@ -23,13 +25,18 @@ class BinarySegmentation:
     files_to_save = ['train.py', 'model/pct.py', 'data_preprocess/data_loader.py', 'config/binary_segmentation.yaml']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
+        self.best_iou = 0
 
         # ******************* #
         # load arguments
         # ******************* #
         self.config_dir = config_dir
         self.args = get_parser(config_dir=self.config_dir)
-        self.device = torch.device("cuda")
+
+        if self.args.random_seed == 0:
+            self.random_seed = int(time.time())
+        else:
+            self.random_seed = self.args.train.random_seed
 
         # ******************* #
         # local or server?
@@ -39,13 +46,11 @@ class BinarySegmentation:
         if self.is_local:
             self.args.npoints = 1024
             self.args.sample_rate = 1.
-
-        # ******************* #
-        # load ML model
-        # ******************* #
-        self.model = PCT_semseg(self.args).to(self.device)
-        self.model = nn.DataParallel(self.model)
-        print("use", torch.cuda.device_count(), "GPUs for training")
+        if self.is_local:
+            self.data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+            # 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy'
+        else:
+            self.data_set_direction = self.args.data_dir
 
         # ******************* #
         # make directions
@@ -53,8 +58,8 @@ class BinarySegmentation:
         if self.is_local:
             direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
         else:
-            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + datetime.datetime.now().strftime(
-                '%Y_%m_%d_%H_%M')
+            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + \
+                        datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
         if not os.path.exists(direction + '/checkpoints'):
             os.makedirs(direction + '/checkpoints')
         if not os.path.exists(direction + '/train_log'):
@@ -70,36 +75,67 @@ class BinarySegmentation:
         for file_name in self.files_to_save:
             shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
         self.writer = SummaryWriter(direction + '/tensorboard_log')
+        with open(direction + '/train_log/' + 'random_seed_' + str(self.random_seed) + '.txt', 'w') as f:
+            f.write('')
+
+    def init_training(self, gpu):
+        rank = gpu
+        dist.init_process_group(backend='nccl', init_method='env://', world_size=self.args.ddp.world_size, rank=rank)
+
+        torch.manual_seed(self.random_seed)
+        torch.cuda.set_device(gpu)
+        # ******************* #
+        # load ML model
+        # ******************* #
+        self.model = PCT_semseg(self.args).cuda(gpu)
+        self.model = nn.parallel.DistributedDataParallel(self.model, device_ids=[gpu])
+        self.model = nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
+        # self.model = nn.DataParallel(self.model)
+        print("use", torch.cuda.device_count(), "GPUs for training")
 
         # ******************* #
         # load data set
         # ******************* #
-        if self.is_local:
-            data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'  # 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy'
-        else:
-            data_set_direction = self.args.data_dir
-
         print("start loading training data ...")
+
         train_dataset = MotorDataset(mode='train',
-                                     data_dir=data_set_direction,
+                                     data_dir=self.data_set_direction,
                                      num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
                                      test_area='Validation', sample_rate=self.args.sample_rate)
+        self.train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
+                                                                             num_replicas=self.args.ddp.world_size,
+                                                                             rank=rank
+                                                                             )
         print("start loading test data ...")
-        validation_set = MotorDataset(mode='valid',
-                                      data_dir=data_set_direction,
-                                      num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                      test_area='Validation', sample_rate=1.0)
+        valid_dataset = MotorDataset(mode='valid',
+                                     data_dir=self.data_set_direction,
+                                     num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
+                                     test_area='Validation', sample_rate=1.0)
+        self.valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset,
+                                                                             num_replicas=self.args.ddp.world_size,
+                                                                             rank=rank
+                                                                             )
 
-        para_workers = 0 if self.is_local else 8
-        self.train_loader = DataLoader(train_dataset, num_workers=para_workers, batch_size=self.args.train_batch_size,
+        # para_workers = 0 if self.is_local else 8
+        self.train_loader = DataLoader(train_dataset,
+                                       # num_workers=para_workers,
+                                       batch_size=self.args.train_batch_size,
                                        shuffle=True,
                                        drop_last=True,
-                                       worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
+                                       # worker_init_fn=lambda x: np.random.seed(x + int(time.time())),  # TODO 是否有影响？
+                                       pin_memory=True,
+                                       sampler=self.train_sampler
+                                       )
         self.num_train_batch = len(self.train_loader)
-        self.validation_loader = DataLoader(validation_set, num_workers=para_workers,
+
+        self.validation_loader = DataLoader(valid_dataset,
+                                            # num_workers=para_workers,
+                                            pin_memory=True,
+                                            sampler=self.valid_sampler,
                                             batch_size=self.args.test_batch_size,
                                             shuffle=True,
-                                            drop_last=True)
+                                            drop_last=True
+                                            )
         self.num_valid_batch = len(self.validation_loader)
 
         # ******************* #
@@ -173,9 +209,9 @@ class BinarySegmentation:
                 weights[i] = 1
         self.weights = weights
 
-        self.best_iou = 0
-
     def train_epoch(self, epoch):
+
+        self.train_sampler.set_epoch(epoch)
 
         self.model = self.model.train()
         self.args.training = True
@@ -192,7 +228,7 @@ class BinarySegmentation:
             # ******************* #
             # forwards
             # ******************* #
-            points, target = points.to(self.device), target.to(self.device)
+            points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
             points = util.normalize_data(points)
 
             if self.args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
@@ -238,8 +274,6 @@ class BinarySegmentation:
         IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
         mIoU = np.mean(IoUs)
 
-        print('loss_sum: %.6f' % loss_sum)
-        print('num_train_batch: %.6f' % self.num_train_batch)
         self.writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
         self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
         self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
@@ -265,6 +299,8 @@ class BinarySegmentation:
 
     def valid_and_save_epoch(self, epoch):
         with torch.no_grad():
+            self.valid_sampler.set_epoch(epoch)
+
             total_correct = 0
             total_seen = 0
 
@@ -280,7 +316,7 @@ class BinarySegmentation:
             print('-----valid-----')
             for i, (points, seg) in tqdm(enumerate(self.validation_loader), total=len(self.validation_loader),
                                          smoothing=0.9):
-                points, seg = points.to(self.device), seg.to(self.device)
+                points, seg = points.cuda(non_blocking=True), seg.cuda(non_blocking=True)
                 points = util.normalize_data(points)
                 points, _ = util.rotate_per_batch(points, None)
                 points = points.permute(0, 2, 1)
@@ -422,12 +458,22 @@ class BinarySegmentation:
                  'test_avg_class_acc': test_avg_class_acc})
             data_frame.to_csv(destination_csv_dir, index=False)
 
-    def train(self, gpu, random_seed):
+    def train(self, gpu):
 
+        self.init_training(gpu)
         print('train %d epochs' % (self.end_epoch - self.start_epoch))
         for epoch in range(self.start_epoch, self.end_epoch):
             self.train_epoch(epoch)
             self.valid_and_save_epoch(epoch)
 
-    def train_ddp(self):
-        random_seed = int(time.time())
+
+def train_ddp():
+    config_dir = 'config/binary_segmentation.yaml'
+    print(config_dir)
+    binarysegmentation = BinarySegmentation(config_dir=config_dir)
+    train = binarysegmentation.train
+
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '8888'
+    # self.train(0)
+    mp.spawn(train, nprocs=1)

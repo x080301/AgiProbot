@@ -39,6 +39,7 @@ class BinarySegmentation:
         if self.is_local:
             self.args.npoints = 1024
             self.args.sample_rate = 1.
+            self.args.ddp.gpus = 1
 
         # ******************* #
         # load ML model
