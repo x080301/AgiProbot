@@ -11,10 +11,14 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_05_09_19_32_4096_sample_rate1': '4096,sample rate 1', '2023_05_11_23_00_1024': '1024',
                   '2023_05_12_14_48_4096points_400epoch': '4096, 400 epoches',
                   '2023_05_13_16_01_fine_tune': 'fine_tune',
-                  '2023_05_14_16_07_fine_tune2': 'fine_tune2'
+                  '2023_05_14_16_07_fine_tune2': 'fine_tune2',
+                  '2023_05_17_07_15_old_lr': '2048, old_lr',
+                  '2023_05_17_17_37_4096': '4096',
+                  '2023_05_18_14_15_2048_no_weights': '2048_no_weights',
+                  '2023_05_18_03_53_withweights': 'withweights'
                   }
-show_list = ['4096', '4096, 400 epoches', 'fine_tune', 'fine_tune2']
-plt.title("epoch and fine_tune")
+show_list = ['2048, old_lr', '4096', '2048_no_weights', 'withweights']
+plt.title("train group 2")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):

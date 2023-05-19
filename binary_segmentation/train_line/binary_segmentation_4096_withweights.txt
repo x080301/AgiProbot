@@ -1,6 +1,6 @@
 from train_and_test.binary_segmentation import BinarySegmentation
 
-config_dir = 'config/binary_segmentation_withweights.yaml'
+config_dir = 'config/binary_segmentation_4096_withweights.yaml'
 print(config_dir)
 binarysegmentation = BinarySegmentation(config_dir=config_dir)
 binarysegmentation.train()
