@@ -18,6 +18,9 @@ from utilities.config import get_parser
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
 
+
+
+
 class BinarySegmentation:
     # 'config/binary_segmentation.yaml' should be at the end. It can be changed latter.
     files_to_save = ['train.py', 'model/pct.py', 'data_preprocess/data_loader.py', 'config/binary_segmentation.yaml']
@@ -197,16 +200,13 @@ class BinarySegmentation:
             points, target = points.to(self.device), target.to(self.device)
             points = util.normalize_data(points)
 
-            if self.args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
-                points, _ = util.rotate_per_batch(points, None)
-            else:
-                points, _ = util.rotate_per_batch(points, None)
+            points, _ = util.rotate_per_batch(points, None)
 
             points = points.permute(0, 2, 1).float()
             batch_size = points.size()[0]
             self.opt.zero_grad()
 
-            seg_pred, trans = self.model(points.float())
+            seg_pred, trans = self.model(points.float())  # _  (B,3,N) -> (B,segment_type,N),(B,3,3)
             # print(seg_pred)
 
             # ******************* #

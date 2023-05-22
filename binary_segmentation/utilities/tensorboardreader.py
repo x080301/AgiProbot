@@ -13,11 +13,12 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_05_13_16_01_fine_tune': 'fine_tune',
                   '2023_05_14_16_07_fine_tune2': 'fine_tune2',
                   '2023_05_17_07_15_old_lr': '2048, old_lr',
-                  '2023_05_17_17_37_4096': '4096',
+                  '2023_05_17_17_37_4096': '4096_no_weights',
                   '2023_05_18_14_15_2048_no_weights': '2048_no_weights',
-                  '2023_05_18_03_53_withweights': 'withweights'
+                  '2023_05_18_03_53_withweights': '2048_with_weights',
+                  '2023_05_19_02_11_4096_with_weights': '4096_with_weights'
                   }
-show_list = ['2048, old_lr', '4096', '2048_no_weights', 'withweights']
+show_list = ['2048, old_lr', '4096_no_weights', '2048_no_weights', '2048_with_weights', '4096_with_weights', 'fine_tune']
 plt.title("train group 2")
 
 mIoU_dict = {}
@@ -31,20 +32,26 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
             mIoU_x = [i.step for i in mIoU]
             mIoU_y = [i.value for i in mIoU]
 
-            x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 50)
+            x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
             y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
 
             mIoU_dict[train_case_dic[train_case]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
-
+y_max = 0
 for key in show_list:
     x = mIoU_dict[key][0]
     y = mIoU_dict[key][1]
     plt.plot(x, y, color=(0.9, 0.9, 0.9))
+    y_max = max(max(y), y_max)
 
 for key in show_list:
     x_smooth = mIoU_dict[key][2]
     y_smooth = mIoU_dict[key][3]
     plt.plot(x_smooth, y_smooth, label=key)
+
+# Draw a horizontal line at the maximum y value
+plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
+plt.annotate(f'{y_max:.6f}', xy=(0, y_max), xytext=(0, 5),
+             textcoords='offset points', ha='center', va='bottom')
 
 # Set y-axis to logarithmic scale
 plt.yscale('log')

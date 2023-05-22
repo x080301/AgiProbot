@@ -9,19 +9,24 @@
 from utilities.util import *
 from torch.autograd import Variable
 import torch.nn.init as init
+import math
 
 
 def knn(x, k):
     """
     Input:
-        points: input points data, [B, N, C]
+        points: input points data, [B, C, N]
     Return:
         idx: sample index data, [B, N, K]
     """
+    print(x.shape)
     inner = -2 * torch.matmul(x.transpose(2, 1), x)
     xx = torch.sum(x ** 2, dim=1, keepdim=True)
-    pairwise_distance = -xx - inner - xx.transpose(2, 1)
+    pairwise_distance = -xx - inner - xx.transpose(2, 1)  # (B,N,N)
+    # print(pairwise_distance)
+
     idx = pairwise_distance.topk(k=k, dim=-1)[1]  # (batch_size, num_points, k)
+
     return idx
 
 
@@ -154,7 +159,7 @@ class STN3d(nn.Module):
 class SA_Layer_Single_Head(nn.Module):
     def __init__(self, channels):
         super(SA_Layer_Single_Head, self).__init__()
-        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
+        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)  # TODO
         self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
         self.v_conv = nn.Conv1d(channels, channels, 1)
         self.trans_conv = nn.Conv1d(channels, channels, 1)
@@ -168,18 +173,22 @@ class SA_Layer_Single_Head(nn.Module):
 
     def forward(self, x):
         # _                                                                         input (8,N,128)
+
         x = x.permute(0, 2, 1)  # _                                                 (B,N,128) -> (B,128,N)
         x_q = self.q_conv(x).permute(0, 2, 1)  # _                                  (B,128,N) -> (B,N,32)
         x_k = self.k_conv(x)  # _                                                   (B,128,N) -> (B,32,N)
         x_v = self.v_conv(x)  # _                                                   (B,128,N) -> (B,128,N)
         energy = x_q @ x_k  # _                                                     (B,N,32) @ (B,32,N) -> (B,N,N)
-        attention = self.softmax(energy)  # _                                       (B,N,N) -> (B,N,N)
 
-        attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))  # _   (B,N,N) -> (B,N,N)
+        scale_factor = math.sqrt(x_v.shape[-2])
+        attention = self.softmax(energy / scale_factor)
+        # _                                                                         (B,N,N) -> (B,N,N)
+
+        # attention = attention / (1e-6 + attention.sum(dim=1, keepdims=True))  # _   (B,N,N) -> (B,N,N)
 
         x_r = x_v @ attention  # _                                                  (B,128,N) @ (B,N,N) -> (B,128,N)
 
-        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))  # _              (B,128,N) -> (B,128,N)
+        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))  # TODO  # _              (B,128,N) -> (B,128,N)
 
         x = x + x_r  # _                                                            (B,128,N) + (B,128,N) -> (B,128,N)
 
