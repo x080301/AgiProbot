@@ -458,21 +458,22 @@ class BinarySegmentation:
                  'test_avg_class_acc': test_avg_class_acc})
             data_frame.to_csv(destination_csv_dir, index=False)
 
-    def train(self, gpu):
 
-        self.init_training(gpu)
-        print('train %d epochs' % (self.end_epoch - self.start_epoch))
-        for epoch in range(self.start_epoch, self.end_epoch):
-            self.train_epoch(epoch)
-            self.valid_and_save_epoch(epoch)
+def train(gpu):
+    config_dir = 'config/binary_segmentation.yaml'
+
+    print(config_dir)
+    binarysegmentation = BinarySegmentation(config_dir=config_dir)
+
+    binarysegmentation.init_training(gpu)
+
+    print('train %d epochs' % (binarysegmentation.end_epoch - binarysegmentation.start_epoch))
+    for epoch in range(binarysegmentation.start_epoch, binarysegmentation.end_epoch):
+        binarysegmentation.train_epoch(epoch)
+        binarysegmentation.valid_and_save_epoch(epoch)
 
 
 def train_ddp():
-    config_dir = 'config/binary_segmentation.yaml'
-    print(config_dir)
-    binarysegmentation = BinarySegmentation(config_dir=config_dir)
-    train = binarysegmentation.train
-
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '8888'
     # self.train(0)
