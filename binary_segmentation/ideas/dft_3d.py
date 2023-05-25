@@ -9,14 +9,10 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
-from model.pct import PCT_semseg
 from utilities import util
 from utilities.config import get_parser
-from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
-import matplotlib.pyplot as plt
 
 
 def find_neighbor_in_d(point_cloud, d_square=15, output_size=11, fft=True):
@@ -123,7 +119,8 @@ class BinarySegmentation:
                                        worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
 
     def count_point_num(self):
-
+        import matplotlib.pyplot as plt
+        
         self.init_training()
 
         num_points_in_d = None
