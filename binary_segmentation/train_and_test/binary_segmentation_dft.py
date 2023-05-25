@@ -12,7 +12,7 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
-from model.pct import PCT_semseg
+from model.pct_dft import PCTDft
 from utilities import util
 from utilities.config import get_parser
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
@@ -44,7 +44,7 @@ class BinarySegmentation:
         # ******************* #
         # load ML model
         # ******************* #
-        self.model = PCT_semseg(self.args).to(self.device)
+        self.model = PCTDft(self.args).to(self.device)
         self.model = nn.DataParallel(self.model)
         print("use", torch.cuda.device_count(), "GPUs for training")
 

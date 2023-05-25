@@ -19,22 +19,62 @@ from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 import matplotlib.pyplot as plt
 
 
-def find_neighbor_in_d(point_cloud, d, output_size):
+def find_neighbor_in_d(point_cloud, d_square=15, output_size=11, fft=True):
     """
 
     :param point_cloud: input numpy array (B,C,N)
-    :param d: maximun distance of the neighbor points
+    :param d_square: maximun distance of the neighbor points
     :param output_size: size of output
+    :param fft: True fft before output, False no fft
     :return: numpy array (B,output_size,output_size,output_size,N)
     """
 
+    # calculate distance
+
     inner = -2 * torch.matmul(point_cloud.transpose(2, 1), point_cloud)
     xx = torch.sum(point_cloud ** 2, dim=1, keepdim=True)
-    pairwise_distance = -xx - inner - xx.transpose(2, 1)  # (B,N,N)
+    pairwise_distance = xx + inner + xx.transpose(2, 1)  # (B,N,N)
 
-    b, n1, n2 = np.where(pairwise_distance < d)
+    # find neighbors with distance < d_square
+    b, n1, n2 = torch.nonzero(pairwise_distance < d_square, as_tuple=True)
+    '''
+    pairwise_distance = np.asarray(pairwise_distance.cpu())
+    b, n1, n2 = np.where(pairwise_distance < d_square)
+    '''
 
-    output = point_cloud[b, :, n1]
+    neighbors = point_cloud[b, :, n1]
+    itself = point_cloud[b, :, n2]
+    related = neighbors - itself
+
+    related_x = related[:, 0].contiguous()
+    related_y = related[:, 1].contiguous()
+    related_z = related[:, 2].contiguous()
+
+    # digitize
+    bins = torch.tensor(range(output_size - 1)).cuda() + 1  # 1~outputsize) (0,outputsize0
+    bins = bins / output_size  # 1/outputsize~1 (0,1)
+
+    d = d_square ** 0.5
+    bins = bins * d - d / 2.0  # (-d/2,d/2)
+
+    related_x_digit = torch.bucketize(related_x, bins, right=False)
+    related_y_digit = torch.bucketize(related_y, bins, right=False)
+    related_z_digit = torch.bucketize(related_z, bins, right=False)
+
+    # prepare output
+    points_with_neighbors = torch.zeros(
+        (point_cloud.shape[0], output_size, output_size, output_size, point_cloud.shape[2])).cuda()
+    points_with_neighbors[b, related_x_digit, related_y_digit, related_z_digit, n2] = 1
+
+    if fft:
+        points_with_neighbors_spectrum = torch.fft.fftn(points_with_neighbors, dim=(1, 2, 3))
+        points_with_neighbors_spectrum = torch.fft.fftshift(points_with_neighbors_spectrum, dim=(1, 2, 3))
+
+        points_with_neighbors_spectrum = 20 * torch.log10(torch.abs(points_with_neighbors_spectrum))
+        # points_with_neighbors_spectrum = 20 * torch.log10(torch.abs(points_with_neighbors_spectrum))
+        return points_with_neighbors_spectrum
+    else:
+        return points_with_neighbors
 
 
 class BinarySegmentation:
@@ -82,7 +122,7 @@ class BinarySegmentation:
                                        drop_last=True,
                                        worker_init_fn=lambda x: np.random.seed(x + int(time.time())))
 
-    def train(self):
+    def count_point_num(self):
 
         self.init_training()
 
@@ -121,6 +161,25 @@ class BinarySegmentation:
         plt.ylabel('Frequency')
         plt.title('Histogram of points within distance d')
         plt.show()
+
+    def train(self):
+
+        self.init_training()
+
+        num_points_in_d = None
+        print("------------------------------------------")
+        for i, (points, target) in tqdm(enumerate(self.train_loader), total=len(self.train_loader), smoothing=0.9):
+            # ******************* #
+            # forwards
+            # ******************* #
+            points, target = points.to(self.device), target.to(self.device)
+            points = util.normalize_data(points)
+
+            points, _ = util.rotate_per_batch(points, None)
+
+            points = points.permute(0, 2, 1).float()  # _       (B,N,3) -> (B,3,N)
+
+            print(find_neighbor_in_d(points, 15, 11, fft=True).shape)
 
 
 if __name__ == "__main__":

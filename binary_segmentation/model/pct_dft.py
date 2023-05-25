@@ -11,6 +11,8 @@ from torch.autograd import Variable
 import torch.nn.init as init
 import math
 
+from ideas.dft_3d import find_neighbor_in_d
+
 
 def knn(x, k):
     """
@@ -19,7 +21,7 @@ def knn(x, k):
     Return:
         idx: sample index data, [B, N, K]
     """
-    print(x.shape)
+    # print(x.shape)
     inner = -2 * torch.matmul(x.transpose(2, 1), x)
     xx = torch.sum(x ** 2, dim=1, keepdim=True)
     pairwise_distance = -xx - inner - xx.transpose(2, 1)  # (B,N,N)
@@ -68,6 +70,68 @@ def get_neighbors(x, k=20):
     feature = torch.cat((neighbors - x, x), dim=3).permute(0, 3, 1, 2).contiguous()
 
     return feature
+
+
+class InputEmbedding(nn.Module):
+    def __init__(self, input_channels, output_channels, fft=True):
+        super(InputEmbedding, self).__init__()
+
+        self.output_channels = output_channels
+        self.fft = fft
+
+        # local_feature
+        self.conv1 = nn.Conv3d(1, 8, kernel_size=(5, 5, 5))
+        self.conv2 = nn.Conv3d(8, 64, kernel_size=(5, 5, 5))
+        self.conv3 = nn.Conv3d(64, output_channels, kernel_size=(3, 3, 3))
+
+        self.bn1 = nn.BatchNorm3d(8)
+        self.bn2 = nn.BatchNorm3d(64)
+        self.bn3 = nn.BatchNorm3d(output_channels)
+
+        # global_feature
+        self.conv4 = nn.Conv1d(input_channels, 8, kernel_size=1)
+        self.conv5 = nn.Conv1d(8, 32, kernel_size=1)
+        self.bn4 = nn.BatchNorm1d(8)
+        self.bn5 = nn.BatchNorm1d(32)
+
+        # feature concatenate
+        self.conv6 = nn.Conv1d(output_channels + 32, output_channels, kernel_size=1)
+        self.conv7 = nn.Conv1d(output_channels, output_channels, kernel_size=1)
+        self.bn6 = nn.BatchNorm1d(output_channels)
+        self.bn7 = nn.BatchNorm1d(output_channels)
+
+    def forward(self, x):  # _    Input: (B,3,N)
+        batch_size = x.size(0)
+        num_points = x.size(2)
+        input_x = x
+
+        # local_feature
+        discretize_size = 11
+        x = find_neighbor_in_d(input_x, d_square=15, output_size=discretize_size, fft=self.fft)
+        # _                                                                 (B,3,N) -> (B,11,11,11,N)
+        x = x.permute(0, 4, 1, 2, 3).contiguous()
+        # _                                                                 (B,11,11,11,N) -> (B,N,11,11,11)
+        x = x.view(batch_size * num_points, 1, discretize_size, discretize_size, discretize_size)
+        # _                                                                 (B,N,11,11,11) -> (B*N,1,11,11,11)
+
+        x = F.leaky_relu(self.bn1(self.conv1(x)), negative_slope=0.2)  # _  (B*N,1,11,11,11) -> (B*N,8,7,7,7)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), negative_slope=0.2)  # _  (B*N,8,7,7,7) -> (B*N,16,3,3,3)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), negative_slope=0.2)  # _  (B*N,64,3,3,3) -> (B*N,128,1,1,1)
+        x = x.view(batch_size, num_points, self.output_channels)  # _       (B*N,128,1,1,1) -> (B,N,128)
+        local_features = x.permute(0, 2, 1)  # _                             (B,N,128) -> (B,128,N)
+
+        # global_featutre
+        x = F.leaky_relu(self.bn4(self.conv4(input_x)), negative_slope=0.2)
+        # _                                                                 (B,3,N) -> (B,8,N)
+        global_featutres = F.leaky_relu(self.bn5(self.conv5(x)), negative_slope=0.2)
+        # _                                                                 (B,8,N) -> (B,32,N)
+
+        # feature concatenate
+        x = torch.cat((local_features, global_featutres), dim=1)  # _       (B,128,N) + (B,32,N) -> (B,160,N)
+        x = F.leaky_relu(self.bn6(self.conv6(x)), negative_slope=0.2)  # _  (B,160,N) -> (B,128,N)
+        x = F.leaky_relu(self.bn7(self.conv7(x)), negative_slope=0.2)  # _  (B,128,N) -> (B,128,N)
+
+        return x
 
 
 class TransformNet(nn.Module):
@@ -156,9 +220,9 @@ class STN3d(nn.Module):
         return x
 
 
-class SA_Layer_Single_Head(nn.Module):
+class SALayerSingleHead(nn.Module):
     def __init__(self, channels):
-        super(SA_Layer_Single_Head, self).__init__()
+        super(SALayerSingleHead, self).__init__()
         self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)  # TODO
         self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
         self.v_conv = nn.Conv1d(channels, channels, 1)
@@ -204,11 +268,14 @@ class SA_Layer_Single_Head(nn.Module):
         return x
 
 
-class PCT_semseg(nn.Module):
+class PCTDft(nn.Module):
     def __init__(self, args):
-        super(PCT_semseg, self).__init__()
+        super(PCTDft, self).__init__()
         self.args = args
         self.k = args.k
+        fft = True if args.fft == 1 else False
+
+        self.input_embedding = InputEmbedding(input_channels=3, output_channels=128, fft=fft)
 
         self.stn3d = TransformNet()
         self.s3n = STN3d(3)
@@ -216,10 +283,10 @@ class PCT_semseg(nn.Module):
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(64)
         self.bn4 = nn.BatchNorm2d(64)
-        self.sa1 = SA_Layer_Single_Head(128)
-        self.sa2 = SA_Layer_Single_Head(128)
-        self.sa3 = SA_Layer_Single_Head(128)
-        self.sa4 = SA_Layer_Single_Head(128)
+        self.sa1 = SALayerSingleHead(128)
+        self.sa2 = SALayerSingleHead(128)
+        self.sa3 = SALayerSingleHead(128)
+        self.sa4 = SALayerSingleHead(128)
         self.bnmax11 = nn.BatchNorm1d(64)
         self.bnmax12 = nn.BatchNorm1d(64)
 
@@ -267,6 +334,9 @@ class PCT_semseg(nn.Module):
         # Visuell_PointCloud_per_batch(x,target)
         x = x.permute(0, 2, 1)  # _                     (B,N,3) -> (B,3,N)
 
+        x = self.input_embedding(x)  # _                (B,3,N) -> (B,128,N)
+
+        '''
         x = get_neighbors(x, k=self.k)  # _             (B,3,N) -> (B,3*2,N,k)
         x = self.conv1(x)  # _                          (B,3*2,N,k) -> (B,64,N,k)
         x = self.conv2(x)  # _                          (B,64,N,k) -> (B,64,N,k)
@@ -278,6 +348,7 @@ class PCT_semseg(nn.Module):
         x2 = x.max(dim=-1, keepdim=False)[0]  # _       (B,64,N,k) -> (B,64,N)
 
         x = torch.cat((x1, x2), dim=1)  # _             (B,64,N)*2 -> (B,128,N)
+        '''
 
         x = x.permute(0, 2, 1)  # _                     (B,128,N) -> (B,N,128)
         x1 = self.sa1(x)  # _                           (B,N,128) -> (B,N,128)
