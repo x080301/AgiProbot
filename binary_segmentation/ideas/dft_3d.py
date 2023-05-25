@@ -120,7 +120,7 @@ class BinarySegmentation:
 
     def count_point_num(self):
         import matplotlib.pyplot as plt
-        
+
         self.init_training()
 
         num_points_in_d = None
