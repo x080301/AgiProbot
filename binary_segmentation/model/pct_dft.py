@@ -105,7 +105,7 @@ class InputEmbedding(nn.Module):
 
         self.gaussian_kernel, self.gaussian_padding = get_gaussian_kernel(kernel_size=args.gaussion.kernel_size,
                                                                           sigma=args.gaussion.sigma)
-        self.gaussian_kernel = torch.from_numpy(self.gaussian_kernel).unsqueeze(0).unsqueeze(0).float().cuda()
+        self.gaussian_kernel = torch.from_numpy(self.gaussian_kernel).unsqueeze(0).unsqueeze(0).float()
 
         # local_feature
         self.conv1 = nn.Conv3d(1, 8, kernel_size=(3, 3, 3))
@@ -143,7 +143,7 @@ class InputEmbedding(nn.Module):
         # _                                                                 (B,N,9,9,9) -> (B*N,9,9,9)
 
         # Gaussian Blur
-        x = F.conv3d(x, weight=self.gaussian_kernel, padding=self.gaussian_padding, stride=1)
+        x = F.conv3d(x, weight=self.gaussian_kernel.cuda(), padding=self.gaussian_padding, stride=1)
         # _                                                                 (B*N,1,9,9,9) -> (B*N,1,9,9,9)
         x = F.leaky_relu(self.bn1(self.conv1(x)), negative_slope=0.2)  # _  (B*N,1,9,9,9) -> (B*N,8,7,7,7)
         x = F.leaky_relu(self.bn2(self.conv2(x)), negative_slope=0.2)  # _  (B*N,8,7,7,7) -> (B*N,64,3,3,3)
