@@ -10,6 +10,7 @@ from utilities.util import *
 from torch.autograd import Variable
 import torch.nn.init as init
 import math
+import cv2
 
 from ideas.dft_3d import find_neighbor_in_d
 
@@ -72,15 +73,42 @@ def get_neighbors(x, k=20):
     return feature
 
 
+def get_gaussian_kernel(kernel_size=3, sigma=1):
+    # 使用cv2.getGaussianKernel生成高斯卷积核
+    kernel_1_dimension = cv2.getGaussianKernel(kernel_size, sigma).flatten()
+    # print(type(kernel))
+    # print(kernel.shape)
+    # print(kernel_1_dimension)
+    kernel_2_dimension = np.outer(kernel_1_dimension, kernel_1_dimension)  # 将一维核扩展为二维
+    # print(kernel_2_dimension)
+
+    # 将二维张量重复拓展为三维
+    kernel_3_dimension = np.expand_dims(kernel_2_dimension, axis=0)  # 在第0维度添加一个维度
+    kernel_3_dimension = np.repeat(kernel_3_dimension, kernel_size, axis=0)  # 沿着第0维度进行重复
+
+    # 在通道维度上分别乘上 x、y、z
+    kernel_3_dimension = kernel_3_dimension * np.array(kernel_1_dimension)[:, np.newaxis, np.newaxis]
+
+    # 打印结果
+    # print(kernel_3_dimension)
+    padding = (kernel_size - 1) // 2
+
+    return kernel_3_dimension, padding
+
+
 class InputEmbedding(nn.Module):
-    def __init__(self, input_channels, output_channels, fft=True):
+    def __init__(self, input_channels, output_channels, args, fft=True):
         super(InputEmbedding, self).__init__()
 
         self.output_channels = output_channels
         self.fft = fft
 
+        self.gaussian_kernel, self.gaussian_padding = get_gaussian_kernel(kernel_size=args.gaussion.kernel_size,
+                                                                          sigma=args.gaussion.sigma)
+        self.gaussian_kernel = torch.from_numpy(self.gaussian_kernel).unsqueeze(0).unsqueeze(0).float().cuda()
+
         # local_feature
-        self.conv1 = nn.Conv3d(1, 8, kernel_size=(5, 5, 5))
+        self.conv1 = nn.Conv3d(1, 8, kernel_size=(3, 3, 3))
         self.conv2 = nn.Conv3d(8, 64, kernel_size=(5, 5, 5))
         self.conv3 = nn.Conv3d(64, output_channels, kernel_size=(3, 3, 3))
 
@@ -106,16 +134,19 @@ class InputEmbedding(nn.Module):
         input_x = x
 
         # local_feature
-        discretize_size = 11
-        x = find_neighbor_in_d(input_x, d_square=15, output_size=discretize_size, fft=self.fft)
-        # _                                                                 (B,3,N) -> (B,11,11,11,N)
+        discretize_size = 9
+        x = find_neighbor_in_d(input_x, d_square=10, output_size=discretize_size, fft=self.fft)
+        # _                                                                 (B,3,N) -> (B,9,9,9,N)
         x = x.permute(0, 4, 1, 2, 3).contiguous()
-        # _                                                                 (B,11,11,11,N) -> (B,N,11,11,11)
+        # _                                                                 (B,9,9,9,N) -> (B,N,9,9,9)
         x = x.view(batch_size * num_points, 1, discretize_size, discretize_size, discretize_size)
-        # _                                                                 (B,N,11,11,11) -> (B*N,1,11,11,11)
+        # _                                                                 (B,N,9,9,9) -> (B*N,9,9,9)
 
-        x = F.leaky_relu(self.bn1(self.conv1(x)), negative_slope=0.2)  # _  (B*N,1,11,11,11) -> (B*N,8,7,7,7)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), negative_slope=0.2)  # _  (B*N,8,7,7,7) -> (B*N,16,3,3,3)
+        # Gaussian Blur
+        x = F.conv3d(x, weight=self.gaussian_kernel, padding=self.gaussian_padding, stride=1)
+        # _                                                                 (B*N,1,9,9,9) -> (B*N,1,9,9,9)
+        x = F.leaky_relu(self.bn1(self.conv1(x)), negative_slope=0.2)  # _  (B*N,1,9,9,9) -> (B*N,8,7,7,7)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), negative_slope=0.2)  # _  (B*N,8,7,7,7) -> (B*N,64,3,3,3)
         x = F.leaky_relu(self.bn3(self.conv3(x)), negative_slope=0.2)  # _  (B*N,64,3,3,3) -> (B*N,128,1,1,1)
         x = x.view(batch_size, num_points, self.output_channels)  # _       (B*N,128,1,1,1) -> (B,N,128)
         local_features = x.permute(0, 2, 1)  # _                             (B,N,128) -> (B,128,N)
@@ -275,7 +306,7 @@ class PCTDft(nn.Module):
         self.k = args.k
         fft = True if args.fft == 1 else False
 
-        self.input_embedding = InputEmbedding(input_channels=3, output_channels=128, fft=fft)
+        self.input_embedding = InputEmbedding(input_channels=3, output_channels=128, args=args, fft=fft)
 
         self.stn3d = TransformNet()
         self.s3n = STN3d(3)

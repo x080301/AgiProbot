@@ -6,3 +6,4 @@ print(config_dir)
 binarysegmentation = BinarySegmentation(config_dir=config_dir)
 
 binarysegmentation.train()
+

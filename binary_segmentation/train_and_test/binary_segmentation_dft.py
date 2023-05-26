@@ -10,6 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import cv2
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
 from model.pct_dft import PCTDft

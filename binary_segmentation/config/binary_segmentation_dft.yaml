@@ -5,6 +5,7 @@ DATA:
   num_segmentation_type: 2
   npoints: 2048
   sample_rate: 1
+
 train:
   fft: 1
   random_seed: 0 # 0->random choose a seed
