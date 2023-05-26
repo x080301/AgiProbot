@@ -62,11 +62,12 @@ def find_neighbor_in_d(point_cloud, d_square=15, output_size=11, fft=True):
         (point_cloud.shape[0], output_size, output_size, output_size, point_cloud.shape[2])).cuda()
     points_with_neighbors[b, related_x_digit, related_y_digit, related_z_digit, n2] += 1
 
-    if fft:
+    if fft == 1:
         points_with_neighbors_spectrum = torch.fft.fftn(points_with_neighbors, dim=(1, 2, 3))
         points_with_neighbors_spectrum = torch.fft.fftshift(points_with_neighbors_spectrum, dim=(1, 2, 3))
 
-        points_with_neighbors_spectrum = 20 * torch.log10(torch.abs(points_with_neighbors_spectrum))
+        points_with_neighbors_spectrum = torch.abs(points_with_neighbors_spectrum)
+        # 20 * torch.log10(torch.abs(points_with_neighbors_spectrum))
         # points_with_neighbors_spectrum = 20 * torch.log10(torch.abs(points_with_neighbors_spectrum))
         return points_with_neighbors_spectrum
     else:

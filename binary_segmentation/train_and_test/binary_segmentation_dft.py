@@ -10,7 +10,6 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-import cv2
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
 from model.pct_dft import PCTDft
@@ -21,7 +20,8 @@ from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
 class BinarySegmentation:
     # 'config/binary_segmentation.yaml' should be at the end. It can be changed latter.
-    files_to_save = ['train.py', 'model/pct.py', 'data_preprocess/data_loader.py', 'config/binary_segmentation.yaml']
+    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
+                     'train.py', 'train_line.py']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
 
