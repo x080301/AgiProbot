@@ -7,9 +7,8 @@
 #
 # binarysegmentation.train()
 
-from train_and_test.dpp_trainer import BinarySegmentationDPP
+from train_and_test.dpp_trainer import dpp_train
 
 config_dir = 'config/binary_segmentation.yaml'
 print(config_dir)
-binarySegmentation_dpp = BinarySegmentationDPP(config_dir)
-binarySegmentation_dpp.dpp_train()
+dpp_train(config_dir)
