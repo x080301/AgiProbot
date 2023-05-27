@@ -13,4 +13,4 @@ if __name__ == "__main__":
     config_dir = 'config/binary_segmentation.yaml'
     print(config_dir)
     bsdpp = BinarySegmentationDPP()
-    bsdpp.main()
+    bsdpp.train_dpp()

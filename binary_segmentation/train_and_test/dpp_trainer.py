@@ -6,14 +6,19 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 import platform
+import time
+import datetime
+import shutil
+from torch.utils.tensorboard import SummaryWriter
 
-os.environ['MASTER_ADDR'] = 'localhost'
-os.environ['MASTER_PORT'] = '12355'
 from utilities.config import get_parser
 from model.pct import PCTSeg
 
 
 class BinarySegmentationDPP:
+    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
+                     'train.py', 'train_line.py']
+
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
         # ******************* #
         # load arguments
@@ -21,6 +26,11 @@ class BinarySegmentationDPP:
         self.config_dir = config_dir
         self.args = get_parser(config_dir=self.config_dir)
         print("use", torch.cuda.device_count(), "GPUs for training")
+
+        if self.args.random_seed == 0:
+            self.random_seed = int(time.time())
+        else:
+            self.random_seed = self.args.train.random_seed
 
         # ******************* #
         # local or server?
@@ -31,12 +41,55 @@ class BinarySegmentationDPP:
             self.args.npoints = 1024
             self.args.sample_rate = 1.
             self.args.ddp.gpus = 1
+            self.data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+            # 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy'
+        else:
+            self.data_set_direction = self.args.data_dir
 
-    def example(self, rank, world_size):
+        # ******************* #
+        # make directions
+        # ******************* #
+        if self.is_local:
+            direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+        else:
+            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + \
+                        datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+        if not os.path.exists(direction + '/checkpoints'):
+            os.makedirs(direction + '/checkpoints')
+        if not os.path.exists(direction + '/train_log'):
+            os.makedirs(direction + '/train_log')
+        if not os.path.exists(direction + '/tensorboard_log'):
+            os.makedirs(direction + '/tensorboard_log')
+        self.checkpoints_direction = direction + '/checkpoints/'
+
+        # ******************* #
+        # save mode and parameters
+        # ******************* #
+        for file_name in self.files_to_save:
+            if '.' in file_name:
+                shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+            else:
+                shutil.copytree(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+
+        with open(direction + '/train_log/' + 'random_seed_' + str(self.random_seed) + '.txt', 'w') as f:
+            f.write('')
+
+        self.save_direction = direction
+
+        # ******************* #
+        # dpp
+        # ******************* #
+        os.environ['MASTER_ADDR'] = 'localhost'
+        os.environ['MASTER_PORT'] = '12355'
+
+    def train(self, rank, world_size):
         torch.manual_seed(0)
         # 初始化
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+        if rank == 0:
+            self.log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+
         # 创建模型
         model = nn.Linear(10, 10).to(rank)
         # 放入DDP
@@ -51,9 +104,9 @@ class BinarySegmentationDPP:
             loss_fn(outputs, labels).backward()
             optimizer.step()
 
-    def main(self):
+    def train_dpp(self):
         world_size = torch.cuda.device_count()
-        mp.spawn(self.example,
+        mp.spawn(self.train,
                  args=(world_size,),
                  nprocs=world_size,
                  join=True)
