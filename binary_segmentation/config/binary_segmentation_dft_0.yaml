@@ -17,7 +17,7 @@ train:
     gpus: 2 # num gpus per node
     world_size: 2 # nodes×gpus
   titel: 'binary_segmentation_syn'
-  model: 'pct'
+  model: 'pct_dft'
   train_batch_size: 8
   training: 1
   finetune: 0

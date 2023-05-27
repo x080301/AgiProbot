@@ -14,7 +14,7 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
-from model.pct import PCT_semseg
+from model.pct import PCTSeg
 from utilities import util
 from utilities.config import get_parser
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
@@ -87,7 +87,7 @@ class BinarySegmentation:
         # ******************* #
         # load ML model
         # ******************* #
-        self.model = PCT_semseg(self.args).cuda(gpu)
+        self.model = PCTSeg(self.args).cuda(gpu)
         self.model = nn.parallel.DistributedDataParallel(self.model, device_ids=[gpu])
         self.model = nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
         # self.model = nn.DataParallel(self.model)

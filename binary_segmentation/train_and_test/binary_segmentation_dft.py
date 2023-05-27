@@ -69,9 +69,12 @@ class BinarySegmentation:
         # ******************* #
         # save mode and parameters
         # ******************* #
-        self.files_to_save[-1] = self.config_dir
+        # self.files_to_save[-1] = self.config_dir
         for file_name in self.files_to_save:
-            shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+            if '.' in file_name:
+                shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+            else:
+                shutil.copytree(file_name, direction + '/train_log/' + file_name.split('/')[-1])
         self.writer = SummaryWriter(direction + '/tensorboard_log')
 
         # ******************* #

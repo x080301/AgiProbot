@@ -1,9 +1,0 @@
-from train_and_test.binary_segmentation_dft import BinarySegmentation
-
-
-config_dir = 'config/binary_segmentation_dft_0.yaml'
-print(config_dir)
-binarysegmentation = BinarySegmentation(config_dir=config_dir)
-
-binarysegmentation.train()
-

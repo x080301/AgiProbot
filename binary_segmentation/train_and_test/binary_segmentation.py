@@ -12,7 +12,7 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
-from model.pct import PCT_semseg
+from model.pct import PCTSeg
 from utilities import util
 from utilities.config import get_parser
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
@@ -20,7 +20,8 @@ from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
 class BinarySegmentation:
     # 'config/binary_segmentation.yaml' should be at the end. It can be changed latter.
-    files_to_save = ['train.py', 'model/pct.py', 'data_preprocess/data_loader.py', 'config/binary_segmentation.yaml']
+    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
+                     'train.py', 'train_line.py']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
 
@@ -44,7 +45,7 @@ class BinarySegmentation:
         # ******************* #
         # load ML model
         # ******************* #
-        self.model = PCT_semseg(self.args).to(self.device)
+        self.model = PCTSeg(self.args).to(self.device)
         self.model = nn.DataParallel(self.model)
         print("use", torch.cuda.device_count(), "GPUs for training")
 
@@ -68,9 +69,11 @@ class BinarySegmentation:
         # ******************* #
         # save mode and parameters
         # ******************* #
-        self.files_to_save[-1] = self.config_dir
         for file_name in self.files_to_save:
-            shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+            if '.' in file_name:
+                shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+            else:
+                shutil.copytree(file_name, direction + '/train_log/' + file_name.split('/')[-1])
         self.writer = SummaryWriter(direction + '/tensorboard_log')
 
         # ******************* #

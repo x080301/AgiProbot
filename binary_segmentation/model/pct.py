@@ -18,11 +18,9 @@ def knn(x, k):
     Return:
         idx: sample index data, [B, N, K]
     """
-    print(x.shape)
     inner = -2 * torch.matmul(x.transpose(2, 1), x)
     xx = torch.sum(x ** 2, dim=1, keepdim=True)
     pairwise_distance = -xx - inner - xx.transpose(2, 1)  # (B,N,N)
-    # print(pairwise_distance)
 
     idx = pairwise_distance.topk(k=k, dim=-1)[1]  # (batch_size, num_points, k)
 
@@ -155,9 +153,9 @@ class STN3d(nn.Module):
         return x
 
 
-class PCT_semseg(nn.Module):
+class PCTSeg(nn.Module):
     def __init__(self, args):
-        super(PCT_semseg, self).__init__()
+        super(PCTSeg, self).__init__()
         self.args = args
         self.k = args.k
 

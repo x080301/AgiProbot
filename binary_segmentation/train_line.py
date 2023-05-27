@@ -12,5 +12,7 @@ while keep_training:
             keep_training = True
             with open('train_line' + '/' + txt_file_name) as f:
                 executable_str = f.read()
-
-            exec(executable_str)
+            try:
+                exec(executable_str)
+            except Exception:
+                pass
