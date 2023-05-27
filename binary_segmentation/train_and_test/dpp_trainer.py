@@ -97,10 +97,11 @@ os.environ['MASTER_PORT'] = '12355'
 
 def example(rank, world_size):
     # 初始化
+    torch.manual_seed(100)
     dist.init_process_group(backend='gloo', rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
     # 创建模型
-    model = nn.Linear(10, 10).to(rank)
-    # 放入DDP
+    model = nn.Linear(10, 10).cuda(rank)
     ddp_model = DDP(model, device_ids=[rank])
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
