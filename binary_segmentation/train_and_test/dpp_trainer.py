@@ -231,13 +231,16 @@ class BinarySegmentationDPP:
         if rank == 0:
             print('train %d epochs' % (end_epoch - start_epoch))
         for epoch in range(start_epoch, end_epoch):
+
             # ******************* #
             # train
             # ******************* #
-            print('-----train-----')
+            if rank == 0:
+                print('-----train-----')
             train_sampler.set_epoch(epoch)
             model = model.train()
-            for i, (points, target) in enumerate(train_loader):
+            for i, (points, target) in tqdm(enumerate(train_loader)):
+
                 # ******************* #
                 # forwards
                 # ******************* #
@@ -284,14 +287,16 @@ class BinarySegmentationDPP:
             elif self.args.scheduler == 'cos_warmupLR':
                 # print(self.opt.param_groups[0]['lr'])
                 scheduler.step()
+
             # ******************* #
             # valid
             # ******************* #
-            print('-----valid-----')
+            if rank == 0:
+                print('-----valid-----')
             with torch.no_grad():
                 valid_sampler.set_epoch(epoch)
                 model = model.eval()
-                for i, (points, seg) in enumerate(validation_loader):
+                for i, (points, seg) in tqdm(enumerate(validation_loader)):
                     pass
         '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
