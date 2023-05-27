@@ -10,6 +10,7 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import numpy as np
 
 from utilities.config import get_parser
 from model.pct import PCTSeg
@@ -239,6 +240,13 @@ class BinarySegmentationDPP:
                 print('-----train-----')
             train_sampler.set_epoch(epoch)
             model = model.train()
+
+            total_correct = 0
+            total_seen = 0
+            loss_sum = 0
+            total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
+            total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
+
             for i, (points, target) in tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9):
 
                 # ******************* #
@@ -272,9 +280,22 @@ class BinarySegmentationDPP:
                 loss.backward()
                 opt.step()
 
-                for name, param in model.named_parameters():
-                    if param.grad is None:
-                        print(name)
+                # ******************* #
+                # further calculation
+                # ******************* #
+                seg_pred = seg_pred.contiguous().view(-1,
+                                                      self.args.num_segmentation_type)  # (batch_size*num_points , num_class)
+                pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                correct = np.sum(
+                    pred_choice == batch_label)  # when a np arraies have same shape, a==b means in conrrespondending position it equals to one,when they are identical
+                total_correct += correct
+                total_seen += (batch_size * self.args.npoints)
+                loss_sum += loss
+                for l in range(self.args.num_segmentation_type):
+                    total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
+                    total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
+
+            
 
             if self.args.scheduler == 'cos':
                 scheduler.step()
