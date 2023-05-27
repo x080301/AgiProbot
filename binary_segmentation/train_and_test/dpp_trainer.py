@@ -5,16 +5,34 @@ import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
+import platform
 
 os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12355'
+from utilities.config import get_parser
+from model.pct import PCTSeg
 
 
 class BinarySegmentationDPP:
-    def __init__(self):
-        pass
+    def __init__(self, config_dir='config/binary_segmentation.yaml'):
+        # ******************* #
+        # load arguments
+        # ******************* #
+        self.config_dir = config_dir
+        self.args = get_parser(config_dir=self.config_dir)
+        print("use", torch.cuda.device_count(), "GPUs for training")
 
-    def example(self,rank, world_size):
+        # ******************* #
+        # local or server?
+        # ******************* #
+        system_type = platform.system().lower()  # 'windows' or 'linux'
+        self.is_local = True if system_type == 'windows' else False
+        if self.is_local:
+            self.args.npoints = 1024
+            self.args.sample_rate = 1.
+            self.args.ddp.gpus = 1
+
+    def example(self, rank, world_size):
         # 初始化
         dist.init_process_group("gloo", rank=rank, world_size=world_size)
         # 创建模型
