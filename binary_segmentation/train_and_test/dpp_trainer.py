@@ -16,6 +16,7 @@ from utilities.config import get_parser
 from model.pct import PCTSeg
 from data_preprocess.data_loader import MotorDataset
 
+
 class BinarySegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
                      'train.py', 'train_line.py']
@@ -82,45 +83,20 @@ class BinarySegmentationDPP:
         # ******************* #
         print("start loading training data ...")
 
-        train_dataset = MotorDataset(mode='train',
-                                     data_dir=self.data_set_direction,
-                                     num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                     test_area='Validation', sample_rate=self.args.sample_rate)
-        '''self.train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
-                                                                             num_replicas=self.args.ddp.world_size,
-                                                                             rank=rank
-                                                                             )'''
+        self.train_dataset = MotorDataset(mode='train',
+                                          data_dir=self.data_set_direction,
+                                          num_class=self.args.num_segmentation_type, num_points=self.args.npoints,
+                                          # 4096
+                                          test_area='Validation', sample_rate=self.args.sample_rate)
         print("start loading test data ...")
-        valid_dataset = MotorDataset(mode='valid',
-                                     data_dir=self.data_set_direction,
-                                     num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
-                                     test_area='Validation', sample_rate=1.0)
-        '''self.valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset,
-                                                                             num_replicas=self.args.ddp.world_size,
-                                                                             rank=rank
-                                                                             )'''
+        self.valid_dataset = MotorDataset(mode='valid',
+                                          data_dir=self.data_set_direction,
+                                          num_class=self.args.num_segmentation_type, num_points=self.args.npoints,
+                                          # 4096
+                                          test_area='Validation', sample_rate=1.0)
+        ''''''
 
-        '''# para_workers = 0 if self.is_local else 8
-        self.train_loader = DataLoader(train_dataset,
-                                       # num_workers=para_workers,
-                                       batch_size=self.args.train_batch_size,
-                                       shuffle=True,
-                                       drop_last=True,
-                                       # worker_init_fn=lambda x: np.random.seed(x + int(time.time())),  # TODO 是否有影响？
-                                       pin_memory=True,
-                                       sampler=self.train_sampler
-                                       )
-        self.num_train_batch = len(self.train_loader)
-
-        self.validation_loader = DataLoader(valid_dataset,
-                                            # num_workers=para_workers,
-                                            pin_memory=True,
-                                            sampler=self.valid_sampler,
-                                            batch_size=self.args.test_batch_size,
-                                            shuffle=True,
-                                            drop_last=True
-                                            )
-        self.num_valid_batch = len(self.validation_loader)'''
+        ''''''
 
         # ******************* #
         # dpp
@@ -134,7 +110,39 @@ class BinarySegmentationDPP:
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
         if rank == 0:
-            self.log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+            log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+
+        # load dataset
+        train_sampler = torch.utils.data.distributed.DistributedSampler(self.train_dataset,
+                                                                        num_replicas=self.args.ddp.world_size,
+                                                                        rank=rank
+                                                                        )
+        valid_sampler = torch.utils.data.distributed.DistributedSampler(self.valid_dataset,
+                                                                        num_replicas=self.args.ddp.world_size,
+                                                                        rank=rank
+                                                                        )
+
+        para_workers = 0 if self.is_local else 8
+        train_loader = DataLoader(self.train_dataset,
+                                  num_workers=para_workers,
+                                  batch_size=self.args.train_batch_size,
+                                  shuffle=False,
+                                  drop_last=True,
+                                  # worker_init_fn=lambda x: np.random.seed(x + int(time.time())),  # TODO 是否有影响？
+                                  pin_memory=True,
+                                  sampler=train_sampler
+                                  )
+        num_train_batch = len(train_loader)
+
+        validation_loader = DataLoader(self.valid_dataset,
+                                       num_workers=para_workers,
+                                       pin_memory=True,
+                                       sampler=valid_sampler,
+                                       batch_size=self.args.test_batch_size,
+                                       shuffle=False,
+                                       drop_last=True
+                                       )
+        num_valid_batch = len(validation_loader)
 
         # 创建模型
         model = nn.Linear(10, 10).to(rank)
