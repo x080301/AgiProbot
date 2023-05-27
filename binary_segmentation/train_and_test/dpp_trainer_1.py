@@ -1,73 +1,42 @@
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
 import os
-from torch.utils.data.distributed import DistributedSampler
+import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+import torch.nn as nn
+import torch.optim as optim
+from torch.nn.parallel import DistributedDataParallel as DDP
 
-# 1) 初始化
-torch.distributed.init_process_group(backend="nccl")
-
-input_size = 5
-output_size = 2
-batch_size = 30
-data_size = 90
-
-# 2） 配置每个进程的gpu
-local_rank = torch.distributed.get_rank()
-torch.cuda.set_device(local_rank)
-device = torch.device("cuda", local_rank)
+os.environ['MASTER_ADDR'] = 'localhost'
+os.environ['MASTER_PORT'] = '12355'
 
 
-class RandomDataset(Dataset):
-    def __init__(self, size, length):
-        self.len = length
-        self.data = torch.randn(length, size).to('cuda')
+def example(rank, world_size):
+    # 初始化
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    # 创建模型
+    model = nn.Linear(10, 10).to(rank)
+    # 放入DDP
+    ddp_model = DDP(model, device_ids=[rank])
+    ddp_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(ddp_model)
 
-    def __getitem__(self, index):
-        return self.data[index]
-
-    def __len__(self):
-        return self.len
-
-
-dataset = RandomDataset(input_size, data_size)
-# 3）使用DistributedSampler
-rand_loader = DataLoader(dataset=dataset,
-                         batch_size=batch_size,
-                         sampler=DistributedSampler(dataset))
-
-
-class Model(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(Model, self).__init__()
-        self.fc = nn.Linear(input_size, output_size)
-
-    def forward(self, input):
-        output = self.fc(input)
-        print("  In Model: input size", input.size(),
-              "output size", output.size())
-        return output
+    loss_fn = nn.MSELoss()
+    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+    # 进行前向后向计算
+    for i in range(10):
+        outputs = ddp_model(torch.randn(20, 10).to(rank))
+        labels = torch.randn(20, 10).to(rank)
+        loss_fn(outputs, labels).backward()
+        optimizer.step()
+    print(rank)
 
 
-model = Model(input_size, output_size)
+def main():
+    world_size = 1
+    mp.spawn(example,
+             args=(world_size,),
+             nprocs=world_size,
+             join=True)
 
-# 4) 封装之前要把模型移到对应的gpu
-model.to(device)
 
-if torch.cuda.device_count() > 1:
-    print("Let's use", torch.cuda.device_count(), "GPUs!")
-    # 5) 封装
-    model = torch.nn.parallel.DistributedDataParallel(model,
-                                                      device_ids=[local_rank],
-                                                      output_device=local_rank)
-
-for data in rand_loader:
-    if torch.cuda.is_available():
-        input_var = data
-    else:
-        input_var = data
-
-    output = model(input_var)
-
-    print("Outside: input size", input_var.size(), "output_size", output.size())
+if __name__ == "__main__":
+    main()
