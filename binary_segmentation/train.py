@@ -7,9 +7,10 @@
 #
 # binarysegmentation.train()
 
-from train_and_test.dpp_trainer import main
+from train_and_test.dpp_trainer import BinarySegmentationDPP
 
 if __name__ == "__main__":
     config_dir = 'config/binary_segmentation.yaml'
     print(config_dir)
-    main()
+    bsdpp = BinarySegmentationDPP()
+    bsdpp.main()
