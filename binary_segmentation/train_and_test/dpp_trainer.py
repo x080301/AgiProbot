@@ -27,10 +27,11 @@ def example(rank, world_size):
         labels = torch.randn(20, 10).to(rank)
         loss_fn(outputs, labels).backward()
         optimizer.step()
+    print(rank)
 
 
 def main():
-    world_size = 1
+    world_size = 2
     mp.spawn(example,
              args=(world_size,),
              nprocs=world_size,
