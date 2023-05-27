@@ -3,8 +3,6 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn as nn
-import torch.optim as optim
-from torch.nn.parallel import DistributedDataParallel as DDP
 import platform
 import time
 import datetime
@@ -94,9 +92,7 @@ class BinarySegmentationDPP:
                                           num_class=self.args.num_segmentation_type, num_points=self.args.npoints,
                                           # 4096
                                           test_area='Validation', sample_rate=1.0)
-        ''''''
 
-        ''''''
 
         # ******************* #
         # dpp
@@ -105,14 +101,32 @@ class BinarySegmentationDPP:
         os.environ['MASTER_PORT'] = '12355'
 
     def train(self, rank, world_size):
-        torch.manual_seed(0)
-        # 初始化
+        # ******************* #
+        # dpp
+        # ******************* #
+        torch.manual_seed(self.random_seed)
+
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+        torch.cuda.set_device(rank)
+
         if rank == 0:
             log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+            # 创建模型
 
+        # ******************* #
+        # load ML model
+        # ******************* #
+        model = PCTSeg(self.args).cuda(rank)
+        model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
+        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+
+        # self.model = nn.DataParallel(self.model)
+        print("use", torch.cuda.device_count(), "GPUs for training")
+
+        # ******************* #
         # load dataset
+        # ******************* #
         train_sampler = torch.utils.data.distributed.DistributedSampler(self.train_dataset,
                                                                         num_replicas=self.args.ddp.world_size,
                                                                         rank=rank
@@ -128,7 +142,6 @@ class BinarySegmentationDPP:
                                   batch_size=self.args.train_batch_size,
                                   shuffle=False,
                                   drop_last=True,
-                                  # worker_init_fn=lambda x: np.random.seed(x + int(time.time())),  # TODO 是否有影响？
                                   pin_memory=True,
                                   sampler=train_sampler
                                   )
@@ -144,19 +157,16 @@ class BinarySegmentationDPP:
                                        )
         num_valid_batch = len(validation_loader)
 
-        # 创建模型
-        model = nn.Linear(10, 10).to(rank)
         # 放入DDP
-        ddp_model = DDP(model, device_ids=[rank])
-        loss_fn = nn.MSELoss()
-        optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+        '''loss_fn = nn.MSELoss()
+        optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)'''
         # 进行前向后向计算
         print(rank)
-        for i in range(10):
+        '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
             labels = torch.randn(20, 10).to(rank)
             loss_fn(outputs, labels).backward()
-            optimizer.step()
+            optimizer.step()'''
 
     def train_dpp(self):
         world_size = torch.cuda.device_count()
