@@ -11,4 +11,4 @@ from train_and_test.dpp_trainer import main
 
 config_dir = 'config/binary_segmentation.yaml'
 print(config_dir)
-main()
+# main()

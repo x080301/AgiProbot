@@ -20,7 +20,7 @@ def example(rank, world_size):
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
     # 进行前向后向计算
-    for i in range(1000):
+    for i in range(10):
         outputs = ddp_model(torch.randn(20, 10).to(rank))
         labels = torch.randn(20, 10).to(rank)
         loss_fn(outputs, labels).backward()
