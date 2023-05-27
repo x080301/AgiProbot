@@ -237,15 +237,16 @@ class BinarySegmentationDPP:
             # train
             # ******************* #
             print('-----train-----')
-            for i, (points, target) in tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9):
+            train_sampler.set_epoch(epoch)
+            for i, (points, target) in enumerate(train_loader):
                 pass
 
             # ******************* #
             # valid
             # ******************* #
             print('-----valid-----')
-            for i, (points, seg) in tqdm(enumerate(validation_loader), total=len(validation_loader),
-                                         smoothing=0.9):
+            valid_sampler.set_epoch(epoch)
+            for i, (points, seg) in enumerate(validation_loader):
                 pass
         '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
@@ -255,10 +256,7 @@ class BinarySegmentationDPP:
 
     def train_dpp(self):
         world_size = torch.cuda.device_count()
-        mp.spawn(self.train,
-                 args=(world_size,),
-                 nprocs=world_size,
-                 join=True)
+        mp.spawn(self.train, args=(world_size,), nprocs=world_size, join=True)
 
 
 if __name__ == "__main__":
