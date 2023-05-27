@@ -9,10 +9,13 @@ import datetime
 import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from utilities.config import get_parser
 from model.pct import PCTSeg
 from data_preprocess.data_loader import MotorDataset
+from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
+from utilities import util
 
 
 class BinarySegmentationDPP:
@@ -93,7 +96,6 @@ class BinarySegmentationDPP:
                                           # 4096
                                           test_area='Validation', sample_rate=1.0)
 
-
         # ******************* #
         # dpp
         # ******************* #
@@ -112,7 +114,6 @@ class BinarySegmentationDPP:
 
         if rank == 0:
             log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
-            # 创建模型
 
         # ******************* #
         # load ML model
@@ -157,11 +158,95 @@ class BinarySegmentationDPP:
                                        )
         num_valid_batch = len(validation_loader)
 
-        # 放入DDP
-        '''loss_fn = nn.MSELoss()
-        optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)'''
-        # 进行前向后向计算
+        # ******************* #
+        # opt
+        # ******************* #
+        if self.args.use_sgd:
+            opt = torch.optim.SGD([{'params': model.parameters(), 'initial_lr': self.args.lr}],
+                                  lr=self.args.lr,
+                                  momentum=self.args.momentum, weight_decay=1e-4)
+        else:
+            opt = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
+
+        if self.args.scheduler == 'cos':
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.args.epochs,
+                                                                   eta_min=self.args.end_lr)
+        elif self.args.scheduler == 'step':
+            scheduler = torch.optim.lr_scheduler.StepLR(opt, 20, 0.1, self.args.epochs)
+        elif self.args.scheduler == 'cos_warmupLR':
+            scheduler = CosineAnnealingWithWarmupLR(opt,
+                                                    T_max=self.args.epochs - self.args.cos_warmupLR.warmup_epochs,
+                                                    eta_min=self.args.end_lr,
+                                                    warmup_init_lr=self.args.end_lr,
+                                                    warmup_epochs=self.args.cos_warmupLR.warmup_epochs)
+
+        else:
+            print('no scheduler called' + self.args.scheduler)
+            exit(-1)
+
+        # ******************* #
+        # if fine tune is true, the the best.pth will be loaded first
+        # ******************* #
+        if self.args.finetune:
+            if os.path.exists('best_m.pth'):
+                checkpoint = torch.load('best_m.pth')
+                print('Use pretrained model for fine tune')
+            else:
+                print('no exiting pretrained model')
+                exit(-1)
+
+            start_epoch = checkpoint['epoch']
+
+            end_epoch = start_epoch
+            end_epoch += 2 if self.is_local else self.args.epochs
+
+            if 'mIoU' in checkpoint:
+                print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
+            else:
+                print('train begin with %dth epoch' % start_epoch)
+
+            model.load_state_dict(checkpoint['model_state_dict'])
+
+        else:
+            start_epoch = 0
+            end_epoch = 2 if self.is_local else self.args.epochs
+
+        # ******************* #
+        # loss function and weights
+        # ******************* #
+        criterion = util.cal_loss
+
+        weights = torch.Tensor(self.train_dataset.label_weights).cuda()
+        # print(weights)
+        percentage = torch.Tensor(self.train_dataset.persentage_each_type).cuda()
+        scale = weights * percentage
+        scale = 1 / scale.sum()
+        # print(scale)
+        weights *= scale
+        # print(weights)
+        if self.args.use_class_weight == 0:
+            for i in range(self.args.num_segmentation_type):
+                weights[i] = 1
+
         print(rank)
+
+        if rank == 0:
+            print('train %d epochs' % (end_epoch - start_epoch))
+        for epoch in range(start_epoch, end_epoch):
+            # ******************* #
+            # train
+            # ******************* #
+            print('-----train-----')
+            for i, (points, target) in tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9):
+                pass
+
+            # ******************* #
+            # valid
+            # ******************* #
+            print('-----valid-----')
+            for i, (points, seg) in tqdm(enumerate(validation_loader), total=len(validation_loader),
+                                         smoothing=0.9):
+                pass
         '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
             labels = torch.randn(20, 10).to(rank)
