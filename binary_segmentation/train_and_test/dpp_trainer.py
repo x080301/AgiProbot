@@ -5,6 +5,20 @@ import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
+import datetime
+import platform
+import shutil
+import time
+import numpy as np
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+
+from data_preprocess.data_loader import MotorDataset, MotorDatasetTest
+from model.pct import PCTSeg
+from utilities import util
+from utilities.config import get_parser
+from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
 os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12355'
@@ -15,7 +29,7 @@ class BinarySegmentationDPP:
                      'train.py', 'train_line.py']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
-        '''# ******************* #
+        # ******************* #
         # load arguments
         # ******************* #
         self.config_dir = config_dir
@@ -36,7 +50,7 @@ class BinarySegmentationDPP:
         # load ML model
         # ******************* #
         self.model = PCTSeg(self.args).to(self.device)
-        self.model = nn.DataParallel(self.model)'''
+        self.model = nn.DataParallel(self.model)
         print("use", torch.cuda.device_count(), "GPUs for training")
 
     def example(self, rank, world_size):
