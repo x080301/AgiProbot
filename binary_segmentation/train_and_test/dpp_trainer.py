@@ -239,7 +239,7 @@ class BinarySegmentationDPP:
                 print('-----train-----')
             train_sampler.set_epoch(epoch)
             model = model.train()
-            for i, (points, target) in tqdm(enumerate(train_loader)):
+            for i, (points, target) in tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9):
 
                 # ******************* #
                 # forwards
@@ -296,7 +296,7 @@ class BinarySegmentationDPP:
             with torch.no_grad():
                 valid_sampler.set_epoch(epoch)
                 model = model.eval()
-                for i, (points, seg) in tqdm(enumerate(validation_loader)):
+                for i, (points, seg) in enumerate(validation_loader):
                     pass
         '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
