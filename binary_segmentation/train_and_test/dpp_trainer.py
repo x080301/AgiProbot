@@ -10,10 +10,11 @@ import time
 import datetime
 import shutil
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader
 
 from utilities.config import get_parser
 from model.pct import PCTSeg
-
+from data_preprocess.data_loader import MotorDataset
 
 class BinarySegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
@@ -75,6 +76,51 @@ class BinarySegmentationDPP:
             f.write('')
 
         self.save_direction = direction
+
+        # ******************* #
+        # load data set
+        # ******************* #
+        print("start loading training data ...")
+
+        train_dataset = MotorDataset(mode='train',
+                                     data_dir=self.data_set_direction,
+                                     num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
+                                     test_area='Validation', sample_rate=self.args.sample_rate)
+        '''self.train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
+                                                                             num_replicas=self.args.ddp.world_size,
+                                                                             rank=rank
+                                                                             )'''
+        print("start loading test data ...")
+        valid_dataset = MotorDataset(mode='valid',
+                                     data_dir=self.data_set_direction,
+                                     num_class=self.args.num_segmentation_type, num_points=self.args.npoints,  # 4096
+                                     test_area='Validation', sample_rate=1.0)
+        '''self.valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset,
+                                                                             num_replicas=self.args.ddp.world_size,
+                                                                             rank=rank
+                                                                             )'''
+
+        '''# para_workers = 0 if self.is_local else 8
+        self.train_loader = DataLoader(train_dataset,
+                                       # num_workers=para_workers,
+                                       batch_size=self.args.train_batch_size,
+                                       shuffle=True,
+                                       drop_last=True,
+                                       # worker_init_fn=lambda x: np.random.seed(x + int(time.time())),  # TODO 是否有影响？
+                                       pin_memory=True,
+                                       sampler=self.train_sampler
+                                       )
+        self.num_train_batch = len(self.train_loader)
+
+        self.validation_loader = DataLoader(valid_dataset,
+                                            # num_workers=para_workers,
+                                            pin_memory=True,
+                                            sampler=self.valid_sampler,
+                                            batch_size=self.args.test_batch_size,
+                                            shuffle=True,
+                                            drop_last=True
+                                            )
+        self.num_valid_batch = len(self.validation_loader)'''
 
         # ******************* #
         # dpp
