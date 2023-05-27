@@ -33,7 +33,8 @@ def example(rank, world_size):
 
 
 def main():
-    world_size = 1
+    world_size = torch.cuda.device_count()
+    print("Let's use", world_size, "GPUs!")
     mp.spawn(example,
              args=(world_size,),
              nprocs=world_size,
