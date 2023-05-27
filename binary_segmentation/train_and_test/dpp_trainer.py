@@ -20,13 +20,14 @@ from utilities import util
 from utilities.config import get_parser
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 
-os.environ['MASTER_ADDR'] = 'localhost'
-os.environ['MASTER_PORT'] = '12355'
+
 
 
 class BinarySegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
                      'train.py', 'train_line.py']
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
         '''# ******************* #
