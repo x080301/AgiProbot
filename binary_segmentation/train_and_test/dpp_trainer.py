@@ -29,7 +29,7 @@ class BinarySegmentationDPP:
                      'train.py', 'train_line.py']
 
     def __init__(self, config_dir='config/binary_segmentation.yaml'):
-        # ******************* #
+        '''# ******************* #
         # load arguments
         # ******************* #
         self.config_dir = config_dir
@@ -50,7 +50,7 @@ class BinarySegmentationDPP:
         # load ML model
         # ******************* #
         self.model = PCTSeg(self.args).to(self.device)
-        self.model = nn.DataParallel(self.model)
+        self.model = nn.DataParallel(self.model)'''
         print("use", torch.cuda.device_count(), "GPUs for training")
 
     def example(self, rank, world_size):
