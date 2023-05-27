@@ -33,8 +33,10 @@ class BinarySegmentationDPP:
             self.args.ddp.gpus = 1
 
     def example(self, rank, world_size):
+        torch.manual_seed(0)
         # 初始化
-        dist.init_process_group("gloo", rank=rank, world_size=world_size)
+        backend = 'gloo' if self.is_local else 'nccl'
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
         # 创建模型
         model = nn.Linear(10, 10).to(rank)
         # 放入DDP
