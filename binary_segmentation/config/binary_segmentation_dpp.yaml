@@ -29,7 +29,7 @@ train:
   momentum: 0.9
   epochs: 200
 
-  scheduler: 'cos' # cos, step, cos_warmupLR
+  scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
     warmup_epochs: 10  # number of epochs the warmup process takes
   no_cuda: 0

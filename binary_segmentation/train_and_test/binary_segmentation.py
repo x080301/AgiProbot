@@ -241,11 +241,11 @@ class BinarySegmentation:
         mIoU = np.mean(IoUs)
 
         self.writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
-        self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
-        self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
-        self.writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
         self.writer.add_scalar('IoU_background/train_IoU_background', IoUs[0], epoch)
         self.writer.add_scalar('IoU_motor/train_IoU_motor', IoUs[1], epoch)
+        self.writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
+        self.writer.add_scalar('loss/train_loss', loss_sum / self.num_train_batch, epoch)
+        self.writer.add_scalar('point_acc/train_point_acc', total_correct / float(total_seen), epoch)
 
         if self.args.scheduler == 'cos':
             self.scheduler.step()

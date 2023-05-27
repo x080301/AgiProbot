@@ -247,7 +247,11 @@ class BinarySegmentationDPP:
             total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
             total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
 
-            for i, (points, target) in tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9):
+            if rank == 0:
+                tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
+            else:
+                tqdm_structure = enumerate(train_loader)
+            for i, (points, target) in tqdm_structure:
 
                 # ******************* #
                 # forwards
@@ -283,11 +287,11 @@ class BinarySegmentationDPP:
                 # ******************* #
                 # further calculation
                 # ******************* #
-                seg_pred = seg_pred.contiguous().view(-1,
-                                                      self.args.num_segmentation_type)  # (batch_size*num_points , num_class)
+                seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
+                # _                                                      (batch_size*num_points , num_class)
                 pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
-                correct = np.sum(
-                    pred_choice == batch_label)  # when a np arraies have same shape, a==b means in conrrespondending position it equals to one,when they are identical
+                correct = np.sum(pred_choice == batch_label)
+                # when a np arraies have same shape, a==b means in conrrespondending position it equals to one,when they are identical
                 total_correct += correct
                 total_seen += (batch_size * self.args.npoints)
                 loss_sum += loss
@@ -295,8 +299,35 @@ class BinarySegmentationDPP:
                     total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
                     total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
 
-            
+            IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
+            mIoU = np.mean(IoUs)
+            torch.distributed.all_reduce(IoUs)
+            torch.distributed.all_reduce(mIoU)
+            IoUs /= float(world_size)
+            mIoU /= float(world_size)
 
+            torch.distributed.all_reduce(loss_sum)
+            loss_sum /= float(world_size)
+            train_loss = loss_sum / num_train_batch
+
+            torch.distributed.all_reduce(total_correct)
+            torch.distributed.all_reduce(total_seen)
+            train_point_acc = total_correct / float(total_seen)
+
+            if rank == 0:
+                log_writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
+                log_writer.add_scalar('IoU_background/train_IoU_background', IoUs[0], epoch)
+                log_writer.add_scalar('IoU_motor/train_IoU_motor', IoUs[1], epoch)
+                log_writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
+                log_writer.add_scalar('loss/train_loss', train_loss, epoch)
+                log_writer.add_scalar('point_acc/train_point_acc', train_point_acc, epoch)
+                print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
+                    epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
+                print('Train mean ioU %.6f' % mIoU)
+
+            # ******************* #
+            # lr step
+            # ******************* #
             if self.args.scheduler == 'cos':
                 scheduler.step()
             elif self.args.scheduler == 'step':
