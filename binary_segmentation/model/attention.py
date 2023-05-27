@@ -14,14 +14,10 @@ class SelfAttentionLayer(nn.Module):
         self.q_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.k_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.v_conv = nn.Conv1d(in_channels, in_channels, 1)
-        self.trans_conv = nn.Conv1d(in_channels, in_channels, 1)
         self.after_norm = nn.BatchNorm1d(in_channels)
         self.act = nn.ReLU()
         self.softmax = nn.Softmax(dim=-1)
 
-        self.feed_forward_cov1 = nn.Conv1d(128, 512, 1)
-        self.relu = nn.ReLU()
-        self.feed_forward_cov2 = nn.Conv1d(512, out_channels, 1)
         self.feed_forward_bn = nn.BatchNorm1d(out_channels)
 
         self.num_heads = num_heads

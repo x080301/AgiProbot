@@ -160,7 +160,6 @@ class PCTSeg(nn.Module):
         self.k = args.k
 
         self.stn3d = TransformNet()
-        self.s3n = STN3d(3)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(64)
@@ -169,8 +168,6 @@ class PCTSeg(nn.Module):
         self.sa2 = SALayerSingleHead(128)
         self.sa3 = SALayerSingleHead(128)
         self.sa4 = SALayerSingleHead(128)
-        self.bnmax11 = nn.BatchNorm1d(64)
-        self.bnmax12 = nn.BatchNorm1d(64)
 
         self.conv1 = nn.Sequential(nn.Conv2d(6, 64, kernel_size=1, bias=False),  # 3*64=384
                                    self.bn1,  # 2*64*2=256
@@ -195,15 +192,7 @@ class PCTSeg(nn.Module):
         self.bn6 = nn.BatchNorm1d(256)
         self.conv6 = nn.Conv1d(512, 256, 1)
         self.conv7 = nn.Conv1d(256, self.args.num_segmentation_type, 1)
-        self.relu = nn.ReLU()
 
-        self.linear1 = nn.Linear(1024 * 2, 512, bias=False)
-        self.bn9 = nn.BatchNorm1d(512)
-        self.dp2 = nn.Dropout(p=args.dropout)
-        self.linear2 = nn.Linear(512, 256)
-        self.bn10 = nn.BatchNorm1d(256)
-        self.dp3 = nn.Dropout(p=args.dropout)
-        self.linear3 = nn.Linear(256, 5)
 
     def forward(self, x):
         num_points = x.size(2)
@@ -242,9 +231,9 @@ class PCTSeg(nn.Module):
         # _                                             (B,1024) -> (B,1024,N)
         x = torch.cat((x, x__), dim=1)
         # _                                             (B,1024,N) + (B,512,N) -> (B,1536,N)
-        x = self.relu(self.bn5(self.conv5(x)))  # _     (B,1536,N) -> (B,512,N)
+        x = F.leaky_relu(self.bn5(self.conv5(x)), negative_slope=0.2)  # _     (B,1536,N) -> (B,512,N)
         x = self.dp5(x)  # _                            (B,512,N) -> (B,512,N)
-        x = self.relu(self.bn6(self.conv6(x)))  # _     (B,512,N) -> (B,256,N)
+        x = F.leaky_relu(self.bn6(self.conv6(x)), negative_slope=0.2)  # _     (B,512,N) -> (B,256,N)
         segmentation_labels = self.conv7(x)  # _        (B,256,N) -> (B,segment_type,N)
 
         return segmentation_labels, transform_matrix

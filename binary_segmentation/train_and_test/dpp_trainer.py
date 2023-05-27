@@ -34,7 +34,6 @@ class BinarySegmentationDPP:
             self.random_seed = int(time.time())
         else:
             self.random_seed = self.args.train.random_seed
-
         # ******************* #
         # local or server?
         # ******************* #
@@ -123,7 +122,6 @@ class BinarySegmentationDPP:
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
         # self.model = nn.DataParallel(self.model)
-        print("use", torch.cuda.device_count(), "GPUs for training")
 
         # ******************* #
         # load dataset
@@ -238,16 +236,63 @@ class BinarySegmentationDPP:
             # ******************* #
             print('-----train-----')
             train_sampler.set_epoch(epoch)
+            model = model.train()
             for i, (points, target) in enumerate(train_loader):
-                pass
+                # ******************* #
+                # forwards
+                # ******************* #
+                points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
+                points = util.normalize_data(points)
 
+                if self.args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
+                    points, _ = util.rotate_per_batch(points, None)
+                else:
+                    points, _ = util.rotate_per_batch(points, None)
+
+                points = points.permute(0, 2, 1).float()
+                batch_size = points.size()[0]
+                opt.zero_grad()
+
+                seg_pred, trans = model(points.float())
+                # print(seg_pred)
+
+                # ******************* #
+                # backwards
+                # ******************* #
+                seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (batch_size,num_points, class_categories)
+
+                batch_label = target.view(-1, 1)[:, 0].cpu().data.numpy()
+                loss = criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),
+                                 weights, using_weight=self.args.use_class_weight)  # a scalar
+
+                # loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+                loss.backward()
+                opt.step()
+
+                for name, param in model.named_parameters():
+                    if param.grad is None:
+                        print(name)
+
+            if self.args.scheduler == 'cos':
+                scheduler.step()
+            elif self.args.scheduler == 'step':
+                if opt.param_groups[0]['lr'] > 1e-5:
+                    scheduler.step()
+                if opt.param_groups[0]['lr'] < 1e-5:
+                    for param_group in self.opt.param_groups:
+                        param_group['lr'] = 1e-5
+            elif self.args.scheduler == 'cos_warmupLR':
+                # print(self.opt.param_groups[0]['lr'])
+                scheduler.step()
             # ******************* #
             # valid
             # ******************* #
             print('-----valid-----')
-            valid_sampler.set_epoch(epoch)
-            for i, (points, seg) in enumerate(validation_loader):
-                pass
+            with torch.no_grad():
+                valid_sampler.set_epoch(epoch)
+                model = model.eval()
+                for i, (points, seg) in enumerate(validation_loader):
+                    pass
         '''for i in range(10):
             outputs = ddp_model(torch.randn(20, 10).to(rank))
             labels = torch.randn(20, 10).to(rank)
@@ -260,4 +305,4 @@ class BinarySegmentationDPP:
 
 
 if __name__ == "__main__":
-    main()
+    pass
