@@ -299,8 +299,8 @@ class BinarySegmentationDPP:
                     total_correct_class__[l] += np.sum((pred_choice == l) & (batch_label == l))
                     total_iou_deno_class__[l] += np.sum(((pred_choice == l) | (batch_label == l)))
 
-            IoUs = np.array(total_correct_class__) / (np.array(total_iou_deno_class__, dtype=np.float64) + 1e-6)
-            mIoU = np.mean(IoUs)
+            IoUs = torch.Tensor(total_correct_class__) / (torch.Tensor(total_iou_deno_class__).float() + 1e-6)
+            mIoU = torch.mean(IoUs)
             torch.distributed.all_reduce(IoUs)
             torch.distributed.all_reduce(mIoU)
             IoUs /= float(world_size)
@@ -310,19 +310,21 @@ class BinarySegmentationDPP:
             loss_sum /= float(world_size)
             train_loss = loss_sum / num_train_batch
 
+            total_correct = torch.tensor(total_correct)
+            total_seen = torch.tensor(total_seen)
             torch.distributed.all_reduce(total_correct)
             torch.distributed.all_reduce(total_seen)
             train_point_acc = total_correct / float(total_seen)
 
             if rank == 0:
-                log_writer.add_scalar('lr', self.opt.param_groups[0]['lr'], epoch)
+                log_writer.add_scalar('lr', opt.param_groups[0]['lr'], epoch)
                 log_writer.add_scalar('IoU_background/train_IoU_background', IoUs[0], epoch)
                 log_writer.add_scalar('IoU_motor/train_IoU_motor', IoUs[1], epoch)
                 log_writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
                 log_writer.add_scalar('loss/train_loss', train_loss, epoch)
                 log_writer.add_scalar('point_acc/train_point_acc', train_point_acc, epoch)
                 print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
-                    epoch, loss_sum / self.num_train_batch, total_correct / float(total_seen)))
+                    epoch, train_loss, train_point_acc))
                 print('Train mean ioU %.6f' % mIoU)
 
             # ******************* #
@@ -346,15 +348,51 @@ class BinarySegmentationDPP:
             if rank == 0:
                 print('-----valid-----')
             with torch.no_grad():
-                valid_sampler.set_epoch(epoch)
+                pass
+                '''valid_sampler.set_epoch(epoch)
                 model = model.eval()
-                for i, (points, seg) in enumerate(validation_loader):
-                    pass
-        '''for i in range(10):
-            outputs = ddp_model(torch.randn(20, 10).to(rank))
-            labels = torch.randn(20, 10).to(rank)
-            loss_fn(outputs, labels).backward()
-            optimizer.step()'''
+
+                total_correct = 0
+                total_seen = 0
+
+                loss_sum = 0
+                labelweights = np.zeros(self.args.num_segmentation_type)
+                total_seen_class = [0 for _ in range(self.args.num_segmentation_type)]
+                total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
+                total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
+
+                if rank == 0:
+                    tqdm_structure = tqdm(enumerate(validation_loader), total=len(validation_loader), smoothing=0.9)
+                else:
+                    tqdm_structure = enumerate(validation_loader)
+                for i, (points, seg) in tqdm_structure:
+                    
+                    points, seg = points.to(self.device), seg.to(self.device)
+                    points = util.normalize_data(points)
+                    points, _ = util.rotate_per_batch(points, None)
+                    points = points.permute(0, 2, 1)
+                    batch_size = points.size()[0]
+
+                    seg_pred, trans = self.model(points.float())
+
+                    seg_pred = seg_pred.permute(0, 2, 1).contiguous()
+                    batch_label = seg.view(-1, 1)[:, 0].cpu().data.numpy()  # array(batch_size*num_points)
+                    loss = self.criterion(seg_pred.view(-1, self.args.num_segmentation_type), seg.view(-1, 1).squeeze(),
+                                          self.weights, using_weight=self.args.use_class_weight)  # a scalar
+                    loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+                    seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
+                    pred_choice = seg_pred.cpu().data.max(1)[1].numpy()  # array(batch_size*num_points)
+                    correct = np.sum(pred_choice == batch_label)
+                    total_correct += correct
+                    total_seen += (batch_size * self.args.npoints)
+                    loss_sum += loss
+                    tmp, _ = np.histogram(batch_label, range(self.args.num_segmentation_type + 1))
+                    labelweights += tmp
+
+                    for l in range(self.args.num_segmentation_type):
+                        total_seen_class[l] += np.sum((batch_label == l))
+                        total_correct_class[l] += np.sum((pred_choice == l) & (batch_label == l))
+                        total_iou_deno_class[l] += np.sum(((pred_choice == l) | (batch_label == l)))'''
 
     def train_dpp(self):
         world_size = torch.cuda.device_count()
