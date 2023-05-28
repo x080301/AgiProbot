@@ -246,7 +246,7 @@ class BinarySegmentationDPP:
             total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
             total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
 
-            if rank == 0:
+            if rank == 0 and epoch == 0:
                 tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
             else:
                 tqdm_structure = enumerate(train_loader)
@@ -360,7 +360,7 @@ class BinarySegmentationDPP:
                 total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
                 total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
 
-                if rank == 0:
+                if rank == 0 and epoch == 0:
                     tqdm_structure = tqdm(enumerate(validation_loader), total=len(validation_loader), smoothing=0.9)
                 else:
                     tqdm_structure = enumerate(validation_loader)
