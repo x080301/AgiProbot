@@ -228,8 +228,6 @@ class BinarySegmentationDPP:
             for i in range(self.args.num_segmentation_type):
                 weights[i] = 1
 
-        print(rank)
-
         if rank == 0:
             print('train %d epochs' % (end_epoch - start_epoch))
         for epoch in range(start_epoch, end_epoch):
@@ -313,7 +311,7 @@ class BinarySegmentationDPP:
             train_loss = loss_sum / num_train_batch
 
             # total_correct = torch.tensor(total_correct)
-            total_seen = torch.tensor(total_seen)
+            total_seen = torch.tensor(total_seen).to(rank)
             torch.distributed.all_reduce(total_correct)
             torch.distributed.all_reduce(total_seen)
             train_point_acc = total_correct / float(total_seen)
@@ -410,7 +408,7 @@ class BinarySegmentationDPP:
                 valid_loss = loss_sum / num_train_batch
 
                 # total_correct = torch.tensor(total_correct)
-                total_seen = torch.tensor(total_seen)
+                total_seen = torch.tensor(total_seen).to(rank)
                 torch.distributed.all_reduce(total_correct)
                 torch.distributed.all_reduce(total_seen)
                 valid_point_acc = total_correct / float(total_seen)
