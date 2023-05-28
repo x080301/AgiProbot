@@ -19,7 +19,7 @@ train:
   finetune: 0
   test: 0
   kernel_loss_weight: 0.05
-  stn_loss_weight: 0
+  stn_loss_weight: 0.01
 
   use_class_weight: 0
   screw_weight: 1.0

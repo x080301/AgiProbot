@@ -36,4 +36,4 @@ def resave_binary_labelled_pcd(read_directory, save_directory):
 
 if __name__ == "__main__":
     resave_binary_labelled_pcd('E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel',
-                               'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy')
+                               r'C:\Users\Lenovo\Desktop\numpy')

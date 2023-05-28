@@ -1,5 +1,7 @@
 import numpy as np
 import open3d
+import os
+from tqdm import tqdm
 
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
@@ -63,29 +65,96 @@ class PcdReader:
 
         return self.points, self.colors
 
-    def save_and_visual_pcd(self, save_dir=None, visualization=False):
-        '''
-        save the file as *.pcd for further usage and visualization
+    def read_directory(self, dir, save_dir):
+        for dir_name in os.listdir(dir):
+            for file_name in tqdm(os.listdir(dir + '/' + dir_name),
+                                  total=len(os.listdir(dir + '/' + dir_name)), smoothing=0.9):
 
-        :param save_dir: direction to save this file
-        :return:
-        '''
+                points = []
+                colors = []
+                with open(dir + '/' + dir_name + '/' + file_name, 'r') as f:
 
-        assert self.points is not None, 'read pcd file first!'
+                    head_flag = True
+                    while True:
+                        # for i in range(12):
+                        oneline = f.readline()
 
-        point_cloud = open3d.geometry.PointCloud()
-        point_cloud.points = open3d.utility.Vector3dVector(self.points)
-        point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
+                        if head_flag:
+                            if 'DATA ascii' in oneline:
+                                head_flag = False
+                                continue
+                            else:
+                                continue
 
-        if save_dir is not None:
-            open3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
+                        if not oneline:
+                            break
 
-        if visualization:
-            open3d.visualization.draw_geometries([point_cloud])
+                        x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+
+                        points.append(np.array([x, y, z]))
+                        if label == '0':
+                            colors.append(np.array([0, 0, 0]))
+                        else:
+                            colors.append(np.array([1, 1, 1]))
+
+                self.points = np.array(points)
+                self.colors = np.array(colors)
+
+                point_cloud = open3d.geometry.PointCloud()
+                point_cloud.points = open3d.utility.Vector3dVector(self.points)
+                point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
+
+                open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/temporary/' + file_name.split('.')[0] + '_' + dir_name + '.pcd',
+                                            point_cloud, write_ascii=True)
+                # open3d.visualization.draw_geometries([point_cloud])
+
+        for i, file_name in tqdm(enumerate(os.listdir('C:/Users/Lenovo/Desktop/temporary/')),
+                                 total=len(os.listdir('C:/Users/Lenovo/Desktop/temporary/'))
+                                 ):
+            read_point_cloud = open3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/temporary/' + file_name,
+                                                          remove_nan_points=True,
+                                                          remove_infinite_points=True)
+
+            colors = np.asarray(read_point_cloud.colors)
+            points = np.asarray(read_point_cloud.points)
+
+            read_point_cloud = np.concatenate([points, colors], axis=-1)
+
+            label = np.sum(read_point_cloud[:, 3:6], axis=1)
+            label = np.where(label < 1.5, 1, 0)  # 0:bacground, 1: motor
+
+            read_point_cloud = np.column_stack((read_point_cloud, label))
+
+            if i % 5 == 0:
+                save_name = 'Validation_' + file_name.split('.')[0] + '_' + dir_name
+            else:
+                save_name = 'Training_' + file_name.split('.')[0] + '_' + dir_name
+
+            np.save(os.path.join(save_dir, save_name), read_point_cloud)
+
+
+def save_and_visual_pcd(self, save_dir=None, visualization=False):
+    '''
+    save the file as *.pcd for further usage and visualization
+
+    :param visualization:
+    :param save_dir: direction to save this file
+    :return:
+    '''
+
+    assert self.points is not None, 'read pcd file first!'
+
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.points = open3d.utility.Vector3dVector(self.points)
+    point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
+
+    if save_dir is not None:
+        open3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
+
+    if visualization:
+        open3d.visualization.draw_geometries([point_cloud])
 
 
 if __name__ == "__main__":
     pcd_reader = PcdReader()
-    points, colors = pcd_reader.read_pcd_ASCII('C:/Users/Lenovo/Desktop/large_motor_inside.pcd')
-    pcd_reader.save_and_visual_pcd(save_dir='C:/Users/Lenovo/Desktop/large_motor_inside_labeled.pcd',
-                                   visualization=True)
+    pcd_reader.read_directory('E:/datasets/agiprobot/binary_label/zivid', 'C:/Users/Lenovo/Desktop/numpy')

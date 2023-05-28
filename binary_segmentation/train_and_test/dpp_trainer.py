@@ -278,8 +278,8 @@ class BinarySegmentationDPP:
                 batch_label = target.view(-1, 1)[:, 0].data
                 loss = criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),
                                  weights, using_weight=self.args.use_class_weight)  # a scalar
-
-                # loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
+                if not self.args.stn_loss_weight == 0:
+                    loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
                 loss.backward()
                 opt.step()
 
