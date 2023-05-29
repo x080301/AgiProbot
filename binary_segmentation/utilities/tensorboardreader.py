@@ -16,10 +16,12 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_05_17_17_37_4096': '4096_no_weights',
                   '2023_05_18_14_15_2048_no_weights': '2048_no_weights',
                   '2023_05_18_03_53_withweights': '2048_with_weights',
-                  '2023_05_19_02_11_4096_with_weights': '4096_with_weights'
+                  '2023_05_19_02_11_4096_with_weights': '4096_with_weights',
+                  '2023_05_28_03_29_without_stnloss': 'without_stnloss',
+                  '2023_05_28_14_24_with_stnloss': 'with_stnloss'
                   }
-show_list = ['2048, old_lr', '4096_no_weights', '2048_no_weights', '2048_with_weights', '4096_with_weights', 'fine_tune']
-plt.title("train group 2")
+show_list = ['without_stnloss', 'with_stnloss']
+plt.title("train group 3")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -29,8 +31,8 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
             mIoU = ea.scalars.Items('mIoU/eval_mIoU')
-            mIoU_x = [i.step for i in mIoU]
-            mIoU_y = [i.value for i in mIoU]
+            mIoU_x = [i.step for i in mIoU][0:200]
+            mIoU_y = [i.value for i in mIoU][0:200]
 
             x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
             y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
