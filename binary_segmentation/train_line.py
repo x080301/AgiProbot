@@ -12,7 +12,8 @@ if __name__ == "__main__":
             if txt_file_name not in file_list:
                 file_list.append(txt_file_name)
                 keep_training = True
-                with open('train_line' + '/' + txt_file_name) as f:
+                train_txt = 'train_line' + '/' + txt_file_name
+                with open(train_txt) as f:
                     executable_str = f.read()
                 try:
                     exec(executable_str)

@@ -20,10 +20,10 @@ from utilities import util
 
 
 class BinarySegmentationDPP:
-    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'train_line', 'utilities',
+    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
                      'train.py', 'train_line.py']
 
-    def __init__(self, config_dir='config/binary_segmentation.yaml'):
+    def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
         # ******************* #
         # load arguments
         # ******************* #
@@ -68,6 +68,9 @@ class BinarySegmentationDPP:
         # ******************* #
         # save mode and parameters
         # ******************* #
+        if train_txt is not None:
+            print(train_txt)
+            self.files_to_save.append(train_txt)
         for file_name in self.files_to_save:
             if '.' in file_name:
                 shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
@@ -187,9 +190,9 @@ class BinarySegmentationDPP:
         # if fine tune is true, the the best.pth will be loaded first
         # ******************* #
         best_mIoU = 0
-        if self.args.finetune:
-            if os.path.exists('best_m.pth'):
-                checkpoint = torch.load('best_m.pth')
+        if self.args.finetune == 1:
+            if os.path.exists(self.args.pretrained_model_path):
+                checkpoint = torch.load(self.args.pretrained_model_path)
                 print('Use pretrained model for fine tune')
             else:
                 print('no exiting pretrained model')

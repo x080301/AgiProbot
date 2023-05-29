@@ -18,7 +18,7 @@ train:
   training: 1
 
   finetune: 0
-  pretrained_model_path: 'best_m.pth'
+  pretrained_model_path:  #TODO
 
   test: 0
   kernel_loss_weight: 0.05
@@ -27,8 +27,8 @@ train:
   use_class_weight: 0
   screw_weight: 1.0
   use_sgd: 0
-  lr: 0.001
-  end_lr: 0.00001
+  lr: 0.00001
+  end_lr: 0.0000001
   momentum: 0.9
   epochs: 200
 
@@ -40,7 +40,7 @@ train:
     dropout: 0.5
     emb_dims: 1024
     k: 20 # k in knn
-    attentionhead: 4
+    attentionhead: 1
 
   validation_symbol: 'Validation'
   num_heads: 4
