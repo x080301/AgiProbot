@@ -40,7 +40,7 @@ train:
     dropout: 0.5
     emb_dims: 1024
     k: 20 # k in knn
-    attentionhead: 1
+    attentionhead: 4
 
   validation_symbol: 'Validation'
   num_heads: 4

@@ -7,6 +7,7 @@
 @Time: 2022/1/15 17:11 PM
 """
 from model.attention import SALayerSingleHead
+from model.attention import SelfAttentionLayer
 from utilities.util import *
 from torch.autograd import Variable
 
@@ -157,17 +158,17 @@ class PCTSeg(nn.Module):
     def __init__(self, args):
         super(PCTSeg, self).__init__()
         self.args = args
-        self.k = args.k
+        self.k = args.model_para.k
 
         self.stn3d = TransformNet()
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(64)
         self.bn4 = nn.BatchNorm2d(64)
-        self.sa1 = SALayerSingleHead(128)
-        self.sa2 = SALayerSingleHead(128)
-        self.sa3 = SALayerSingleHead(128)
-        self.sa4 = SALayerSingleHead(128)
+        self.sa1 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa2 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
 
         self.conv1 = nn.Sequential(nn.Conv2d(6, 64, kernel_size=1, bias=False),  # 3*64=384
                                    self.bn1,  # 2*64*2=256
@@ -192,7 +193,6 @@ class PCTSeg(nn.Module):
         self.bn6 = nn.BatchNorm1d(256)
         self.conv6 = nn.Conv1d(512, 256, 1)
         self.conv7 = nn.Conv1d(256, self.args.num_segmentation_type, 1)
-
 
     def forward(self, x):
         num_points = x.size(2)

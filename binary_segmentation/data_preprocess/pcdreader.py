@@ -69,6 +69,7 @@ class PcdReader:
         for dir_name in os.listdir(dir):
             for file_name in tqdm(os.listdir(dir + '/' + dir_name),
                                   total=len(os.listdir(dir + '/' + dir_name)), smoothing=0.9):
+                break
 
                 points = []
                 colors = []
@@ -91,6 +92,8 @@ class PcdReader:
 
                         x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
 
+                        if x == '0' and y == '0' and z == '0':
+                            continue
                         points.append(np.array([x, y, z]))
                         if label == '0':
                             colors.append(np.array([0, 0, 0]))
@@ -104,14 +107,15 @@ class PcdReader:
                 point_cloud.points = open3d.utility.Vector3dVector(self.points)
                 point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
 
-                open3d.io.write_point_cloud('C:/Users/Lenovo/Desktop/temporary/' + file_name.split('.')[0] + '_' + dir_name + '.pcd',
-                                            point_cloud, write_ascii=True)
+                open3d.io.write_point_cloud(
+                    'C:/Users/Lenovo/Desktop/temporary_1/' + file_name.split('.')[0] + '_' + dir_name + '.pcd',
+                    point_cloud, write_ascii=True)
                 # open3d.visualization.draw_geometries([point_cloud])
 
-        for i, file_name in tqdm(enumerate(os.listdir('C:/Users/Lenovo/Desktop/temporary/')),
-                                 total=len(os.listdir('C:/Users/Lenovo/Desktop/temporary/'))
+        for i, file_name in tqdm(enumerate(os.listdir('C:/Users/Lenovo/Desktop/temporary_1/')),
+                                 total=len(os.listdir('C:/Users/Lenovo/Desktop/temporary_1/'))
                                  ):
-            read_point_cloud = open3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/temporary/' + file_name,
+            read_point_cloud = open3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/temporary_1/' + file_name,
                                                           remove_nan_points=True,
                                                           remove_infinite_points=True)
 
@@ -157,4 +161,4 @@ def save_and_visual_pcd(self, save_dir=None, visualization=False):
 
 if __name__ == "__main__":
     pcd_reader = PcdReader()
-    pcd_reader.read_directory('E:/datasets/agiprobot/binary_label/zivid', 'C:/Users/Lenovo/Desktop/numpy')
+    pcd_reader.read_directory('E:/datasets/agiprobot/binary_label/zivid', 'C:/Users/Lenovo/Desktop/numpy_1')
