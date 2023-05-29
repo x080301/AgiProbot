@@ -1,3 +1,5 @@
+train_txt = 'train_line' + '/' + txt_file_name
+
 from train_and_test.dpp_trainer import BinarySegmentationDPP
 
 config_dir = 'config/binary_segmentation_lr_minus_5_minus_6.yaml'

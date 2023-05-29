@@ -1,0 +1,58 @@
+DATA:
+  data_dir: '/data/users/fu/big_motor_zivid_binlabel_npy'
+  which_dataset: 'Motor_Dataset4'
+  exp_name: 'STN_16_2048_100'
+  num_segmentation_type: 2
+  npoints: 2048
+  sample_rate: 1
+
+train:
+  random_seed: 0 # 0->random choose a seed
+  ddp:
+    nodes: 1
+    gpus: 2 # num gpus per node
+    world_size: 2 # nodes×gpus
+  titel: 'binary_segmentation_syn'
+
+  train_batch_size: 4
+  training: 1
+
+  finetune: 1
+  pretrained_model_path: 'best_m.pth'
+
+  test: 0
+  kernel_loss_weight: 0.05
+
+  screw_weight: 1.0
+  use_sgd: 0
+  lr: 0.00001
+  end_lr: 0.00000001
+  momentum: 0.9
+  epochs: 200
+
+  scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
+  cos_warmupLR:
+    warmup_epochs: 10  # number of epochs the warmup process takes
+  model_para:
+    model: 'pct'
+    dropout: 0.5
+    emb_dims: 1024
+    k: 20 # k in knn
+    attentionhead: 4
+  stn_loss_weight: 0
+  use_class_weight: 0
+  validation_symbol: 'Validation'
+  num_heads: 4
+  num_attention_layer: 1
+  self_encoder_latent_features: 128
+  hidden_size_for_cross_attention: 512
+  after_stn_as_input: 1
+  after_stn_as_kernel_neighbor_query: 1
+
+test:
+  test_symbol: 'Train'
+  test_batch_size: 2
+
+
+
+
