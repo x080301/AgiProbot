@@ -264,11 +264,9 @@ class BinarySegmentationDPP:
 
             if rank == 0 and epoch == self.start_epoch:
                 tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
-                print("in")
             else:
                 tqdm_structure = enumerate(train_loader)
             for i, (points, target) in tqdm_structure:
-                print(i)
                 # ******************* #
                 # forwards
                 # ******************* #
