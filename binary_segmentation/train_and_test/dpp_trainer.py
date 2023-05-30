@@ -124,10 +124,39 @@ class BinarySegmentationDPP:
         # ******************* #
         # load ML model
         # ******************* #
-        model = PCTSeg(self.args).cuda(rank)
+        model = PCTSeg(self.args).to(rank)
+
+        # if fine tune is true, the the best.pth will be loaded first
+        best_mIoU = 0
+        if self.args.finetune == 1:
+            if os.path.exists(self.args.pretrained_model_path):
+                checkpoint = torch.load(self.args.pretrained_model_path)
+                if rank == 0:
+                    print('Use pretrained model for fine tune')
+            else:
+                if rank == 0:
+                    print('no exiting pretrained model')
+                exit(-1)
+
+            start_epoch = checkpoint['epoch']
+
+            end_epoch = start_epoch
+            end_epoch += 2 if self.is_local else self.args.epochs
+
+            if rank == 0:
+                if 'mIoU' in checkpoint:
+                    print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
+                else:
+                    print('train begin with %dth epoch' % start_epoch)
+
+            model.load_state_dict(checkpoint['model_state_dict'])
+
+        else:
+            start_epoch = 0
+            end_epoch = 2 if self.is_local else self.args.epochs
+
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-
         # self.model = nn.DataParallel(self.model)
 
         # ******************* #
@@ -188,37 +217,6 @@ class BinarySegmentationDPP:
         else:
             print('no scheduler called' + self.args.scheduler)
             exit(-1)
-
-        # ******************* #
-        # if fine tune is true, the the best.pth will be loaded first
-        # ******************* #
-        best_mIoU = 0
-        if self.args.finetune == 1:
-            if os.path.exists(self.args.pretrained_model_path):
-                checkpoint = torch.load(self.args.pretrained_model_path)
-                if rank == 0:
-                    print('Use pretrained model for fine tune')
-            else:
-                if rank == 0:
-                    print('no exiting pretrained model')
-                exit(-1)
-
-            start_epoch = checkpoint['epoch']
-
-            end_epoch = start_epoch
-            end_epoch += 2 if self.is_local else self.args.epochs
-
-            if rank == 0:
-                if 'mIoU' in checkpoint:
-                    print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
-                else:
-                    print('train begin with %dth epoch' % start_epoch)
-
-            model.load_state_dict(checkpoint['model_state_dict'])
-
-        else:
-            start_epoch = 0
-            end_epoch = 2 if self.is_local else self.args.epochs
 
         # ******************* #
         # loss function and weights
@@ -410,7 +408,7 @@ class BinarySegmentationDPP:
 
                 torch.distributed.all_reduce(loss_sum)
                 loss_sum /= float(world_size)
-                valid_loss = loss_sum / num_train_batch
+                valid_loss = loss_sum / num_valid_batch
 
                 # total_correct = torch.tensor(total_correct)
                 total_seen = torch.tensor(total_seen).to(rank)
