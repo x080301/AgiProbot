@@ -43,7 +43,6 @@ train:
     attentionhead: 4
 
   validation_symbol: 'Validation'
-  num_heads: 4
   num_attention_layer: 1
   self_encoder_latent_features: 128
   hidden_size_for_cross_attention: 512

@@ -40,10 +40,9 @@ train:
     dropout: 0.5
     emb_dims: 1024
     k: 20 # k in knn
-    attentionhead: 1
+    attentionhead: 4
 
   validation_symbol: 'Validation'
-  num_heads: 1
   num_attention_layer: 1
   self_encoder_latent_features: 128
   hidden_size_for_cross_attention: 512
