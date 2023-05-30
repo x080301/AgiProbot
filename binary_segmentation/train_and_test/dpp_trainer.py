@@ -196,9 +196,11 @@ class BinarySegmentationDPP:
         if self.args.finetune == 1:
             if os.path.exists(self.args.pretrained_model_path):
                 checkpoint = torch.load(self.args.pretrained_model_path)
-                print('Use pretrained model for fine tune')
+                if rank == 0:
+                    print('Use pretrained model for fine tune')
             else:
-                print('no exiting pretrained model')
+                if rank == 0:
+                    print('no exiting pretrained model')
                 exit(-1)
 
             start_epoch = checkpoint['epoch']
@@ -206,10 +208,11 @@ class BinarySegmentationDPP:
             end_epoch = start_epoch
             end_epoch += 2 if self.is_local else self.args.epochs
 
-            if 'mIoU' in checkpoint:
-                print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
-            else:
-                print('train begin with %dth epoch' % start_epoch)
+            if rank == 0:
+                if 'mIoU' in checkpoint:
+                    print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
+                else:
+                    print('train begin with %dth epoch' % start_epoch)
 
             model.load_state_dict(checkpoint['model_state_dict'])
 
