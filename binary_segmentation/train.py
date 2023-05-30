@@ -11,7 +11,7 @@ from train_and_test.dpp_trainer import BinarySegmentationDPP
 
 train_txt = None
 if __name__ == "__main__":
-    config_dir = 'config/binary_segmentation_zivid.yaml'
+    config_dir = 'config/binary_segmentation.yaml'
     print(config_dir)
     bsdpp = BinarySegmentationDPP(train_txt, config_dir)
     bsdpp.train_dpp()
