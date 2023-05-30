@@ -10,7 +10,7 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import numpy as np
+import copy
 
 from utilities.config import get_parser
 from model.pct import PCTSeg
@@ -108,7 +108,52 @@ class BinarySegmentationDPP:
         os.environ['MASTER_ADDR'] = 'localhost'
         os.environ['MASTER_PORT'] = '12355'
 
+        # ******************* #
+        # load ML model
+        # ******************* #
+        model = PCTSeg(self.args)
+
+        # if fine tune is true, the the best.pth will be loaded first
+
+        if self.args.finetune == 1:
+            if os.path.exists(self.args.pretrained_model_path):
+                checkpoint = torch.load(self.args.pretrained_model_path)
+                print('Use pretrained model for fine tune')
+            else:
+                print('no exiting pretrained model')
+                exit(-1)
+
+            start_epoch = checkpoint['epoch']
+
+            end_epoch = start_epoch
+            end_epoch += 2 if self.is_local else self.args.epochs
+
+            if 'mIoU' in checkpoint:
+                print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
+            else:
+                print('train begin with %dth epoch' % start_epoch)
+
+            state_dict = checkpoint['model_state_dict']
+            new_state_dict = {}
+            for k, v in state_dict.items():
+                if k[0:7] == 'module.':
+                    new_state_dict[k[7:]] = v
+                else:
+                    break
+            model.load_state_dict(new_state_dict)  # .to(rank)
+            print('succeed')
+        else:
+            start_epoch = 0
+            end_epoch = 2 if self.is_local else self.args.epochs
+
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
+        self.model = model
+
+        # self.model = nn.DataParallel(self.model)
+
     def train(self, rank, world_size):
+        best_mIoU = 0
         # ******************* #
         # dpp
         # ******************* #
@@ -121,44 +166,9 @@ class BinarySegmentationDPP:
         if rank == 0:
             log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
 
-        # ******************* #
-        # load ML model
-        # ******************* #
-        model = PCTSeg(self.args).to(rank)
-
-        # if fine tune is true, the the best.pth will be loaded first
-        best_mIoU = 0
-        if self.args.finetune == 1:
-            if os.path.exists(self.args.pretrained_model_path):
-                checkpoint = torch.load(self.args.pretrained_model_path)
-                if rank == 0:
-                    print('Use pretrained model for fine tune')
-            else:
-                if rank == 0:
-                    print('no exiting pretrained model')
-                exit(-1)
-
-            start_epoch = checkpoint['epoch']
-
-            end_epoch = start_epoch
-            end_epoch += 2 if self.is_local else self.args.epochs
-
-            if rank == 0:
-                if 'mIoU' in checkpoint:
-                    print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
-                else:
-                    print('train begin with %dth epoch' % start_epoch)
-
-            model.load_state_dict(checkpoint['model_state_dict'])
-
-        else:
-            start_epoch = 0
-            end_epoch = 2 if self.is_local else self.args.epochs
-
+        model = copy.deepcopy(self.model).to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-        # self.model = nn.DataParallel(self.model)
-
         # ******************* #
         # load dataset
         # ******************* #
@@ -236,8 +246,8 @@ class BinarySegmentationDPP:
                 weights[i] = 1
 
         if rank == 0:
-            print('train %d epochs' % (end_epoch - start_epoch))
-        for epoch in range(start_epoch, end_epoch):
+            print('train %d epochs' % (self.end_epoch - self.start_epoch))
+        for epoch in range(self.start_epoch, self.end_epoch):
 
             # ******************* #
             # train
