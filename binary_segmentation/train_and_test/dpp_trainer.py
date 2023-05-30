@@ -44,7 +44,10 @@ class BinarySegmentationDPP:
             self.args.npoints = 1024
             self.args.sample_rate = 1.
             self.args.ddp.gpus = 1
-            self.data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+            if self.args.finetune == 0:
+                self.data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+            else:
+                self.data_set_direction = 'E:/datasets/agiprobot/binary_label/big_motor_zivid_binlabel_npy_for_debug'
             # 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_npy'
         else:
             self.data_set_direction = self.args.data_dir

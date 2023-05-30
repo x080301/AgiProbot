@@ -94,9 +94,9 @@ class PcdReader:
 
                         if x == '0' and y == '0' and z == '0':
                             continue
-
+                        x, y, z, label = float(x), float(y), float(z), int(label)
                         points.append(np.array([x, y, z]))
-                        if label == '0':
+                        if label == 0:
                             colors.append(np.array([0, 0, 0]))
                             labels.append(1)
                         else:
