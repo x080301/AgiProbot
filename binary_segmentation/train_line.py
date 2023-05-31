@@ -8,7 +8,7 @@ if __name__ == "__main__":
     while keep_training:
         keep_training = False
 
-        for txt_file_name in os.listdir('train_line'):
+        for txt_file_name in sorted(os.listdir('train_line')):
             if txt_file_name not in file_list:
                 file_list.append(txt_file_name)
                 keep_training = True
