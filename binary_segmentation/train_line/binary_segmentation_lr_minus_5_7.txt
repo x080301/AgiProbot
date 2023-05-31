@@ -1,0 +1,7 @@
+
+from train_and_test.dpp_trainer import BinarySegmentationDPP
+
+config_dir = 'config/binary_segmentation_lr_minus_5_minus_7.yaml'
+print(config_dir)
+bsdpp = BinarySegmentationDPP(train_txt,config_dir)
+bsdpp.train_dpp()

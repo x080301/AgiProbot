@@ -4,18 +4,20 @@ if __name__ == "__main__":
 
     file_list = []
 
-    keep_training = True
-    while keep_training:
-        keep_training = False
-
+    while True:
+        executable_str = None
         for txt_file_name in sorted(os.listdir('train_line')):
             if txt_file_name not in file_list:
                 file_list.append(txt_file_name)
-                keep_training = True
                 train_txt = 'train_line' + '/' + txt_file_name
                 with open(train_txt) as f:
                     executable_str = f.read()
-                try:
-                    exec(executable_str)
-                except Exception:
-                    pass
+                break
+
+        if executable_str is None:
+            break
+        else:
+            try:
+                exec(executable_str)
+            except Exception:
+                pass
