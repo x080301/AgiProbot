@@ -18,10 +18,14 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_05_18_03_53_withweights': '2048_with_weights',
                   '2023_05_19_02_11_4096_with_weights': '4096_with_weights',
                   '2023_05_28_03_29_without_stnloss': 'without_stnloss',
-                  '2023_05_28_14_24_with_stnloss': 'with_stnloss'
+                  '2023_05_28_14_24_with_stnloss': 'with_stnloss',
+                  '2023_05_30_02_39_pretrain': 'pre_trained',
+                  '2023_05_30_15_27_zivid_5_8': 'zivid_5_8',
+                  '2023_05_31_20_21_zivid_4_7': 'zivid_4_7',
+                  '2023_05_31_10_07_lr1e4_6': 'lr1e_4_6'
                   }
-show_list = ['without_stnloss', 'with_stnloss']
-plt.title("train group 3")
+show_list = ['pre_trained', 'zivid_5_8', 'zivid_4_7']
+plt.title("pretrain and fine tune")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -31,8 +35,8 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
             mIoU = ea.scalars.Items('mIoU/eval_mIoU')
-            mIoU_x = [i.step for i in mIoU][0:200]
-            mIoU_y = [i.value for i in mIoU][0:200]
+            mIoU_x = [i.step for i in mIoU]
+            mIoU_y = [i.value for i in mIoU]
 
             x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
             y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
@@ -40,6 +44,8 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
             mIoU_dict[train_case_dic[train_case]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
 y_max = 0
 for key in show_list:
+    if key == 'pre_trained':
+        continue
     x = mIoU_dict[key][0]
     y = mIoU_dict[key][1]
     plt.plot(x, y, color=(0.9, 0.9, 0.9))
@@ -52,14 +58,15 @@ for key in show_list:
 
 # Draw a horizontal line at the maximum y value
 plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
-plt.annotate(f'{y_max:.6f}', xy=(0, y_max), xytext=(0, 5),
+plt.annotate(f'{y_max:.6f}', xy=(105, y_max), xytext=(0, 5),
              textcoords='offset points', ha='center', va='bottom')
 
 # Set y-axis to logarithmic scale
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.95, 1)
+plt.ylim(0.98, 1)
+plt.xlim(100, 250)
 
 # Add title and axis labels
 

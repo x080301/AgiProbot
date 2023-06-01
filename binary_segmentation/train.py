@@ -7,7 +7,8 @@
 #
 # binarysegmentation.train()
 
-from train_and_test.dpp_trainer import BinarySegmentationDPP
+# from train_and_test.dpp_trainer import BinarySegmentationDPP
+from train_and_test.dpp_trainer_freeze import BinarySegmentationDPP
 
 train_txt = None
 if __name__ == "__main__":
