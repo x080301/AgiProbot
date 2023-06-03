@@ -76,7 +76,7 @@ class BinarySegmentationDPP:
         # ******************* #
         if train_txt is not None:
             print(train_txt)
-            self.files_to_save.append(train_txt)
+            shutil.copyfile(train_txt, direction + '/train_log/' + train_txt.split('/')[-1])
         for file_name in self.files_to_save:
             if '.' in file_name:
                 shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
