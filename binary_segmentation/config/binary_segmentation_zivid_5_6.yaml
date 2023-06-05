@@ -26,7 +26,7 @@ train:
   screw_weight: 1.0
   use_sgd: 0
   lr: 0.00001
-  end_lr: 0.00000001
+  end_lr: 0.000001
   momentum: 0.9
   epochs: 50
 

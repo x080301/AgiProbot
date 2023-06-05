@@ -54,7 +54,7 @@ def get_neighbors(x, k=20):
     Input:
         points: input points data, [B, C, N]
     Return:
-        feature_points:, indexed points data, [B, 2*C, N, K]
+        feature_points: indexed points data, [B, 2*C, N, K]
     """
     batch_size = x.size(0)
     num_dims = x.size(1)

@@ -22,10 +22,14 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_05_30_02_39_pretrain': 'pre_trained',
                   '2023_05_30_15_27_zivid_5_8': 'zivid_5_8',
                   '2023_05_31_20_21_zivid_4_7': 'zivid_4_7',
-                  '2023_05_31_10_07_lr1e4_6': 'lr1e_4_6'
+                  '2023_05_31_10_07_lr1e4_6': 'lr 1e-4->-6',
+                  '2023_06_03_04_59_lr_5_7': 'lr 1e-5->-7',
+                  '2023_06_02_00_48_lr5_6': 'lr 1e-5->-6',
+                  '2023_06_01_15_40_lr1e4_7': 'lr 1e-4->-7',
+                  '2023_06_02_09_56_zivid_freeze': 'zivid_5_8_freeze'
                   }
-show_list = ['pre_trained', 'zivid_5_8', 'zivid_4_7']
-plt.title("pretrain and fine tune")
+show_list = ['pre_trained','lr 1e-4->-6', 'lr 1e-5->-7', 'lr 1e-5->-6','lr 1e-4->-7']
+plt.title("lr comparing")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -44,8 +48,8 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
             mIoU_dict[train_case_dic[train_case]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
 y_max = 0
 for key in show_list:
-    if key == 'pre_trained':
-        continue
+    '''if key == 'pre_trained':
+        continue'''
     x = mIoU_dict[key][0]
     y = mIoU_dict[key][1]
     plt.plot(x, y, color=(0.9, 0.9, 0.9))
@@ -56,18 +60,19 @@ for key in show_list:
     y_smooth = mIoU_dict[key][3]
     plt.plot(x_smooth, y_smooth, label=key)
 
-# Draw a horizontal line at the maximum y value
-plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
-plt.annotate(f'{y_max:.6f}', xy=(105, y_max), xytext=(0, 5),
-             textcoords='offset points', ha='center', va='bottom')
-
 # Set y-axis to logarithmic scale
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.98, 1)
-plt.xlim(100, 250)
+plt.ylim(0.9, 1)
+xmin = 0
+xmax = 250
+plt.xlim(xmin, xmax)
 
+# Draw a horizontal line at the maximum y value
+plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
+plt.annotate(f'{y_max:.6f}', xy=(xmin + 5, y_max), xytext=(0, 5),
+             textcoords='offset points', ha='center', va='bottom')
 # Add title and axis labels
 
 plt.xlabel("epoch")
