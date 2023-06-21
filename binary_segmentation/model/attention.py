@@ -8,13 +8,13 @@ def split_heads(x, heads, depth):
     return x
 
 
-class SelfAttentionLayer(nn.Module):
+class CrossAttentionLayer(nn.Module):
     def __init__(self, in_channels, out_channels=128, num_heads=1):
         super(SelfAttentionLayer, self).__init__()
         self.q_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.k_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.v_conv = nn.Conv1d(in_channels, in_channels, 1)
-        self.after_norm = nn.BatchNorm1d(in_channels)
+        self.after_attention_bn = nn.BatchNorm1d(in_channels)
         self.act = nn.ReLU()
         self.softmax = nn.Softmax(dim=-1)
 
@@ -30,31 +30,33 @@ class SelfAttentionLayer(nn.Module):
                                           nn.LeakyReLU(negative_slope=0.2),
                                           nn.Conv1d(512, out_channels, 1, bias=False))
 
-    def forward(self, x):
+    def forward(self, x_vk, x_q):
         # _                                                                         input (8,N,128)
 
-        x = x.permute(0, 2, 1)  # _                                                 (B,N,128) -> (B,128,N)
+        x_vk = x_vk.permute(0, 2, 1)  # _                                           (B,N,128) -> (B,128,N)
+        x_q = x_q.permute(0, 2, 1)  # _                                             (B,N,128) -> (B,128,N)
 
-        x_q = self.q_conv(x)
-        x_q = split_heads(x_q, self.num_heads, self.q_depth)  # _                   (B,128,N) -> (B,H,D,N)
-        x_q = x_q.permute(0, 1, 3, 2).contiguous()  # _                             (B,H,D,N) -> (B,H,N,D)
+        q = self.q_conv(x_q)
+        q = split_heads(q, self.num_heads, self.q_depth)  # _                       (B,128,N) -> (B,H,D,N)
+        q = q.permute(0, 1, 3, 2).contiguous()  # _                                 (B,H,D,N) -> (B,H,N,D)
 
-        x_k = self.k_conv(x)  # _                                                   (B,128,N) -> (B,32,N)
-        x_k = split_heads(x_k, self.num_heads, self.k_depth).contiguous()  # _      (B,128,N) -> (B,H,D,N)
+        k = self.k_conv(x_vk)  # _                                                  (B,128,N) -> (B,32,N)
+        k = split_heads(k, self.num_heads, self.k_depth).contiguous()  # _          (B,128,N) -> (B,H,D,N)
 
-        x_v = self.v_conv(x)  # _                                                   (B,128,N) -> (B,128,N)
-        x_v = split_heads(x_v, self.num_heads, self.v_depth).contiguous()  # _      (B,128,N) -> (B,H,D,N)
+        v = self.v_conv(x_vk)  # _                                                  (B,128,N) -> (B,128,N)
+        v = split_heads(v, self.num_heads, self.v_depth).contiguous()  # _          (B,128,N) -> (B,H,D,N)
 
-        energy = x_q @ x_k  # _                                                     (B,H,N,D) @ (B,H,D,N)  -> (B,H,N,N)
+        energy = q @ k  # _                                                         (B,H,N,D) @ (B,H,D,N)  -> (B,H,N,N)
 
-        scale_factor = math.sqrt(x_q.shape[-2])
-        attention = self.softmax(energy / scale_factor)  # _                        (B,H,N,N) -> (B,H,N,N)
+        scale_factor = math.sqrt(q.shape[-2])
+        attention_map = self.softmax(energy / scale_factor)  # _                    (B,H,N,N) -> (B,H,N,N)
 
-        residual = x
-        x = x_v @ attention  # _                                                    (B,H,D,N) @ (B,H,N,N) -> (B,H,D,N)
+        residual = x_q
+        x = v @ attention_map  # _                                                  (B,H,D,N) @ (B,H,N,N) -> (B,H,D,N)
         x = x.reshape(x.shape[0], -1, x.shape[3])  # _                              (B,H,D,N) -> (B,128,N)
 
-        x = self.after_norm(x + residual)  # _                                      (B,128,N) + (B,128,N) -> (B,128,N)
+        x = self.after_attention_bn(x + residual)
+        # _                                                                         (B,128,N) + (B,128,N) -> (B,128,N)
 
         # feed forward
         residual = x
@@ -66,13 +68,26 @@ class SelfAttentionLayer(nn.Module):
         return x
 
 
+class SelfAttentionLayer(nn.Module):
+    def __init__(self, in_channels, out_channels=128, num_heads=1):
+        super(SelfAttentionLayer, self).__init__()
+
+        self.self_attention_layer = CrossAttentionLayer(in_channels, out_channels, num_heads)
+
+    def forward(self, x):
+        # _                                                                         input (8,N,128)
+        x = self.self_attention_layer(x_vk=x, x_q=x)  # _                           (8,N,128) -> (B,N,128)
+
+        return x
+
+
 class SALayerSingleHead(nn.Module):
     def __init__(self, channels):
         super(SALayerSingleHead, self).__init__()
         self.self_attention_single_head = SelfAttentionLayer(channels, out_channels=128, num_heads=1)
 
     def forward(self, x):
-        return self.self_attention_single_head(x)
+        return self.self_attention_single_head(x)  # _                              (8,N,128) -> (B,N,128)
 
 
 class SALayerSingleHeadArchive(nn.Module):

@@ -6,7 +6,6 @@
 @File: model.py
 @Time: 2022/1/15 17:11 PM
 """
-from model.attention import SALayerSingleHead
 from model.attention import SelfAttentionLayer
 from utilities.util import *
 from torch.autograd import Variable
