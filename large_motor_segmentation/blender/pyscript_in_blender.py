@@ -1,6 +1,6 @@
 # import open3d as o3d
-# import os
 import bpy
+import os
 
 # 将blender读取为obj数据形式
 #   读取blender文件
@@ -24,7 +24,7 @@ for obj in collection.objects:
         bpy.context.view_layer.objects.active = bpy.data.objects[obj.name]
         has_active_object = True
         joined_object_name = obj.name
-    #print(obj.name)
+    # print(obj.name)
 bpy.ops.object.join()
 
 # ******************* #
@@ -40,26 +40,6 @@ bpy.ops.object.modifier_apply(modifier="Remesh")
 # ******************* #
 #   保存为.obj
 # ******************* #
-bpy.ops.export_scene.obj(filepath='C:/Users/Lenovo/Desktop/test.obj', use_triangles=True)
-
-blender_file_dir = 'E:/datasets/agiprobot/agi_large_motor_dataset_syn/'
-
-'''flag = False
-for file_dir_batch in os.listdir(blender_file_dir):
-    for file_dir in os.listdir(blender_file_dir + file_dir_batch):
-        for file_name in os.listdir(blender_file_dir + file_dir_batch + '/' + file_dir):
-            if 'Szene.blend' not in file_name:
-                continue
-            else:
-                print(file_name)
-                bpy.ops.import_scene.fbx(filepath=blender_file_dir + file_dir_batch + '/' + file_dir+'/'+file_name)
-
-
-'''
-r'''
-mesh = o3d.io.read_triangle_mesh(r'C:\Users\Lenovo\Desktop\0Szene.obj')
-# pcd = mesh.sample_points_uniformly(number_of_points=10000)
-# print(pcd.points)
-o3d.visualization.draw_geometries([mesh], window_name=".obj")
-
-'''
+# print(os.getcwd())
+# root: D:\softwares\blender
+bpy.ops.export_scene.obj(filepath='Intermediate_results/intermediate_obj.obj', use_triangles=True)
