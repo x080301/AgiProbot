@@ -15,7 +15,7 @@ def read_one_mesh(file_dir=r"C:\Users\Lenovo\Desktop\Alignment\Alignment\Motor_0
     pcd = mesh.sample_points_uniformly(number_of_points=number_of_points)  # 600000
     if save_dir is not None:
         pcd.paint_uniform_color([1, 1, 0])
-        o3d.io.write_point_cloud(save_dir, pcd)
+        o3d.io.write_point_cloud(save_dir, pcd, write_ascii=True)
 
     return pcd
 
