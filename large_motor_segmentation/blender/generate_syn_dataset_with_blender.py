@@ -14,6 +14,7 @@ def run_cmd(cmd_str='', echo_print=False):
     """
     执行cmd命令，不显示执行过程中弹出的黑框
     备注：subprocess.run()函数会将本来打印到cmd上的内容打印到python执行界面上，所以避免了出现cmd弹出框的问题
+    :param echo_print:
     :param cmd_str: 执行的cmd命令
     :return:
     """
@@ -104,7 +105,7 @@ def generate_pcd_with_label(source_dir, save_dir):
 
                     # 转存到intermediate results
                     site = {"source_blender": "Intermediate_results/blender_scene.blend",
-                            "py_script": "D:/Jupyter/AgiProbot/large_motor_segmentation/blender/pyscript_in_blender.py"}
+                            "py_script": "D:/Jupyter/AgiProbot/large_motor_segmentation/blender/blender_scripts/pyscript_in_blender.py"}
                     cmd_str = 'D: & ' \
                               'cd /softwares/blender/ & ' \
                               'blender.exe --background {source_blender} --python {py_script}'.format(**site)
@@ -129,7 +130,8 @@ def generate_pcd_with_label(source_dir, save_dir):
                     # 保存各部分的obj文件
                     site = {
                         "source_blender": "Intermediate_results/blender_scene.blend",
-                        "py_script": "D:/Jupyter/AgiProbot/large_motor_segmentation/blender/generate_obj_with_label_using_blender.py"}
+                        "py_script": "D:/Jupyter/AgiProbot/large_motor_segmentation/blender/blender_scripts/generate_obj_with_label_using_blender.py"
+                    }
                     cmd_str = 'D: & ' \
                               'cd /softwares/blender/ & ' \
                               'blender.exe --background {source_blender} --python {py_script}'.format(**site)
@@ -154,6 +156,7 @@ def generate_pcd_with_label(source_dir, save_dir):
                     # 将各部分的颜色投影到无颜色的pcd中
                     pcd_with_color = set_points_colors(raw_points_pcd, all_parts_pcd)
 
+                    # 保存
                     o3d.io.write_point_cloud(save_dir + file_dir_batch + '_' + file_dir + '.pcd', pcd_with_color)
                     # o3d.visualization.draw_geometries([pcd_with_color])
 

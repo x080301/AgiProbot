@@ -101,6 +101,7 @@ def rotate_per_batch(data, goals, angle_clip=np.pi * 1):
             angles = []
             for i in range(3):
                 angles.append(random.uniform(-angle_clip, angle_clip))
+
             angles = np.array(angles)
             Rx = np.array([[1, 0, 0],
                            [0, np.cos(angles[0]), -np.sin(angles[0])],
@@ -113,7 +114,9 @@ def rotate_per_batch(data, goals, angle_clip=np.pi * 1):
                            [0, 0, 1]])
             R = np.dot(Rz, np.dot(Ry, Rx))
             R = torch.from_numpy(R).float().cuda()
+
             rotated_data[k, :, :] = torch.matmul(data[k, :, :], R)
+
             rotation_matrix[k, :, :] = R
         return rotated_data, rotation_matrix
 

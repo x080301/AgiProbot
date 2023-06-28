@@ -185,7 +185,7 @@ def train(args, io):
             if args.model == "PCT_patch" or args.model == "dgcnn_patch":
                 loss = loss + criterion2(result.view(-1, 3), goals.view(-1, 3), masks) * args.kernel_loss_weight
 
-            loss = loss + feature_transform_reguliarzer(trans) * args.stn_loss_weight + loss_class  # TODO
+            loss = loss + feature_transform_reguliarzer(trans) * args.stn_loss_weight + loss_class
             loss.backward()
             opt.step()
             seg_pred = seg_pred.contiguous().view(-1, NUM_CLASS)  # (batch_size*num_points , num_class)

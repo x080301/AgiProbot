@@ -273,10 +273,8 @@ class BinarySegmentationDPP:
                 points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
                 points = util.normalize_data(points)
 
-                if self.args.after_stn_as_kernel_neighbor_query:  # [bs,4096,3]
-                    points, _ = util.rotate_per_batch(points, None)
-                else:
-                    points, _ = util.rotate_per_batch(points, None)
+                # rotation augmentation
+                points, _ = util.rotate_per_batch(points, None)
 
                 points = points.permute(0, 2, 1).float()
                 batch_size = points.size()[0]
