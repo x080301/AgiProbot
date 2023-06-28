@@ -1,12 +1,13 @@
 # import open3d as o3d
 import bpy
-import os
-
-# 将blender读取为obj数据形式
-#   读取blender文件
 
 # ******************* #
-#   删除背景部分
+# This blender script can be run by python file: generate_syn_dataset_with_blender.py
+# It read existing motor model from a .blend file and generate .obj file without label.
+# ******************* #
+
+# ******************* #
+# delete needless objects
 # ******************* #
 delete_list = ['Camera', 'Empty', '0000_Plane', '0000_ClampingSystem_fix', '0000_ClampingSystem_movable']
 collection = bpy.data.collections['Collection 1']
@@ -15,7 +16,7 @@ for object_name in delete_list:
     bpy.data.objects.remove(obj)
 
 # ******************* #
-#   合并剩余模型
+#  join the remaining objects
 # ******************* #
 has_active_object = False
 for obj in collection.objects:
@@ -28,7 +29,7 @@ for obj in collection.objects:
 bpy.ops.object.join()
 
 # ******************* #
-#   重构网格
+# remesh the model, so that overlapping boundaries of objects will not appear in the final result.
 # ******************* #
 object = bpy.data.objects[joined_object_name]
 
@@ -38,8 +39,6 @@ modifier.voxel_size = 0.01
 bpy.ops.object.modifier_apply(modifier="Remesh")
 
 # ******************* #
-#   保存为.obj
+# resave as .obj
 # ******************* #
-# print(os.getcwd())
-# root: D:\softwares\blender
 bpy.ops.export_scene.obj(filepath='Intermediate_results/intermediate_obj.obj', use_triangles=True)

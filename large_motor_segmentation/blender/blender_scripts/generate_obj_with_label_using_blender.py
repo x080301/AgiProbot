@@ -1,10 +1,15 @@
 # import open3d as o3d
 import bpy
-import os
-import numpy as np
 
 
 def object_grouping(object_list):
+    """
+    This function was written based on observation of how these objects are named.
+
+    :param object_list
+    :return: object_dict: objects are grouped.
+    """
+
     object_dict = {'Void': [], 'Background': [], 'Gear': [], 'Connector': [], 'Screws': [], 'Solenoid': [],
                    'Electrical Connector': [], 'Main Housing': [], 'Noise': [], 'Inner Gear': []
                    }
@@ -71,11 +76,8 @@ def object_grouping(object_list):
         return object_dict
 
 
-# 将blender读取为obj数据形式
-#   读取blender文件
-
 # ******************* #
-#   删除背景部分
+# delete needless objects
 # ******************* #
 delete_list = ['Camera', 'Empty', '0000_Plane', '0000_ClampingSystem_fix', '0000_ClampingSystem_movable']
 collection = bpy.data.collections['Collection 1']
@@ -83,10 +85,6 @@ for object_name in delete_list:
     obj = collection.objects[object_name]
     bpy.data.objects.remove(obj)
 
-'D:/softwares/blender/Intermediate_results/part_to_operat.npy'
-# ******************* #
-#   选择要保存部分并保存
-# ******************* #
 object_name_list = []
 for obj in collection.objects:
     object_name_list.append(obj.name)
@@ -94,15 +92,16 @@ for obj in collection.objects:
 grouped_objects_dict = object_grouping(object_name_list)
 
 for semantic_part in grouped_objects_dict.keys():
-    # 选择需保存的部分
     if len(grouped_objects_dict[semantic_part]) > 0:
+
+        # select objects in one semantic type
         for obj_name in grouped_objects_dict[semantic_part]:
             bpy.data.objects[obj_name].select_set(True)
 
-        # 保存
+        # export as an .obj file
         bpy.ops.export_scene.obj(filepath='Intermediate_results/intermediate_' + semantic_part + '_part.obj',
                                  use_triangles=True, use_selection=True)
 
-        # 归位
+        # deselect selected objects
         for obj_name in grouped_objects_dict[semantic_part]:
             bpy.data.objects[obj_name].select_set(False)
