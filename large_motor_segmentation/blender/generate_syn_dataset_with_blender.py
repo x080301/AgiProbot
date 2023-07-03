@@ -6,8 +6,6 @@ import numpy as np
 import scipy
 from tqdm import tqdm
 
-from utilities import point_cloud_operation
-
 # This color assignment is unified in project agiprobot.
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
@@ -20,6 +18,25 @@ rgb_dic = {'Void': [207, 207, 207],
            'Noise': [223, 200, 200],
            'Inner Gear': [107, 218, 250]
            }
+
+
+def read_one_mesh(file_dir=r"C:\Users\Lenovo\Desktop\Alignment\Alignment\Motor_001.stl", save_dir=None,
+                  number_of_points=200000):
+    """
+    :param save_dir:
+    :param number_of_points:
+    :param file_dir: direction of *.stl file
+    :return: point cloud
+    """
+
+    mesh = o3d.io.read_triangle_mesh(file_dir)
+
+    pcd = mesh.sample_points_uniformly(number_of_points=number_of_points)  # 600000
+    if save_dir is not None:
+        pcd.paint_uniform_color([1, 1, 0])
+        o3d.io.write_point_cloud(save_dir, pcd, write_ascii=True)
+
+    return pcd
 
 
 def set_points_colors(raw_points_pcd, all_parts_pcd):
@@ -42,6 +59,13 @@ def set_points_colors(raw_points_pcd, all_parts_pcd):
 
 
 def generate_pcd_with_label(source_dir, save_dir):
+    """
+    generate pcd files from blender models
+
+    :param source_dir: directory where blender models are located as .blend files
+    :param save_dir: directory where to save the results as .pcd files
+    :return: no return
+    """
     for root, _, files in os.walk(source_dir):
         for file_name in files:
             if 'Szene.blend' in file_name:
@@ -66,7 +90,7 @@ def generate_pcd_with_label(source_dir, save_dir):
 
                 # load obj and sample it to point cloud
                 print('sampling')
-                whole_model_pcd = point_cloud_operation.read_one_mesh(
+                whole_model_pcd = read_one_mesh(
                     'D:/softwares/blender/Intermediate_results/intermediate_obj.obj',
                     number_of_points=200000
                 )
@@ -92,7 +116,7 @@ def generate_pcd_with_label(source_dir, save_dir):
                 part_pcd = None
                 for part_obj_file_name in os.listdir('D:/softwares/blender/Intermediate_results/'):
                     if '_part.obj' in part_obj_file_name:
-                        part_pcd = point_cloud_operation.read_one_mesh(
+                        part_pcd = read_one_mesh(
                             'D:/softwares/blender/Intermediate_results/' + part_obj_file_name,
                             number_of_points=50000)
 
