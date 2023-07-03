@@ -48,10 +48,10 @@ saved to 'E:/result_dir'.
 # Library Structure
 
 ```
-©¦  __init__.py
-©¦  README.md
-©¦  generate_syn_dataset_with_blender.py             -- main pyfile
-©À©¤blender_scripts
-©¦      generate_obj_with_label_using_blender.py     -- blender script, generate full model point cloud
-©¦      pyscript_in_blender.py                       -- blender scriot, generate segment point clouds
+â”‚  __init__.py
+â”‚  README.md
+â”‚  generate_syn_dataset_with_blender.py             -- main pyfile
+â”œâ”€blender_scripts
+â”‚      generate_obj_with_label_using_blender.py     -- blender script, generate full model point cloud
+â”‚      pyscript_in_blender.py                       -- blender scriot, generate segment point clouds
 ```
