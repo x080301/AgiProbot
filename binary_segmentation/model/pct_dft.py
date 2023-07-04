@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-@Author: bixuelei
-@Contact: xueleibi@gmail.com
-@File: model.py
-@Time: 2022/1/15 17:11 PM
-"""
+
 from model.attention import SALayerSingleHead
 from utilities.util import *
 from torch.autograd import Variable
