@@ -167,7 +167,7 @@ class BinarySegmentationDPP:
 
         model = copy.deepcopy(self.model).to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
-        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
         # ******************* #
         # load dataset
         # ******************* #
