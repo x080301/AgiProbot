@@ -6,10 +6,12 @@ more details see READMEs in each folder.
 
 ```
 .
-├─ __init__.py
-├─ README.md
-├─ generate_syn_dataset_with_blender.py             -- main pyfile
-└─ blender_scripts
-    ├─ generate_obj_with_label_using_blender.py     -- blender script, generates full model point cloud
-    └─ pyscript_in_blender.py                       -- blender scriot, generates segment point clouds
+├─ agi_para_extracter                -- Extracting screw position and further parameters of small motor
+├─ binary_segmentation               -- pretraining and fine tuning for binary segmentation of zivid-scaned model, PCT
+├─ large_motor_segmentation          -- pretraining and fine tuning for semantic segmentation of full model, PCT
+    ├─ blender                           --generating synthetic large motor data set with blender 
+    └─ ...
+├─ .gitattributes
+├─ .gitignore
+└─ README.md
 ```
