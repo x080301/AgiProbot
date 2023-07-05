@@ -7,8 +7,12 @@ _my_test.py
 run.log
 *.pyc
 
+agi_project_10_category-main/
+AgiProbot_Motor_Segmentation_WACV2023-main
 APES_Dev-master/
+GUI_agi-master
 副本/
+standard_deep_Learning_structure
 .idea/
 agi_project_10_category-main/.idea/
 AgiProbot_Motor_Segmentation_WACV2023-main/.idea/
