@@ -6,7 +6,7 @@ more details see READMEs in each folder.
 
 ```
 .
-├─ agi_para_extracter                -- Extracting screw position and further parameters of small motor
+├─ agi_para_extracter                -- extracting screw position and further parameters of small motor
 ├─ binary_segmentation               -- pretraining and fine tuning for binary segmentation of zivid-scaned model, PCT
 ├─ large_motor_segmentation          -- pretraining and fine tuning for semantic segmentation of full model, PCT
 |    ├─ blender                           --generating synthetic large motor data set with blender 
