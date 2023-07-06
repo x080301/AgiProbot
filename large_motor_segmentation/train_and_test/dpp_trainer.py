@@ -13,13 +13,13 @@ from tqdm import tqdm
 import copy
 
 from utilities.config import get_parser
-from model.pct import PCTSeg
+from model import pct_token
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
 
 
-class BinarySegmentationDPP:
+class SegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
                      'train.py', 'train_line.py']
 
@@ -111,7 +111,7 @@ class BinarySegmentationDPP:
         # ******************* #
         # load ML model
         # ******************* #
-        model = PCTSeg(self.args)
+        model = pct_token.TokenSegmentation(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
 

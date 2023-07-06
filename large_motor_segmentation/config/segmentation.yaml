@@ -12,6 +12,8 @@ train:
     nodes: 1
     gpus: 2 # num gpus per node
     world_size: 2 # nodes×gpus
+  token:
+    num_tokens: 11
   titel: 'binary_segmentation_syn'
 
   train_batch_size: 4
