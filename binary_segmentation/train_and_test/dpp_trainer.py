@@ -119,7 +119,7 @@ class BinarySegmentationDPP:
         # ******************* #
         # dpp and load ML model
         # ******************* #
-        # torch.cuda.set_device(rank)
+        torch.cuda.set_device(rank)
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
 
