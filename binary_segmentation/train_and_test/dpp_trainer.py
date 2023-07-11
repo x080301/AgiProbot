@@ -119,15 +119,6 @@ class BinarySegmentationDPP:
         # ******************* #
         # dpp and load ML model
         # ******************* #
-        torch.manual_seed(self.random_seed)
-
-        backend = 'gloo' if self.is_local else 'nccl'
-        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-        torch.cuda.set_device(rank)
-
-        if rank == 0:
-            log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
-
         model = PCTSeg(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
@@ -168,6 +159,16 @@ class BinarySegmentationDPP:
         model = model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+
+        torch.manual_seed(self.random_seed)
+
+        backend = 'gloo' if self.is_local else 'nccl'
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+        torch.cuda.set_device(rank)
+
+        if rank == 0:
+            log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+
         # ******************* #
         # load dataset
         # ******************* #
