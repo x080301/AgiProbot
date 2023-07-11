@@ -111,6 +111,23 @@ class BinarySegmentationDPP:
         # ******************* #
         # load ML model
         # ******************* #
+
+        # self.model = nn.DataParallel(self.model)
+
+    def train(self, rank, world_size):
+        best_mIoU = 0
+        # ******************* #
+        # dpp and load ML model
+        # ******************* #
+        torch.manual_seed(self.random_seed)
+
+        backend = 'gloo' if self.is_local else 'nccl'
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+        torch.cuda.set_device(rank)
+
+        if rank == 0:
+            log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
+
         model = PCTSeg(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
@@ -145,27 +162,10 @@ class BinarySegmentationDPP:
             start_epoch = 0
             end_epoch = 2 if self.is_local else self.args.epochs
 
-        self.start_epoch = start_epoch
-        self.end_epoch = end_epoch
-        self.model = model
+        start_epoch = start_epoch
+        end_epoch = end_epoch
 
-        # self.model = nn.DataParallel(self.model)
-
-    def train(self, rank, world_size):
-        best_mIoU = 0
-        # ******************* #
-        # dpp
-        # ******************* #
-        torch.manual_seed(self.random_seed)
-
-        backend = 'gloo' if self.is_local else 'nccl'
-        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-        torch.cuda.set_device(rank)
-
-        if rank == 0:
-            log_writer = SummaryWriter(self.save_direction + '/tensorboard_log')
-
-        model = copy.deepcopy(self.model).to(rank)
+        model = model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
         # ******************* #
@@ -245,8 +245,8 @@ class BinarySegmentationDPP:
                 weights[i] = 1
 
         if rank == 0:
-            print('train %d epochs' % (self.end_epoch - self.start_epoch))
-        for epoch in range(self.start_epoch, self.end_epoch):
+            print('train %d epochs' % (end_epoch - start_epoch))
+        for epoch in range(start_epoch, end_epoch):
 
             # ******************* #
             # train
@@ -262,7 +262,7 @@ class BinarySegmentationDPP:
             total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
             total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
 
-            if rank == 0 and epoch == self.start_epoch:
+            if rank == 0 and epoch == start_epoch:
                 tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
             else:
                 tqdm_structure = enumerate(train_loader)
@@ -373,7 +373,7 @@ class BinarySegmentationDPP:
                 total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
                 total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
 
-                if rank == 0 and epoch == self.start_epoch:
+                if rank == 0 and epoch == start_epoch:
                     tqdm_structure = tqdm(enumerate(validation_loader), total=len(validation_loader), smoothing=0.9)
                 else:
                     tqdm_structure = enumerate(validation_loader)

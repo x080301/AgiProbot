@@ -31,10 +31,9 @@ class CrossAttentionLayer(nn.Module):
                                           nn.Conv1d(512, out_channels, 1, bias=False))
 
     def forward(self, x_vk, x_q):
-        # _                                                                         input (8,N,128)
+        # _                                                                         input (8,128,N)
 
-        x_vk = x_vk.permute(0, 2, 1)  # _                                           (B,N,128) -> (B,128,N)
-        x_q = x_q.permute(0, 2, 1)  # _                                             (B,N,128) -> (B,128,N)
+        residual = x_q
 
         q = self.q_conv(x_q)
         q = split_heads(q, self.num_heads, self.q_depth)  # _                       (B,128,N) -> (B,H,D,N)
@@ -51,19 +50,15 @@ class CrossAttentionLayer(nn.Module):
         scale_factor = math.sqrt(q.shape[-2])
         attention_map = self.softmax(energy / scale_factor)  # _                    (B,H,N,N) -> (B,H,N,N)
 
-        residual = x_q
         x = v @ attention_map  # _                                                  (B,H,D,N) @ (B,H,N,N) -> (B,H,D,N)
         x = x.reshape(x.shape[0], -1, x.shape[3])  # _                              (B,H,D,N) -> (B,128,N)
 
-        x = self.after_attention_bn(x + residual)
-        # _                                                                         (B,128,N) + (B,128,N) -> (B,128,N)
+        x = self.after_attention_bn(x + residual)  # _                              (B,128,N) + (B,128,N) -> (B,128,N)
 
         # feed forward
         residual = x
         x = self.feed_forward(x)  # _                                               (B,128,N) -> (B,512,N) -> (B,128,N)
         x = self.feed_forward_bn(x + residual)  # _                                 (B,128,N) + (B,128,N) -> (B,128,N)
-
-        x = x.permute(0, 2, 1)  # _                                                 (B,128,N) -> (B,N,128)
 
         return x
 
@@ -76,7 +71,7 @@ class SelfAttentionLayer(nn.Module):
 
     def forward(self, x):
         # _                                                                         input (8,N,128)
-        x = self.self_attention_layer(x_vk=x, x_q=x)  # _                           (8,N,128) -> (B,N,128)
+        x = self.self_attention_layer(x_vk=x, x_q=x)  # _                           (8,128,N) -> (B,128,N)
 
         return x
 

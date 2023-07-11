@@ -151,91 +151,6 @@ class STN3d(nn.Module):
         return x
 
 
-class PCTSeg(nn.Module):
-    def __init__(self, args):
-        super(PCTSeg, self).__init__()
-        self.args = args
-        self.k = args.model_para.k
-
-        self.stn3d = TransformNet()
-        self.bn1 = nn.BatchNorm2d(64)
-        self.bn2 = nn.BatchNorm2d(64)
-        self.bn3 = nn.BatchNorm2d(64)
-        self.bn4 = nn.BatchNorm2d(64)
-        self.sa1 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
-        self.sa2 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
-        self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
-        self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
-
-        self.conv1 = nn.Sequential(nn.Conv2d(6, 64, kernel_size=1, bias=False),  # 3*64=384
-                                   self.bn1,  # 2*64*2=256
-                                   nn.LeakyReLU(negative_slope=0.2))  # 0
-        self.conv2 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=1, bias=False),  # 64*64=4096
-                                   self.bn2,  # 256
-                                   nn.LeakyReLU(negative_slope=0.2))  # 0
-        self.conv3 = nn.Sequential(nn.Conv2d(64 * 2, 64, kernel_size=1, bias=False),  # 128*64=8096
-                                   self.bn3,  # 256
-                                   nn.LeakyReLU(negative_slope=0.2))  # 0
-        self.conv4 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=1, bias=False),  # 64*64=4096
-                                   self.bn4,  # 256
-                                   nn.LeakyReLU(negative_slope=0.2))  # 0
-        self.bn__ = nn.BatchNorm1d(1024)
-        self.conv__ = nn.Sequential(nn.Conv1d(512, 1024, kernel_size=1, bias=False),  # 128*64=8096
-                                    self.bn__,  # 256
-                                    nn.LeakyReLU(negative_slope=0.2))  # 0
-        self.bn5 = nn.BatchNorm1d(512)
-        self.conv5 = nn.Conv1d(1024 + 512, 512, 1)
-        self.dp5 = nn.Dropout(0.5)
-
-        self.bn6 = nn.BatchNorm1d(256)
-        self.conv6 = nn.Conv1d(512, 256, 1)
-        self.conv7 = nn.Conv1d(256, self.args.num_segmentation_type, 1)
-
-    def forward(self, x):
-        num_points = x.size(2)
-        x = x.float()  # _                              input (B,3,N)
-        # transform_matrix = self.s3n(x)
-        transform_matrix = self.stn3d(get_neighbors(x, k=self.k))
-        # _                                             (B,3,N) -> (B,3,3)
-        x = x.permute(0, 2, 1)  # _                     (B,3,N) -> (B,N,3)
-        x = torch.bmm(x, transform_matrix)  # _         (B,N,3) * (B,3,3) -> (B,N,3)
-        # Visuell_PointCloud_per_batch(x,target)
-        x = x.permute(0, 2, 1)  # _                     (B,N,3) -> (B,3,N)
-
-        x = get_neighbors(x, k=self.k)  # _             (B,3,N) -> (B,3*2,N,k)
-        x = self.conv1(x)  # _                          (B,3*2,N,k) -> (B,64,N,k)
-        x = self.conv2(x)  # _                          (B,64,N,k) -> (B,64,N,k)
-        x1 = x.max(dim=-1, keepdim=False)[0]  # _       (B,64,N,k) -> (B,64,N)
-
-        x = get_neighbors(x1, k=self.k)  # _            (B,64,N) -> (B,64*2,N,k)
-        x = self.conv3(x)  # _                          (B,64*2,N,k) -> (B,64,N,k)
-        x = self.conv4(x)  # _                          (B,64,N,k) -> (B,64,N,k)
-        x2 = x.max(dim=-1, keepdim=False)[0]  # _       (B,64,N,k) -> (B,64,N)
-
-        x = torch.cat((x1, x2), dim=1)  # _             (B,64,N)*2 -> (B,128,N)
-
-        x = x.permute(0, 2, 1)  # _                     (B,128,N) -> (B,N,128)
-        x1 = self.sa1(x)  # _                           (B,N,128) -> (B,N,128)
-        x2 = self.sa2(x1)  # _                          (B,N,128) -> (B,N,128)
-        x3 = self.sa3(x2)  # _                          (B,N,128) -> (B,N,128)
-        x4 = self.sa4(x3)  # _                          (B,N,128) -> (B,N,128)
-        x = torch.cat((x1, x2, x3, x4), dim=-1)  # _    (B,N,128)*4 -> (B,N,512)
-        x = x.permute(0, 2, 1)  # _                     (B,N,512) -> (B,512,N)
-        x__ = x
-        x = self.conv__(x)  # _                         (B,512,N) -> (B,1024,N)
-        x = x.max(dim=-1, keepdim=False)[0]  # _        (B,1024,N) -> (B,1024)
-        x = x.unsqueeze(-1).repeat(1, 1, num_points)
-        # _                                             (B,1024) -> (B,1024,N)
-        x = torch.cat((x, x__), dim=1)
-        # _                                             (B,1024,N) + (B,512,N) -> (B,1536,N)
-        x = F.leaky_relu(self.bn5(self.conv5(x)), negative_slope=0.2)  # _     (B,1536,N) -> (B,512,N)
-        x = self.dp5(x)  # _                            (B,512,N) -> (B,512,N)
-        x = F.leaky_relu(self.bn6(self.conv6(x)), negative_slope=0.2)  # _     (B,512,N) -> (B,256,N)
-        segmentation_labels = self.conv7(x)  # _        (B,256,N) -> (B,segment_type,N)
-
-        return segmentation_labels, transform_matrix
-
-
 class InputEmbedding(nn.Module):
     def __init__(self, args):
         super(InputEmbedding, self).__init__()
@@ -324,6 +239,150 @@ class SegmentationMLP(nn.Module):
         return segmentation_labels
 
 
+class BoltTokenMLP(nn.Module):
+    def __init__(self, args):
+        super(BoltTokenMLP, self).__init__()
+        self.args = args
+
+        if self.args.token.num_mlp == 1:
+            if self.args.token.mlp_dropout == 0:
+
+                self.linear1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn1 = nn.BatchNorm1d(256)
+
+                self.linear2 = nn.Conv1d(256, self.args.token.bolt_type + 2 + 3 + 3, kernel_size=1)
+            else:
+                self.linear1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn1 = nn.BatchNorm1d(256)
+                self.dp = nn.Dropout(0.5)
+
+                self.linear2 = nn.Conv1d(256, self.args.token.token_output_dimention + 2 + 3 + 3, kernel_size=1)
+        elif self.args.token.num_mlp == 3:
+            if self.args.token.mlp_dropout == 0:
+                # existing label
+                self.linear_existing1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_existing1 = nn.BatchNorm1d(256)
+
+                self.linear_existing2 = nn.Conv1d(256, 2, kernel_size=1)
+
+                # type_label
+                self.linear_type1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_type1 = nn.BatchNorm1d(256)
+
+                self.linear_type2 = nn.Conv1d(256, self.args.token.token_output_dimention, kernel_size=1)
+
+                # center position of bolts
+                self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_center1 = nn.BatchNorm1d(256)
+
+                self.linear_center2 = nn.Conv1d(256, 3, kernel_size=1)
+
+                # normal of bolts
+                self.linear_normal1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_normal1 = nn.BatchNorm1d(256)
+
+                self.linear_normal2 = nn.Conv1d(256, 3, kernel_size=1)
+
+            else:
+                # existing label
+                self.linear_existing1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_existing1 = nn.BatchNorm1d(256)
+                self.dp_existing = nn.Dropout(0.5)
+
+                self.linear_existing2 = nn.Conv1d(256, 2, kernel_size=1)
+
+                # type_label
+                self.linear_type1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_type1 = nn.BatchNorm1d(256)
+                self.dp_type = nn.Dropout(0.5)
+
+                self.linear_type2 = nn.Conv1d(256, self.args.token.token_output_dimention, kernel_size=1)
+
+                # center position of bolts
+                self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_center1 = nn.BatchNorm1d(256)
+
+                self.linear_center2 = nn.Conv1d(256, 3, kernel_size=1)
+
+                # normal of bolts
+                self.linear_normal1 = nn.Conv1d(512, 256, kernel_size=1)
+                self.bn_normal1 = nn.BatchNorm1d(256)
+
+                self.linear_normal2 = nn.Conv1d(256, 3, kernel_size=1)
+
+    def forward(self, x):
+        # _                                                     input (B,512,T)
+
+        if self.args.token.num_mlp == 1:
+            if self.args.token.mlp_dropout == 0:
+
+                x = F.leaky_relu(self.self.bn1(self.linear1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
+            else:
+                x = F.leaky_relu(self.self.bn1(self.linear1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+                x = self.dp(x)  # _                             (B,256,T) -> (B,256,T)
+
+                x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
+
+        elif self.args.token.num_mlp == 4:
+            if self.args.token.mlp_dropout == 0:
+                # existing label
+                x = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_existing2(x)  # _               (B,256,T) -> (B,2,T)
+
+                # type_label
+                x = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_type2(x)  # _                   (B,256,T) -> (B,bolt_type,T)
+
+                # center position of bolts
+                x = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_center2(x)  # _                 (B,256,T) -> (B,3,T)
+
+                # normal of bolts
+                x = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_normal2(x)  # _                 (B,256,T) -> (B,3,T)
+
+            else:
+                # existing label
+                x = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+                x = self.dp_existing(x)  # _                    (B,256,T) -> (B,256,T)
+
+                x = self.linear_existing2(x)  # _               (B,256,T) -> (B,2,T)
+
+                # type_label
+                x = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+                x = self.dp_type(x)  # _                        (B,256,T) -> (B,256,T)
+
+                x = self.linear_type2(x)  # _                   (B,256,T) -> (B,bolt_type,T)
+
+                # center position of bolts
+                x = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_center2(x)  # _                 (B,256,T) -> (B,3,T)
+
+                # normal of bolts
+                x = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
+                # _                                             (B,512,T) -> (B,256,T)
+
+                x = self.linear_normal2(x)  # _                 (B,256,T) -> (B,3,T)
+
+        return segmentation_labels
+
+
 class TokenSegmentation(nn.Module):
 
     def __init__(self, args):
@@ -340,6 +399,7 @@ class TokenSegmentation(nn.Module):
         self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
 
         self.segmentation_mlp = SegmentationMLP(self.args)
+        self.bolt_token_mlp = BoltTokenMLP(self.args)
 
     def forward(self, x):
         batch_size, _, num_points = x.shape  # _        input (B,3,N)
@@ -352,13 +412,11 @@ class TokenSegmentation(nn.Module):
         x = torch.cat((point_wise_features, bolt_tokens), dim=-1)
         # _                                             (B,128,N) + (B,128,T) -> (B,128,N+T)
 
-        x = x.permute(0, 2, 1)  # _                     (B,128,N+T) -> (B,N+T,128)
-        x1 = self.sa1(x)  # _                           (B,N+T,128) -> (B,N+T,128)
-        x2 = self.sa2(x1)  # _                          (B,N+T,128) -> (B,N+T,128)
-        x3 = self.sa3(x2)  # _                          (B,N+T,128) -> (B,N+T,128)
-        x4 = self.sa4(x3)  # _                          (B,N+T,128) -> (B,N+T,128)
-        x = torch.cat((x1, x2, x3, x4), dim=-1)  # _    (B,N+T,128)*4 -> (B,N+T,512)
-        x = x.permute(0, 2, 1)  # _                     (B,N+T,512) -> (B,512,N+T)
+        x1 = self.sa1(x)  # _                           (B,128,N+T) -> (B,128,N+T)
+        x2 = self.sa2(x1)  # _                          (B,128,N+T) -> (B,128,N+T)
+        x3 = self.sa3(x2)  # _                          (B,128,N+T) -> (B,128,N+T)
+        x4 = self.sa4(x3)  # _                          (B,128,N+T) -> (B,128,N+T)
+        x = torch.cat((x1, x2, x3, x4), dim=-2)  # _    (B,128,N+T)*4 -> (B,512,N+T)
 
         point_wise_features, bolt_tokens = torch.split(x, [num_points, self.args.token.num_tokens], dim=-1)
         # _                                             (B,512,N+T) -> (B,512,N) + (B,512,T)
@@ -366,4 +424,7 @@ class TokenSegmentation(nn.Module):
         segmentation_labels = self.segmentation_mlp(point_wise_features)
         # _                                             (B,512,N) -> (B,segment_type,N)
 
-        return segmentation_labels, transform_matrix
+        bolt_token_outputs = self.bolt_token_mlp(bolt_tokens)
+        # _                                             (B,512,T) -> (B,bolt_type+2+3+3,T)
+
+        return segmentation_labels, bolt_token_outputs, transform_matrix
