@@ -1,7 +1,0 @@
-
-from train_and_test.dpp_trainer import BinarySegmentationDPP
-
-config_dir = 'config/binary_segmentation_zivid_3_5_no_pretrain.yaml'
-print(config_dir)
-bsdpp = BinarySegmentationDPP(train_txt,config_dir)
-bsdpp.train_dpp()

@@ -6,7 +6,7 @@ DATA:
   npoints: 2048
   sample_rate: 1
 
-train:
+ttrain:
   random_seed: 0 # 0->random choose a seed
   ddp:
     nodes: 1
@@ -25,10 +25,10 @@ train:
 
   screw_weight: 1.0
   use_sgd: 0
-  lr: 0.001
-  end_lr: 0.00001
+  lr: 0.0001
+  end_lr: 0.0000001
   momentum: 0.9
-  epochs: 50
+  epochs: 300
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
@@ -48,9 +48,9 @@ train:
   after_stn_as_input: 1
   after_stn_as_kernel_neighbor_query: 1
 
-test:
-  test_symbol: 'Train'
-  test_batch_size: 2
+  test:
+    test_symbol: 'Train'
+    test_batch_size: 2
 
 
 
