@@ -1,5 +1,5 @@
 DATA:
-  data_dir: '/data/users/fu/big_motor_zivid_binlabel_npy'
+  data_dir: '/data/users/fu/big_motor_blendar_binlabel_npy'
   which_dataset: 'Motor_Dataset4'
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 2
@@ -25,8 +25,8 @@ train:
 
   screw_weight: 1.0
   use_sgd: 0
-  lr: 0.00001
-  end_lr: 0.000001
+  lr: 0.0000001
+  end_lr: 0.00000001
   momentum: 0.9
   epochs: 50
 
@@ -51,7 +51,6 @@ train:
 test:
   test_symbol: 'Train'
   test_batch_size: 2
-
 
 
 
