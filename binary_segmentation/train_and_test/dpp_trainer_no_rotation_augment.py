@@ -10,9 +10,10 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import copy
 
 from utilities.config import get_parser
-from model.pct_token import TokenSegmentation
+from model.pct import PCTSeg
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
@@ -122,7 +123,7 @@ class BinarySegmentationDPP:
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
 
-        model = TokenSegmentation(self.args)
+        model = PCTSeg(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
 
@@ -274,7 +275,7 @@ class BinarySegmentationDPP:
                 points = util.normalize_data(points)
 
                 # rotation augmentation
-                points, _ = util.rotate_per_batch(points, None)
+                # points, _ = util.rotate_per_batch(points, None)
 
                 points = points.permute(0, 2, 1).float()
                 batch_size = points.size()[0]

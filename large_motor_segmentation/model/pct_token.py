@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
+import torch
+from torch import nn
+from torch.nn import functional as F
 from torch.autograd import Variable
 import einops
+import numpy as np
 
-from utilities.util import *
+# from utilities.util import *
 from model.attention import SelfAttentionLayer
 
 
@@ -256,7 +259,7 @@ class BoltTokenMLP(nn.Module):
                 self.bn1 = nn.BatchNorm1d(256)
                 self.dp = nn.Dropout(0.5)
 
-                self.linear2 = nn.Conv1d(256, self.args.token.token_output_dimention + 2 + 3 + 3, kernel_size=1)
+                self.linear2 = nn.Conv1d(256, self.args.token.bolt_type + 2 + 3 + 3, kernel_size=1)
         elif self.args.token.num_mlp == 3:
             if self.args.token.mlp_dropout == 0:
                 # existing label
@@ -269,7 +272,7 @@ class BoltTokenMLP(nn.Module):
                 self.linear_type1 = nn.Conv1d(512, 256, kernel_size=1)
                 self.bn_type1 = nn.BatchNorm1d(256)
 
-                self.linear_type2 = nn.Conv1d(256, self.args.token.token_output_dimention, kernel_size=1)
+                self.linear_type2 = nn.Conv1d(256, self.args.token.bolt_type, kernel_size=1)
 
                 # center position of bolts
                 self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
@@ -296,7 +299,7 @@ class BoltTokenMLP(nn.Module):
                 self.bn_type1 = nn.BatchNorm1d(256)
                 self.dp_type = nn.Dropout(0.5)
 
-                self.linear_type2 = nn.Conv1d(256, self.args.token.token_output_dimention, kernel_size=1)
+                self.linear_type2 = nn.Conv1d(256, self.args.token.bolt_type, kernel_size=1)
 
                 # center position of bolts
                 self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
@@ -320,6 +323,12 @@ class BoltTokenMLP(nn.Module):
                 # _                                             (B,512,T) -> (B,256,T)
 
                 x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
+
+                existing_label, type_labels, bolt_centers, bolt_normals = \
+                    torch.split(x, [2, self.args.token.bolt_type, 3, 3], dim=1)
+                # _                                             (B,bolt_type+2+3+3,T) ->
+                # _                                                       (B,2,T),(B,bolt_type,T),(B,3,T),(B,3,T)
+
             else:
                 x = F.leaky_relu(self.self.bn1(self.linear1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
@@ -327,60 +336,80 @@ class BoltTokenMLP(nn.Module):
 
                 x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
 
-        elif self.args.token.num_mlp == 4:
+                existing_label, type_labels, bolt_centers, bolt_normals = \
+                    torch.split(x, [2, self.args.token.bolt_type, 3, 3], dim=1)
+                # _                                             (B,bolt_type+2+3+3,T) ->
+                # _                                                       (B,2,T),(B,bolt_type,T),(B,3,T),(B,3,T)
+
+        else:  # elif self.args.token.num_mlp == 4:
             if self.args.token.mlp_dropout == 0:
+
                 # existing label
-                x = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
+                existing_label = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_existing2(x)  # _               (B,256,T) -> (B,2,T)
+                existing_label = self.linear_existing2(existing_label)
+                # _                                             (B,256,T) -> (B,2,T)
 
                 # type_label
-                x = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
+                type_labels = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_type2(x)  # _                   (B,256,T) -> (B,bolt_type,T)
+                type_labels = self.linear_type2(type_labels)
+                # _                                             (B,256,T) -> (B,bolt_type,T)
 
                 # center position of bolts
-                x = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
+                bolt_centers = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_center2(x)  # _                 (B,256,T) -> (B,3,T)
+                bolt_centers = self.linear_center2(bolt_centers)
+                # _                                             (B,256,T) -> (B,3,T)
 
                 # normal of bolts
-                x = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
+                bolt_normals = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_normal2(x)  # _                 (B,256,T) -> (B,3,T)
+                bolt_normals = self.linear_normal2(bolt_normals)
+                # _                                             (B,256,T) -> (B,3,T)
 
             else:
+
                 # existing label
-                x = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
+                existing_label = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
                 x = self.dp_existing(x)  # _                    (B,256,T) -> (B,256,T)
 
-                x = self.linear_existing2(x)  # _               (B,256,T) -> (B,2,T)
+                existing_label = self.linear_existing2(existing_label)
+                # _                                             (B,256,T) -> (B,2,T)
 
                 # type_label
-                x = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
+                type_labels = F.leaky_relu(self.self.bn_type1(self.linear_type1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
                 x = self.dp_type(x)  # _                        (B,256,T) -> (B,256,T)
 
-                x = self.linear_type2(x)  # _                   (B,256,T) -> (B,bolt_type,T)
+                type_labels = self.linear_type2(type_labels)
+                # _                                             (B,256,T) -> (B,bolt_type,T)
 
                 # center position of bolts
-                x = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
+                bolt_centers = F.leaky_relu(self.self.bn_center1(self.linear_center1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_center2(x)  # _                 (B,256,T) -> (B,3,T)
+                bolt_centers = self.linear_center2(bolt_centers)
+                # _                                             (B,256,T) -> (B,3,T)
 
                 # normal of bolts
-                x = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
+                bolt_normals = F.leaky_relu(self.self.bn_normal1(self.linear_normal1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
 
-                x = self.linear_normal2(x)  # _                 (B,256,T) -> (B,3,T)
+                bolt_normals = self.linear_normal2(bolt_normals)
+                # _                                             (B,256,T) -> (B,3,T)
 
-        return segmentation_labels
+        # existing_label = F.softmax(existing_label, dim=1)  # _  (B,2,T)
+        # type_labels = F.softmax(type_labels, dim=1)  # _        (B,bolt_type,T)
+        # bolt_centers = F.sigmoid(bolt_centers, dim=1)  # _      (B,3,T)
+        # bolt_normals = bolt_normals  # _                        (B,3,T)
+
+        return existing_label, type_labels, bolt_centers, bolt_normals
 
 
 class TokenSegmentation(nn.Module):
@@ -424,7 +453,8 @@ class TokenSegmentation(nn.Module):
         segmentation_labels = self.segmentation_mlp(point_wise_features)
         # _                                             (B,512,N) -> (B,segment_type,N)
 
-        bolt_token_outputs = self.bolt_token_mlp(bolt_tokens)
+        existing_label, type_labels, bolt_centers, bolt_normals = self.bolt_token_mlp(bolt_tokens)
         # _                                             (B,512,T) -> (B,bolt_type+2+3+3,T)
 
-        return segmentation_labels, bolt_token_outputs, transform_matrix
+        # return logits
+        return segmentation_labels, existing_label, type_labels, bolt_centers, bolt_normals, transform_matrix

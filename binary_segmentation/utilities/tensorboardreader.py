@@ -28,7 +28,7 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_06_01_15_40_lr1e4_7': 'lr 1e-4->-7',
                   '2023_06_02_09_56_zivid_freeze': 'zivid_5_8_freeze'
                   }
-show_list = ['pre_trained','lr 1e-4->-6', 'lr 1e-5->-7', 'lr 1e-5->-6','lr 1e-4->-7']
+show_list = ['pre_trained', 'lr 1e-4->-6', 'lr 1e-5->-7', 'lr 1e-5->-6', 'lr 1e-4->-7']
 plt.title("lr comparing")
 
 mIoU_dict = {}

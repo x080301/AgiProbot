@@ -9,7 +9,7 @@
 
 # from train_and_test.dpp_trainer import BinarySegmentationDPP
 
-from train_and_test.pre_train_fine_tune import BinarySegmentationDPP
+from train_and_test.dpp_trainer_no_rotation_augment import BinarySegmentationDPP
 import shutil
 
 train_txt = None
