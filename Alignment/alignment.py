@@ -2,8 +2,8 @@ import open3d as o3d
 import numpy as np
 from tqdm import tqdm
 
-import utilities.data_visualization
-from utilities.point_cloud_operation import get_normal_array
+import data_visualization
+from point_cloud_operation import get_normal_array
 
 
 def _get_point_clouds_in_dict(pcd):
@@ -92,10 +92,10 @@ def _test_zy_axis():
                                             remove_nan_points=True, remove_infinite_points=True,
                                             print_progress=True)
 
-    _, mesh_arrow, mesh_sphere_begin, _ = utilities.data_visualization.get_arrow(segmented_pcd.get_center(), z * 150)
+    _, mesh_arrow, mesh_sphere_begin, _ = data_visualization.get_arrow(segmented_pcd.get_center(), z * 150)
     z_arrow_list = [mesh_arrow, mesh_sphere_begin]
 
-    _, mesh_arrow, mesh_sphere_begin, _ = utilities.data_visualization.get_arrow(segmented_pcd.get_center(), y * 150)
+    _, mesh_arrow, mesh_sphere_begin, _ = data_visualization.get_arrow(segmented_pcd.get_center(), y * 150)
     y_arrow_list = [mesh_arrow, mesh_sphere_begin]
 
     # o3d.visualization.draw_geometries([segmented_pcd])

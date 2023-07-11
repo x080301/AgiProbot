@@ -3,8 +3,8 @@ import open3d as o3d
 import copy
 import time
 
-from utilities.data_visualization import visualization_point_cloud
-from data_preprocess.global_registration import global_registration
+from data_visualization import visualization_point_cloud
+from global_registration import global_registration
 
 
 def _point2plane_test(target_point_cloud, source_point_cloud, max_correspondence_distance=10):

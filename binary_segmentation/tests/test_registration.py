@@ -1,5 +1,4 @@
 import time
-import unittest
 
 import open3d as o3d
 

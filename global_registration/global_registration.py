@@ -2,7 +2,7 @@ import time
 import copy
 import open3d as o3d
 import numpy as np
-from utilities.data_visualization import visualization_point_cloud
+from data_visualization import visualization_point_cloud
 
 
 def preprocess_point_cloud(pcd, voxel_size, visualization=False):
