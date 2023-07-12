@@ -21,7 +21,7 @@ from utilities import util
 
 class BinarySegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
-                     'train.py', 'train_line.py']
+                     'train.py', 'train_line.py', 'best_m.pth']
 
     def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
         # ******************* #
@@ -162,7 +162,7 @@ class BinarySegmentationDPP:
 
         model = model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
-        # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
         torch.manual_seed(self.random_seed)
 
