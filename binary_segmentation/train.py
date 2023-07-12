@@ -1,15 +1,8 @@
 train_txt = None
 if __name__ == "__main__":
-    from train_and_test.pre_train_fine_tune import BinarySegmentationDPP
+    from train_and_test.dpp_trainer_no_rotation_augment import BinarySegmentationDPP
 
-    config_dir = 'config/binary_segmentation_5_6.yaml'
-    print(config_dir)
-    bsdpp = BinarySegmentationDPP(train_txt, config_dir)
-    bsdpp.train_dpp()
-
-    from train_and_test.dpp_trainer import BinarySegmentationDPP
-
-    config_dir = 'config/binary_segmentation_fine_tune_6_8.yaml'
+    config_dir = 'config/binary_segmentation_lr_minus_4_minus_6.yaml'
     print(config_dir)
     bsdpp = BinarySegmentationDPP(train_txt, config_dir)
     bsdpp.train_dpp()

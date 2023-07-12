@@ -270,7 +270,9 @@ class BinarySegmentationDPP:
                 # ******************* #
                 # forwards
                 # ******************* #
-                points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
+                points.to(rank, non_blocking=True)
+                target.to(rank, non_blocking=True)
+
                 points = util.normalize_data(points)
 
                 # rotation augmentation
