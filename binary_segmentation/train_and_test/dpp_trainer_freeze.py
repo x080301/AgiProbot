@@ -265,7 +265,7 @@ class BinarySegmentationDPP:
             if rank == 0:
                 print('-----train-----')
             train_sampler.set_epoch(epoch)
-            model = model.train()
+            model.train()
 
             total_correct = 0
             total_seen = 0
@@ -376,7 +376,7 @@ class BinarySegmentationDPP:
             with torch.no_grad():
                 pass
                 valid_sampler.set_epoch(epoch)
-                model = model.eval()
+                model.eval()
 
                 total_correct = 0
                 total_seen = 0

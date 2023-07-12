@@ -159,7 +159,7 @@ class BinarySegmentationDPP:
         start_epoch = start_epoch
         end_epoch = end_epoch
 
-        model = model.to(rank)
+        model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
@@ -254,7 +254,7 @@ class BinarySegmentationDPP:
             if rank == 0:
                 print('-----train-----')
             train_sampler.set_epoch(epoch)
-            model = model.train()
+            model.train()
 
             total_correct = 0
             total_seen = 0
@@ -363,7 +363,7 @@ class BinarySegmentationDPP:
             with torch.no_grad():
                 pass
                 valid_sampler.set_epoch(epoch)
-                model = model.eval()
+                model.eval()
 
                 total_correct = 0
                 total_seen = 0

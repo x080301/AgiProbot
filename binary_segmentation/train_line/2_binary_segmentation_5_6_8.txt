@@ -7,6 +7,7 @@ print(config_dir)
 bsdpp = BinarySegmentationDPP(train_txt, config_dir)
 best_m_path = bsdpp.train_dpp()
 
+print(best_m_path)
 shutil.copyfile(best_m_path, 'best_m.pth')
 
 config_dir = 'config/binary_segmentation_fine_tune_6_8.yaml'

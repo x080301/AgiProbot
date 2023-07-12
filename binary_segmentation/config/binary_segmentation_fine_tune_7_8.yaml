@@ -1,5 +1,5 @@
 DATA:
-  data_dir: '/data/users/fu/big_motor_blendar_binlabel_npy'
+  data_dir: '/data/users/fu/big_motor_zivid_binlabel_npy'
   which_dataset: 'Motor_Dataset4'
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 2
