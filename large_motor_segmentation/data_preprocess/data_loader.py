@@ -102,7 +102,7 @@ class MotorDataset(Dataset):
             motor_directory = os.path.join(data_dir, motor_position)
             motor_data = np.load(motor_directory)
 
-            points_in_one_motor = motor_data[:, 0:6]
+            points_in_one_motor = motor_data[:, 0:3]
             labels_in_one_motor = motor_data[:, 6]  # result is a np array
             points_motors.append(points_in_one_motor)
             labels_motors.append(labels_in_one_motor)
@@ -144,7 +144,7 @@ class MotorDataset(Dataset):
 
     def __getitem__(self, index):
 
-        points = self.points_motors[self.motors_indes[index]][:, 0:3]  # initialize the parameter
+        points = self.points_motors[self.motors_indes[index]]  # initialize the parameter
         labels = self.labels_motors[self.motors_indes[index]]
         ########################have a randow choose of points from points cloud#######################
         choice = np.random.choice(points.shape[0], self.num_points, replace=True)
