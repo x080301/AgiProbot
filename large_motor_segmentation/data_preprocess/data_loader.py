@@ -105,7 +105,7 @@ class MotorDataset(Dataset):
             points_in_one_motor = motor_data[:, 0:3]
             labels_in_one_motor = motor_data[:, 6]  # result is a np array
             points_motors.append(points_in_one_motor)
-            labels_motors.append(labels_in_one_motor)
+            labels_motors.append(labels_in_one_motor)  # Todo: token labels
 
             points_num_eachmotor.append(points_in_one_motor.shape[0])
 
