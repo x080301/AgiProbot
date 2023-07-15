@@ -10,6 +10,7 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import copy
 
 from utilities.config import get_parser
 from model.pct import PCTSeg
@@ -111,18 +112,7 @@ class BinarySegmentationDPP:
         # load ML model
         # ******************* #
 
-        # self.model = nn.DataParallel(self.model)
-
-    def train(self, rank, world_size):
-        best_mIoU = 0
-        # ******************* #
-        # dpp and load ML model
-        # ******************* #
-        torch.cuda.set_device(rank)
-        backend = 'gloo' if self.is_local else 'nccl'
-        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-
-        model = PCTSeg(self.args)
+        self.model = PCTSeg(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
 
@@ -151,14 +141,28 @@ class BinarySegmentationDPP:
                     new_state_dict[k[7:]] = v
                 else:
                     break
-            model.load_state_dict(new_state_dict)  # .to(rank)
+            self.model.load_state_dict(new_state_dict)  # .to(rank)
         else:
             start_epoch = 0
             end_epoch = 2 if self.is_local else self.args.epochs
 
-        start_epoch = start_epoch
-        end_epoch = end_epoch
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
+        # self.model = nn.DataParallel(self.model)
 
+    def train(self, rank, world_size):
+        best_mIoU = 0
+        # ******************* #
+        # dpp and load ML model
+        # ******************* #
+        torch.cuda.set_device(rank)
+        backend = 'gloo' if self.is_local else 'nccl'
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+
+        start_epoch = self.start_epoch
+        end_epoch = self.end_epoch
+
+        model = copy.deepcopy(self.model)
         model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
