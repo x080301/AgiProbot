@@ -1,36 +1,81 @@
+import copy
+import random
+
 import numpy as np
 import torch
-import torch.nn.functional as F
-import random
 import torch.nn as nn
-import copy
+import torch.nn.functional as F
 
 
-# import open3d
+def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, ground_truth, args):
+    # (B,2,T), (B,bolt_type,T), (B,3,T), (B,3,T), (B,2+bolt_type+3+3,T)
 
-def cal_loss(pred, gold, weights, smoothing=False, using_weight=False):
-    ''' Calculate cross entropy loss, apply label smoothing if needed. '''
+    loss = 0
 
-    gold = gold.contiguous().view(-1)
-    gold = gold.type(torch.int64)
+    if not args.model.token.bolt_existing_loss == 0:
+        logits = bolt_existing_label.permute(0, 2, 1)
+        logits = logits.view(-1, args.num_segmentation_type).contiguous()
+        # _                                                 (B,2,T) -> (B*T,2)
+        target = ground_truth[:, 0:2].view(-1)
+        target = target.type(torch.int64).contiguous()  # _     (B,T) -> (B*T)
 
-    if smoothing:
-        eps = 0.2
-        n_class = pred.size(1)
-        one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
-        one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
-        log_prb = F.log_softmax(pred, dim=1)
-        if using_weight:
-            inter = -one_hot * log_prb
-            loss = torch.matmul(inter, weights).sum(dim=1).mean()
-        else:
-            loss = -(one_hot * log_prb).sum(dim=1).mean()
+        loss += args.model.token.bolt_existing_loss * F.cross_entropy(logits, target, reduction='mean')
 
+    if not args.model.token.bolt_type_loss == 0:
+        logits = bolt_type_pred.permute(0, 2, 1)
+        logits = logits.view(-1, args.num_segmentation_type).contiguous()
+        # _                                                 (B,bolt_type,T) -> (B*T,bolt_type)
+        target = ground_truth[:, 2:2 + args.model.token.bolt_type].view(-1)
+        target = target.type(torch.int64).contiguous()  # _     (B,T) -> (B*T)
+
+        loss += args.model.token.bolt_type_loss * F.cross_entropy(logits, target, reduction='mean')
+    if not args.model.token.bolt_centers_loss == 0:
+        logits = bolt_centers
+        target = ground_truth[:, 2 + args.model.token.bolt_type:2 + args.model.token.bolt_type + 3]
+
+        pred = F.sigmoid(logits)
+        loss += args.model.token.bolt_centers_loss * F.huber_loss(pred, target, delta=1)
+    if not args.model.token.bolt_normals_loss == 0:
+        logits = bolt_normals
+        target = ground_truth[:, 2 + args.model.token.bolt_type + 3:2 + args.model.token.bolt_type + 3 + 3]
+
+        pred = F.sigmoid(logits)
+        loss += args.model.token.bolt_normals_loss * F.huber_loss(pred, target, delta=1)
+
+    return loss
+
+
+def cal_segment_loss(pred, target, weights, args):
+    """
+        Calculate cross entropy loss, apply label smoothing if needed.
+        pred: (B, segment_type, N)
+        target: (B, N)
+    """
+
+    pred = pred.permute(0, 2, 1)
+    pred = pred.view(-1, args.num_segmentation_type).contiguous()
+    # _                                                     (B,segment_type,N) -> (B*N,segment_type)
+    target = target.view(-1)
+    target = target.type(torch.int64).contiguous()  # _     (B,N) -> (B*N)
+
+    if args.use_class_weight == 0:
+        loss = F.cross_entropy(pred, target, reduction='mean')
     else:
-        if using_weight:
-            loss = F.cross_entropy(pred, gold, weight=weights, reduction='mean')
-        else:
-            loss = F.cross_entropy(pred, gold, reduction='mean')
+        loss = F.cross_entropy(pred, target, weight=weights, reduction='mean')
+
+    return loss
+
+
+def cal_loss(point_segmentation_pred, target, weights, transform_matrix,
+             bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+             args):
+    segment_loss = cal_segment_loss(point_segmentation_pred, target, weights, args)
+    token_loss = cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, args)
+
+    loss = segment_loss + token_loss
+
+    if not args.stn_loss_weight == 0:
+        loss += feature_transform_reguliarzer(transform_matrix) * args.stn_loss_weight
 
     return loss
 

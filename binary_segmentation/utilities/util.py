@@ -10,8 +10,12 @@ from time import time
 # import open3d
 
 def cal_loss(pred, gold, weights, smoothing=False, using_weight=False):
-    ''' Calculate cross entropy loss, apply label smoothing if needed. '''
-
+    """
+        Calculate cross entropy loss, apply label smoothing if needed.
+        pred: (B*N, segment_type)
+        target: (B*N)
+    """
+    #
     gold = gold.contiguous().view(-1)
     gold = gold.type(torch.int64)
 

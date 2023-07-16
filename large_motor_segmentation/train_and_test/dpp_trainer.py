@@ -10,9 +10,10 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import copy
 
 from utilities.config import get_parser
-from model.pct_token import TokenSegmentation
+from model.pct_token import PCTToken
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
@@ -20,7 +21,7 @@ from utilities import util
 
 class BinarySegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
-                     'train.py', 'train_line.py']
+                     'train.py', 'train_line.py', 'best_m.pth']
 
     def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
         # ******************* #
@@ -111,18 +112,7 @@ class BinarySegmentationDPP:
         # load ML model
         # ******************* #
 
-        # self.model = nn.DataParallel(self.model)
-
-    def train(self, rank, world_size):
-        best_mIoU = 0
-        # ******************* #
-        # dpp and load ML model
-        # ******************* #
-        torch.cuda.set_device(rank)
-        backend = 'gloo' if self.is_local else 'nccl'
-        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-
-        model = TokenSegmentation(self.args)
+        self.model = PCTToken(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
 
@@ -151,17 +141,31 @@ class BinarySegmentationDPP:
                     new_state_dict[k[7:]] = v
                 else:
                     break
-            model.load_state_dict(new_state_dict)  # .to(rank)
+            self.model.load_state_dict(new_state_dict)  # .to(rank)
         else:
             start_epoch = 0
             end_epoch = 2 if self.is_local else self.args.epochs
 
-        start_epoch = start_epoch
-        end_epoch = end_epoch
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
+        # self.model = nn.DataParallel(self.model)
 
-        model = model.to(rank)
+    def train(self, rank, world_size):
+        best_mIoU = 0
+        # ******************* #
+        # dpp and load ML model
+        # ******************* #
+        torch.cuda.set_device(rank)
+        backend = 'gloo' if self.is_local else 'nccl'
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+
+        start_epoch = self.start_epoch
+        end_epoch = self.end_epoch
+
+        model = copy.deepcopy(self.model)
+        model.to(rank)
         model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
-        # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
         torch.manual_seed(self.random_seed)
 
@@ -230,7 +234,6 @@ class BinarySegmentationDPP:
         # ******************* #
         # loss function and weights
         # ******************* #
-        criterion = util.cal_loss
 
         weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         # print(weights)
@@ -254,7 +257,7 @@ class BinarySegmentationDPP:
             if rank == 0:
                 print('-----train-----')
             train_sampler.set_epoch(epoch)
-            model = model.train()
+            model.train()
 
             total_correct = 0
             total_seen = 0
@@ -267,10 +270,16 @@ class BinarySegmentationDPP:
             else:
                 tqdm_structure = enumerate(train_loader)
             for i, (points, target) in tqdm_structure:
+                '''
+                points: (B,N,3)
+                target: (B,N)
+                '''
                 # ******************* #
                 # forwards
                 # ******************* #
-                points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
+                target = target.cuda(non_blocking=True)
+
+                points = points.cuda(non_blocking=True)
                 points = util.normalize_data(points)
 
                 # rotation augmentation
@@ -280,28 +289,35 @@ class BinarySegmentationDPP:
                 batch_size = points.size()[0]
                 opt.zero_grad()
 
-                seg_pred, trans = model(points.float())
-                # print(seg_pred)
+                point_segmentation_pred, \
+                bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, \
+                transform_matrix = model(points.float())
+                # (B, segment_type, N)
+                # (B,2,T), (B,bolt_type,T), (B,3,T), (B,3,T)
+                # (B,3,3)
 
                 # ******************* #
                 # backwards
                 # ******************* #
-                seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (batch_size,num_points, class_categories)
+                # loss
+                loss = util.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
+                                     bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                                     self.args)
 
-                batch_label = target.view(-1, 1)[:, 0].data
-                loss = criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),
-                                 weights, using_weight=self.args.use_class_weight)  # a scalar
-                if not self.args.stn_loss_weight == 0:
-                    loss = loss + util.feature_transform_reguliarzer(trans) * self.args.stn_loss_weight
                 loss.backward()
                 opt.step()
 
                 # ******************* #
                 # further calculation
                 # ******************* #
-                seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
+
+                batch_label = target.view(-1, 1)[:, 0]
+
+                point_segmentation_pred = point_segmentation_pred.permute(0, 2, 1)
+                point_segmentation_pred = point_segmentation_pred.contiguous().view(-1, self.args.num_segmentation_type)
                 # _                                                      (batch_size*num_points , num_class)
-                pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
+                pred_choice = point_segmentation_pred.data.max(1)[1]  # array(batch_size*num_points)
+
                 correct = torch.sum(pred_choice == batch_label)
                 # when a np arraies have same shape, a==b means in conrrespondending position it equals to one,when they are identical
                 total_correct += correct
@@ -363,7 +379,7 @@ class BinarySegmentationDPP:
             with torch.no_grad():
                 pass
                 valid_sampler.set_epoch(epoch)
-                model = model.eval()
+                model.eval()
 
                 total_correct = 0
                 total_seen = 0
@@ -377,26 +393,40 @@ class BinarySegmentationDPP:
                     tqdm_structure = tqdm(enumerate(validation_loader), total=len(validation_loader), smoothing=0.9)
                 else:
                     tqdm_structure = enumerate(validation_loader)
-                for i, (points, seg) in tqdm_structure:
+                for i, (points, target) in tqdm_structure:
+                    '''
+                    points: (B,N,C)
+                    target: (B,N,2+bolt_type+3+3)
+                    '''
 
-                    points, seg = points.cuda(non_blocking=True), seg.cuda(non_blocking=True)
+                    points, target = points.cuda(non_blocking=True), target.cuda(
+                        non_blocking=True)
                     points = util.normalize_data(points)
                     points, _ = util.rotate_per_batch(points, None)
                     points = points.permute(0, 2, 1)
                     batch_size = points.size()[0]
 
-                    seg_pred, trans = model(points.float())
+                    point_segmentation_pred, \
+                    bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, \
+                    transform_matrix = model(points.float())
+                    # (B, segment_type, N)
+                    # (B,2,T), (B,bolt_type,T), (B,3,T), (B,3,T)
+                    # (B,3,3)
 
-                    seg_pred = seg_pred.permute(0, 2, 1).contiguous()
-                    batch_label = seg.view(-1, 1)[:, 0].data  # array(batch_size*num_points)
-                    loss = criterion(seg_pred.view(-1, self.args.num_segmentation_type), seg.view(-1, 1).squeeze(),
-                                     weights, using_weight=self.args.use_class_weight)  # a scalar
-                    seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
-                    pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
+                    # loss
+                    loss = util.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
+                                         bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                                         self.args)
+                    loss_sum += loss
+
+                    batch_label = target.view(-1, 1)[:, 0].data
+
+                    point_segmentation_pred = point_segmentation_pred.permute(0, 2, 1).contiguous()
+                    point_segmentation_pred = point_segmentation_pred.view(-1, self.args.num_segmentation_type)
+                    pred_choice = point_segmentation_pred.data.max(1)[1]  # array(batch_size*num_points)
                     correct = torch.sum(pred_choice == batch_label)
                     total_correct += correct
                     total_seen += (batch_size * self.args.npoints)
-                    loss_sum += loss
 
                     for l in range(self.args.num_segmentation_type):
                         total_seen_class[l] += torch.sum((batch_label == l))

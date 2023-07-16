@@ -271,6 +271,10 @@ class BinarySegmentationDPP:
             else:
                 tqdm_structure = enumerate(train_loader)
             for i, (points, target) in tqdm_structure:
+                '''
+                points: (B,N,3)
+                target: (B,N)
+                '''
                 # ******************* #
                 # forwards
                 # ******************* #
@@ -284,13 +288,13 @@ class BinarySegmentationDPP:
                 batch_size = points.size()[0]
                 opt.zero_grad()
 
-                seg_pred, trans = model(points.float())
+                seg_pred, trans = model(points.float())  # (B,segment_type,N),(B,3,3)
                 # print(seg_pred)
 
                 # ******************* #
                 # backwards
                 # ******************* #
-                seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (batch_size,num_points, class_categories)
+                seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (B,segment_type,N) -> (B,N,segment_type)
 
                 batch_label = target.view(-1, 1)[:, 0].data
                 loss = criterion(seg_pred.view(-1, self.args.num_segmentation_type), target.view(-1, 1).squeeze(),

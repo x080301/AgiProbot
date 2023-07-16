@@ -6,19 +6,30 @@ DATA:
   npoints: 2048
   sample_rate: 1
 
-train:
-  random_seed: 0 # 0->random choose a seed
-  ddp:
-    nodes: 1
-    gpus: 2 # num gpus per node
-    world_size: 2 # nodes×gpus
+model:
   token:
     num_tokens: 11
     num_mlp: 4
     mlp_dropout: 0
     bolt_type: 10
 
+    bolt_existing_loss: 0
+    bolt_type_loss: 0
+    bolt_centers_loss: 0
+    bolt_normals_loss: 0
 
+  model: 'pct'
+  dropout: 0.5
+  emb_dims: 1024
+  k: 20 # k in knn
+  attentionhead: 4
+
+train:
+  random_seed: 0 # 0->random choose a seed
+  ddp:
+    nodes: 1
+    gpus: 2 # num gpus per node
+    world_size: 2 # nodes×gpus
   titel: 'binary_segmentation_syn'
 
   train_batch_size: 4
@@ -32,20 +43,15 @@ train:
 
   screw_weight: 1.0
   use_sgd: 0
-  lr: 0.001
-  end_lr: 0.00001
+  lr: 0.0001
+  end_lr: 0.000001
   momentum: 0.9
   epochs: 200
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
-    warmup_epochs: 10  # number of epochs the warmup process takes
-  model_para:
-    model: 'pct'
-    dropout: 0.5
-    emb_dims: 1024
-    k: 20 # k in knn
-    attentionhead: 4
+    warmup_epochs: 5  # number of epochs the warmup process takes
+
   stn_loss_weight: 0
   use_class_weight: 0
   validation_symbol: 'Validation'
@@ -58,7 +64,6 @@ train:
 test:
   test_symbol: 'Train'
   test_batch_size: 2
-
 
 
 
