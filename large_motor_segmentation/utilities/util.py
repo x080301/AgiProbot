@@ -41,6 +41,8 @@ def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_norma
 
         pred = F.sigmoid(logits)
         loss += args.model.token.bolt_normals_loss * F.huber_loss(pred, target, delta=1)
+        # Todo :MSE metric， loss or MSE，delta
+        # 增加mask，跟着bolt_existing_label 的 ground truth走
 
     return loss
 

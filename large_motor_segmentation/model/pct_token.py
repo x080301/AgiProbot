@@ -157,7 +157,7 @@ class STN3d(nn.Module):
 class InputEmbedding(nn.Module):
     def __init__(self, args):
         super(InputEmbedding, self).__init__()
-        self.k = args.model.k
+        self.k = args.model_para.k
 
         self.stn3d = TransformNet()
         self.bn1 = nn.BatchNorm2d(64)
@@ -245,21 +245,21 @@ class BoltTokenMLP(nn.Module):
         super(BoltTokenMLP, self).__init__()
         self.args = args
 
-        if self.args.model.token.num_mlp == 1:
-            if self.args.model.token.mlp_dropout == 0:
+        if self.args.model_para.token.num_mlp == 1:
+            if self.args.model_para.token.mlp_dropout == 0:
 
                 self.linear1 = nn.Conv1d(512, 256, kernel_size=1)
                 self.bn1 = nn.BatchNorm1d(256)
 
-                self.linear2 = nn.Conv1d(256, self.args.model.token.bolt_type + 2 + 3 + 3, kernel_size=1)
+                self.linear2 = nn.Conv1d(256, self.args.model_para.token.bolt_type + 2 + 3 + 3, kernel_size=1)
             else:
                 self.linear1 = nn.Conv1d(512, 256, kernel_size=1)
                 self.bn1 = nn.BatchNorm1d(256)
                 self.dp = nn.Dropout(0.5)
 
-                self.linear2 = nn.Conv1d(256, self.args.model.token.bolt_type + 2 + 3 + 3, kernel_size=1)
-        elif self.args.model.token.num_mlp == 3:
-            if self.args.model.token.mlp_dropout == 0:
+                self.linear2 = nn.Conv1d(256, self.args.model_para.token.bolt_type + 2 + 3 + 3, kernel_size=1)
+        elif self.args.model_para.token.num_mlp == 3:
+            if self.args.model_para.token.mlp_dropout == 0:
                 # existing label
                 self.linear_existing1 = nn.Conv1d(512, 256, kernel_size=1)
                 self.bn_existing1 = nn.BatchNorm1d(256)
@@ -270,7 +270,7 @@ class BoltTokenMLP(nn.Module):
                 self.linear_type1 = nn.Conv1d(512, 256, kernel_size=1)
                 self.bn_type1 = nn.BatchNorm1d(256)
 
-                self.linear_type2 = nn.Conv1d(256, self.args.model.token.bolt_type, kernel_size=1)
+                self.linear_type2 = nn.Conv1d(256, self.args.model_para.token.bolt_type, kernel_size=1)
 
                 # center position of bolts
                 self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
@@ -297,7 +297,7 @@ class BoltTokenMLP(nn.Module):
                 self.bn_type1 = nn.BatchNorm1d(256)
                 self.dp_type = nn.Dropout(0.5)
 
-                self.linear_type2 = nn.Conv1d(256, self.args.model.token.bolt_type, kernel_size=1)
+                self.linear_type2 = nn.Conv1d(256, self.args.model_para.token.bolt_type, kernel_size=1)
 
                 # center position of bolts
                 self.linear_center1 = nn.Conv1d(512, 256, kernel_size=1)
@@ -314,8 +314,8 @@ class BoltTokenMLP(nn.Module):
     def forward(self, x):
         # _                                                     input (B,512,T)
 
-        if self.args.model.token.num_mlp == 1:
-            if self.args.model.token.mlp_dropout == 0:
+        if self.args.model_para.token.num_mlp == 1:
+            if self.args.model_para.token.mlp_dropout == 0:
 
                 x = F.leaky_relu(self.self.bn1(self.linear1(x)), negative_slope=0.2)
                 # _                                             (B,512,T) -> (B,256,T)
@@ -323,7 +323,7 @@ class BoltTokenMLP(nn.Module):
                 x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
 
                 existing_label, type_labels, bolt_centers, bolt_normals = \
-                    torch.split(x, [2, self.args.model.token.bolt_type, 3, 3], dim=1)
+                    torch.split(x, [2, self.args.model_para.token.bolt_type, 3, 3], dim=1)
                 # _                                             (B,bolt_type+2+3+3,T) ->
                 # _                                                       (B,2,T),(B,bolt_type,T),(B,3,T),(B,3,T)
 
@@ -335,12 +335,12 @@ class BoltTokenMLP(nn.Module):
                 x = self.linear2(x)  # _                        (B,256,T) -> (B,bolt_type+2+3+3,T)
 
                 existing_label, type_labels, bolt_centers, bolt_normals = \
-                    torch.split(x, [2, self.args.model.token.bolt_type, 3, 3], dim=1)
+                    torch.split(x, [2, self.args.model_para.token.bolt_type, 3, 3], dim=1)
                 # _                                             (B,bolt_type+2+3+3,T) ->
                 # _                                                       (B,2,T),(B,bolt_type,T),(B,3,T),(B,3,T)
 
-        else:  # elif self.args.model.token.num_mlp == 4:
-            if self.args.model.token.mlp_dropout == 0:
+        else:  # elif self.args.model_para.token.num_mlp == 4:
+            if self.args.model_para.token.mlp_dropout == 0:
 
                 # existing label
                 existing_label = F.leaky_relu(self.self.bn_existing1(self.linear_existing1(x)), negative_slope=0.2)
@@ -416,14 +416,14 @@ class PCTToken(nn.Module):
         super(PCTToken, self).__init__()
         self.args = args
 
-        self.bolt_token = nn.Parameter(torch.randn(1, 128, self.args.model.token.num_tokens))
+        self.bolt_token = nn.Parameter(torch.randn(1, 128, self.args.model_para.token.num_tokens))
 
         self.input_embedding = InputEmbedding(self.args)
 
-        self.sa1 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model.attentionhead)
-        self.sa2 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model.attentionhead)
-        self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model.attentionhead)
-        self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model.attentionhead)
+        self.sa1 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa2 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
 
         self.segmentation_mlp = SegmentationMLP(self.args)
         self.bolt_token_mlp = BoltTokenMLP(self.args)
@@ -445,7 +445,7 @@ class PCTToken(nn.Module):
         x4 = self.sa4(x3)  # _                          (B,128,N+T) -> (B,128,N+T)
         x = torch.cat((x1, x2, x3, x4), dim=-2)  # _    (B,128,N+T)*4 -> (B,512,N+T)
 
-        point_wise_features, bolt_tokens = torch.split(x, [num_points, self.args.model.token.num_tokens], dim=-1)
+        point_wise_features, bolt_tokens = torch.split(x, [num_points, self.args.model_para.token.num_tokens], dim=-1)
         # _                                             (B,512,N+T) -> (B,512,N) + (B,512,T)
 
         point_segmentation_pred = self.segmentation_mlp(point_wise_features)
@@ -456,6 +456,3 @@ class PCTToken(nn.Module):
 
         # return logits
         return point_segmentation_pred, bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, transform_matrix
-
-
-

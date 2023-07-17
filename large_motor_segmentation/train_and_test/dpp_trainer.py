@@ -269,7 +269,7 @@ class BinarySegmentationDPP:
                 tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
             else:
                 tqdm_structure = enumerate(train_loader)
-            for i, (points, target) in tqdm_structure:
+            for i, (points, target, token_) in tqdm_structure:
                 '''
                 points: (B,N,3)
                 target: (B,N)
@@ -280,7 +280,7 @@ class BinarySegmentationDPP:
                 target = target.cuda(non_blocking=True)
 
                 points = points.cuda(non_blocking=True)
-                points = util.normalize_data(points)
+                points = util.normalize_data(points, )
 
                 # rotation augmentation
                 points, _ = util.rotate_per_batch(points, None)
@@ -473,16 +473,22 @@ class BinarySegmentationDPP:
 
                     if mIoU >= best_mIoU:
                         best_mIoU = mIoU
-                        if self.args.finetune:
-                            savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
-                        else:
-                            savepath = self.checkpoints_direction + str(mIoU.item()) + 'best_m.pth'
 
                         state = {'epoch': epoch,
                                  'model_state_dict': model.state_dict(),
                                  'optimizer_state_dict': opt.state_dict(),
                                  'mIoU': mIoU
                                  }
+
+                        if self.args.finetune == 1:
+                            savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
+                        else:
+                            savepath = '/home/ies/fu/codes/binary_segmentation/best_m.pth'
+                            print('Saving best model at %s' % savepath)
+                            torch.save(state, savepath)
+
+                            savepath = self.checkpoints_direction + str(mIoU.item()) + 'best_m.pth'
+
                         print('Saving best model at %s' % savepath)
                         torch.save(state, savepath)
 

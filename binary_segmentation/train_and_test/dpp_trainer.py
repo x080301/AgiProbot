@@ -451,16 +451,22 @@ class BinarySegmentationDPP:
 
                     if mIoU >= best_mIoU:
                         best_mIoU = mIoU
-                        if self.args.finetune:
-                            savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
-                        else:
-                            savepath = self.checkpoints_direction + str(mIoU.item()) + 'best_m.pth'
 
                         state = {'epoch': epoch,
                                  'model_state_dict': model.state_dict(),
                                  'optimizer_state_dict': opt.state_dict(),
                                  'mIoU': mIoU
                                  }
+
+                        if self.args.finetune == 1:
+                            savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
+                        else:
+                            savepath = '/home/ies/fu/codes/binary_segmentation/best_m.pth'
+                            print('Saving best model at %s' % savepath)
+                            torch.save(state, savepath)
+
+                            savepath = self.checkpoints_direction + str(mIoU.item()) + 'best_m.pth'
+
                         print('Saving best model at %s' % savepath)
                         torch.save(state, savepath)
 

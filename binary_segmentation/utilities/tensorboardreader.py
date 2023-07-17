@@ -26,10 +26,14 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_06_03_04_59_lr_5_7': 'lr 1e-5->-7',
                   '2023_06_02_00_48_lr5_6': 'lr 1e-5->-6',
                   '2023_06_01_15_40_lr1e4_7': 'lr 1e-4->-7',
-                  '2023_06_02_09_56_zivid_freeze': 'zivid_5_8_freeze'
+                  '2023_06_02_09_56_zivid_freeze': 'zivid_5_8_freeze',
+                  '2023_07_12_21_49_4_7_no_pretrain': 'zivid_4_7_no_pretrain',
+                  '2023_07_15_20_02_no_rotation_augument': 'lr 1e-4->-6 no_rotatoion_augument',
+                  '2023_07_16_04_46': 'pretrain 1e-5->1e-7',
+                  '2023_07_16_13_33': 'fine tune 5e-7->1e-8'
                   }
-show_list = ['pre_trained', 'lr 1e-4->-6', 'lr 1e-5->-7', 'lr 1e-5->-6', 'lr 1e-4->-7']
-plt.title("lr comparing")
+show_list = ['pretrain 1e-5->1e-7', 'fine tune 5e-7->1e-8']
+plt.title("pretain & fine tune")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -64,7 +68,7 @@ for key in show_list:
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.9, 1)
+plt.ylim(0.8, 0.994)
 xmin = 0
 xmax = 250
 plt.xlim(xmin, xmax)

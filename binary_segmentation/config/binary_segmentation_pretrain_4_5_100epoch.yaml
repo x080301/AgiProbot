@@ -6,24 +6,6 @@ DATA:
   npoints: 2048
   sample_rate: 1
 
-model_para:
-  token:
-    num_tokens: 11
-    num_mlp: 4
-    mlp_dropout: 0
-    bolt_type: 10
-
-    bolt_existing_loss: 1 # 先设定1，结果差的设置高一点，好的减小
-    bolt_type_loss: 1
-    bolt_centers_loss: 1
-    bolt_normals_loss: 1
-
-  model: 'pct'
-  dropout: 0.5
-  emb_dims: 1024
-  k: 20 # k in knn
-  attentionhead: 4
-
 train:
   random_seed: 0 # 0->random choose a seed
   ddp:
@@ -44,14 +26,19 @@ train:
   screw_weight: 1.0
   use_sgd: 0
   lr: 0.0001
-  end_lr: 0.000001
+  end_lr: 0.00001
   momentum: 0.9
-  epochs: 200
+  epochs: 100
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
     warmup_epochs: 5  # number of epochs the warmup process takes
-
+  model_para:
+    model: 'pct'
+    dropout: 0.5
+    emb_dims: 1024
+    k: 20 # k in knn
+    attentionhead: 4
   stn_loss_weight: 0
   use_class_weight: 0
   validation_symbol: 'Validation'

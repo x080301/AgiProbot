@@ -1,5 +1,3 @@
-train_txt = None
-
 from train_and_test.dpp_trainer import BinarySegmentationDPP
 
 config_dir = 'config/binary_segmentation_pretrain_4_5_100epoch.yaml'
