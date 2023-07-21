@@ -3,7 +3,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 keys = ['lr', 'loss/train_loss', 'point_acc/train_point_acc', 'mIoU/train_mIoU', 'IoU_background/train_IoU_background',
         'IoU_motor/train_IoU_motor', 'loss/eval_loss', 'point_acc/eval_point_acc', 'point_acc/eval_class_acc',
         'mIoU/eval_mIoU', 'IoU_background/eval_IoU_background', 'IoU_motor/eval_IoU_motor']
@@ -57,7 +56,7 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
 
             mIoU_dict[train_case_dic[train_case]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
 y_max = 0
-for i,key in enumerate(show_list):
+for i, key in enumerate(show_list):
     '''if key == 'pre_trained':
         continue'''
     x = mIoU_dict[key][0]
