@@ -465,7 +465,7 @@ class BinarySegmentationDPP:
                             print('Saving best model at %s' % savepath)
                             torch.save(state, savepath)
 
-                            savepath = self.checkpoints_direction + str(mIoU.item()) + 'best_m.pth'
+                            savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_m.pth'
 
                         print('Saving best model at %s' % savepath)
                         torch.save(state, savepath)
