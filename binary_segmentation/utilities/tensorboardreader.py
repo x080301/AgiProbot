@@ -31,13 +31,16 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_07_15_20_02_no_rotation_augument': 'lr 1e-4->-6 no_rotatoion_augument',
                   '2023_07_16_04_46_pretrain_1e51e7': 'pretrain 1e-5->1e-7',
                   '2023_07_16_13_33_fine_tune_5e71e8': 'fine tune 5e-7->1e-8',
-                  '2023_07_17_08_19_pretain_5_6': 'pretrain 1e-5->1e-6',
+                  '2023_07_17_08_19_pretain_5_6': '100 epoch pretrain 1e-5->1e-6',
                   '2023_07_17_17_06_fine_tune_6_8': 'fine tune 5e->6->1e-8',
-                  '2023_07_20_05_52_100_epoch_pretain_4_5': 'pretrain 1e-4->1e-5',
-                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': 'fine tune 5e->1e-7'
+                  '2023_07_18_11_54_100_epoch_pretain_4_6': '100 pretrain 1e-4->1e-6',
+                  '2023_07_18_16_18_100_epoch_fine_tune_5_7': '100 fine tune 46_5e->1e-7',
+                  '2023_07_20_05_52_100_epoch_pretain_4_5': '100 pretrain 1e-4->1e-5',
+                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': '100 fine tune 45_5e->1e-7'
                   }
-show_list = ['lr 1e-4->-6', 'zivid_5_8', 'zivid_4_7_no_pretrain', 'pretrain 1e-5->1e-7', 'fine tune 5e-7->1e-8',
-             'pretrain 1e-5->1e-6', 'fine tune 5e->6->1e-8', 'pretrain 1e-4->1e-5', 'fine tune 5e->1e-7']
+show_list = ['lr 1e-4->-6', 'zivid_5_8', 'zivid_4_7_no_pretrain',
+             '100 pretrain 1e-4->1e-6', '100 fine tune 46_5e->1e-7',
+             '100 pretrain 1e-4->1e-5', '100 fine tune 45_5e->1e-7']
 plt.title("pretain & fine tune")
 
 mIoU_dict = {}
@@ -56,17 +59,13 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
 
             mIoU_dict[train_case_dic[train_case]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
 y_max = 0
-for i, key in enumerate(show_list):
-    '''if key == 'pre_trained':
-        continue'''
+for key in show_list:
     x = mIoU_dict[key][0]
-    print(x)
-    print(type(x))
     y = mIoU_dict[key][1]
     plt.plot(x, y, color=(0.9, 0.9, 0.9))
     y_max = max(max(y), y_max)
 
-for key in show_list:
+for i, key in enumerate(show_list):
     x_smooth = mIoU_dict[key][2]
     y_smooth = mIoU_dict[key][3]
     plt.plot(x_smooth, y_smooth, label=key)
@@ -75,7 +74,7 @@ for key in show_list:
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.8, 0.994)
+plt.ylim(0.97, 0.994)
 xmin = 0
 xmax = 250
 plt.xlim(xmin, xmax)
