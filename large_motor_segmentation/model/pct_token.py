@@ -456,3 +456,42 @@ class PCTToken(nn.Module):
 
         # return logits
         return point_segmentation_pred, bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, transform_matrix
+
+
+class PCTPretain(nn.Module):
+
+    def __init__(self, args):
+        super(PCTPretain, self).__init__()
+        self.args = args
+
+        self.input_embedding = InputEmbedding(self.args)
+
+        self.sa1 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa2 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+        self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
+
+        self.segmentation_mlp = SegmentationMLP(self.args)
+
+    def forward(self, x):
+        batch_size, _, num_points = x.shape  # _        input (B,3,N)
+        # _                                             bolt_tokens (B,128,T)
+
+        point_wise_features, transform_matrix = self.input_embedding(x)
+        # _                                             (B,3,N) -> (B,128,N)
+
+        # _                                             (B,128,N) + (B,128,T) -> (B,128,N+T)
+
+        x1 = self.sa1(point_wise_features)  # _                           (B,128,N+T) -> (B,128,N+T)
+        x2 = self.sa2(x1)  # _                          (B,128,N+T) -> (B,128,N+T)
+        x3 = self.sa3(x2)  # _                          (B,128,N+T) -> (B,128,N+T)
+        x4 = self.sa4(x3)  # _                          (B,128,N+T) -> (B,128,N+T)
+        point_wise_features = torch.cat((x1, x2, x3, x4), dim=-2)  # _    (B,128,N+T)*4 -> (B,512,N+T)
+
+        # _                                             (B,512,N+T) -> (B,512,N) + (B,512,T)
+
+        point_segmentation_pred = self.segmentation_mlp(point_wise_features)
+        # _                                             (B,512,N) -> (B,segment_type,N)
+
+        # return logits
+        return point_segmentation_pred, transform_matrix

@@ -80,5 +80,5 @@ def prepare_token_label(save_path):
 
 
 if __name__ == "__main__":
-    resave_binary_labelled_pcd('E:/datasets/agiprobot/large_motor_syn/labeled_pcd',
-                               'E:/datasets/agiprobot/large_motor_syn/numpy_files')
+    resave_binary_labelled_pcd('E:/datasets/agiprobot/large_motor_syn/labeled_pcd_600million_points',
+                               'E:/datasets/agiprobot/large_motor_syn/numpy_files_600million_points')

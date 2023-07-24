@@ -34,13 +34,13 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_07_17_08_19_pretain_5_6': '100 epoch pretrain 1e-5->1e-6',
                   '2023_07_17_17_06_fine_tune_6_8': 'fine tune 5e->6->1e-8',
                   '2023_07_18_11_54_100_epoch_pretain_4_6': '100 pretrain 1e-4->1e-6',
-                  '2023_07_18_16_18_100_epoch_fine_tune_5_7': '100 fine tune 46_5e->1e-7',
+                  '2023_07_18_16_18_100_epoch_fine_tune_5_7': '100 fine tune 46_1e-5->1e-7',
                   '2023_07_20_05_52_100_epoch_pretain_4_5': '100 pretrain 1e-4->1e-5',
-                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': '100 fine tune 45_5e->1e-7'
+                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': '100 fine tune 45_1e-5->1e-7'
                   }
 show_list = ['lr 1e-4->-6', 'zivid_5_8', 'zivid_4_7_no_pretrain',
-             '100 pretrain 1e-4->1e-6', '100 fine tune 46_5e->1e-7',
-             '100 pretrain 1e-4->1e-5', '100 fine tune 45_5e->1e-7']
+             '100 pretrain 1e-4->1e-6', '100 fine tune 46_1e-5->1e-7',
+             '100 pretrain 1e-4->1e-5', '100 fine tune 45_1e-5->1e-7']
 plt.title("pretain & fine tune")
 
 mIoU_dict = {}

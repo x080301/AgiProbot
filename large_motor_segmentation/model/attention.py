@@ -10,7 +10,7 @@ def split_heads(x, heads, depth):
 
 class CrossAttentionLayer(nn.Module):
     def __init__(self, in_channels, out_channels=128, num_heads=1):
-        super(SelfAttentionLayer, self).__init__()
+        super(CrossAttentionLayer, self).__init__()
         self.q_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.k_conv = nn.Conv1d(in_channels, in_channels, 1, bias=False)
         self.v_conv = nn.Conv1d(in_channels, in_channels, 1)

@@ -3,8 +3,6 @@ import open3d as o3d
 import os
 
 
-
-
 def resave_binary_labelled_pcd(read_directory, save_directory):
     for i, file_name in enumerate(os.listdir(read_directory)):
 

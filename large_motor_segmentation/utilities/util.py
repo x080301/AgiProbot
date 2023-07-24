@@ -82,6 +82,37 @@ def cal_loss(point_segmentation_pred, target, weights, transform_matrix,
     return loss
 
 
+def cal_loss_pretrain(pred, gold, weights, smoothing=False, using_weight=False):
+    """
+        Calculate cross entropy loss, apply label smoothing if needed.
+        pred: (B*N, segment_type)
+        target: (B*N)
+    """
+    #
+    gold = gold.contiguous().view(-1)
+    gold = gold.type(torch.int64)
+
+    if smoothing:
+        eps = 0.2
+        n_class = pred.size(1)
+        one_hot = torch.zeros_like(pred).scatter(1, gold.view(-1, 1), 1)
+        one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
+        log_prb = F.log_softmax(pred, dim=1)
+        if using_weight:
+            inter = -one_hot * log_prb
+            loss = torch.matmul(inter, weights).sum(dim=1).mean()
+        else:
+            loss = -(one_hot * log_prb).sum(dim=1).mean()
+
+    else:
+        if using_weight:
+            loss = F.cross_entropy(pred, gold, weight=weights, reduction='mean')
+        else:
+            loss = F.cross_entropy(pred, gold, reduction='mean')
+
+    return loss
+
+
 def normalize_data(batch_data):
     """ Normalize the batch data, use coordinates of the block centered at origin,
         Input:

@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from model.attention import SelfAttentionLayer
-from utilities.util import *
+# from utilities.util import *
+import torch
+from torch import nn
+from torch.nn import functional as F
 from torch.autograd import Variable
+import numpy as np
 
 
 def knn(x, k):

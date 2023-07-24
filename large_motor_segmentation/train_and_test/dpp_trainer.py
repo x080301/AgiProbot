@@ -19,7 +19,7 @@ from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
 
 
-class BinarySegmentationDPP:
+class SegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
                      'train.py', 'train_line.py', 'best_m.pth']
 
@@ -483,7 +483,7 @@ class BinarySegmentationDPP:
                         if self.args.finetune == 1:
                             savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
                         else:
-                            savepath = '/home/ies/fu/codes/binary_segmentation/best_m.pth'
+                            savepath = '/home/ies/fu/codes/large_motor_segmentation/best_m.pth'
                             print('Saving best model at %s' % savepath)
                             torch.save(state, savepath)
 

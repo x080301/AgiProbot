@@ -10,11 +10,12 @@
 # from train_and_test.dpp_trainer import BinarySegmentationDPP
 # from train_and_test.dpp_trainer_freeze import BinarySegmentationDPP
 
-from train_and_test.dpp_trainer import SegmentationDPP
 
 train_txt = None
-if __name__ == "__main__":
-    config_dir = 'config/binary_segmentation_zivid_5_7.yaml'
-    print(config_dir)
-    bsdpp = SegmentationDPP(train_txt, config_dir)
-    bsdpp.train_dpp()
+
+from train_and_test.dpp_trainer_pretrain import SegmentationDPP
+
+config_dir = 'config/segmentation_pretrain_4_5_100epoch.yaml'
+print(config_dir)
+bsdpp = SegmentationDPP(train_txt, config_dir)
+bsdpp.train_dpp()
