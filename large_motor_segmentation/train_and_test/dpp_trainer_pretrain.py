@@ -79,6 +79,7 @@ class SegmentationDPP:
                 shutil.copyfile(file_name, direction + '/train_log/' + file_name.split('/')[-1])
             else:
                 shutil.copytree(file_name, direction + '/train_log/' + file_name.split('/')[-1])
+                print('test')
 
         with open(direction + '/train_log/' + 'random_seed_' + str(self.random_seed) + '.txt', 'w') as f:
             f.write('')
