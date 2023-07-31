@@ -36,12 +36,12 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_07_18_11_54_100_epoch_pretain_4_6': '100 pretrain 1e-4->1e-6',
                   '2023_07_18_16_18_100_epoch_fine_tune_5_7': '100 fine tune 46_1e-5->1e-7',
                   '2023_07_20_05_52_100_epoch_pretain_4_5': '100 pretrain 1e-4->1e-5',
-                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': '100 fine tune 45_1e-5->1e-7'
+                  '2023_07_20_10_16_100_epoch_fine_tune_5_7': '100 fine tune 45_1e-5->1e-7',
+                  '2023_07_25_00_46_full_model_pretrain_4_5_100epoch': 'full model pretrain 1e-4 -> 1e-5 100epoch',
+                  '2023_07_26_00_10_full_model_pretrain_4_6_200epoch': 'full model pretrain 1e-4 -> 1e-6 200epoch'
                   }
-show_list = ['lr 1e-4->-6', 'zivid_5_8', 'zivid_4_7_no_pretrain',
-             '100 pretrain 1e-4->1e-6', '100 fine tune 46_1e-5->1e-7',
-             '100 pretrain 1e-4->1e-5', '100 fine tune 45_1e-5->1e-7']
-plt.title("pretain & fine tune")
+show_list = ['full model pretrain 1e-4 -> 1e-5 100epoch', 'full model pretrain 1e-4 -> 1e-6 200epoch']
+plt.title("full model pretain")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -61,22 +61,22 @@ for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
 y_max = 0
 for key in show_list:
     x = mIoU_dict[key][0]
-    y = mIoU_dict[key][1]
+    y = [i / 6 * 8 for i in mIoU_dict[key][1]]
     plt.plot(x, y, color=(0.9, 0.9, 0.9))
     y_max = max(max(y), y_max)
 
 for i, key in enumerate(show_list):
     x_smooth = mIoU_dict[key][2]
-    y_smooth = mIoU_dict[key][3]
+    y_smooth = [i / 6 * 8 for i in mIoU_dict[key][3]]
     plt.plot(x_smooth, y_smooth, label=key)
 
 # Set y-axis to logarithmic scale
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.97, 0.994)
+plt.ylim(0.9, 0.98)
 xmin = 0
-xmax = 250
+xmax = 200
 plt.xlim(xmin, xmax)
 
 # Draw a horizontal line at the maximum y value

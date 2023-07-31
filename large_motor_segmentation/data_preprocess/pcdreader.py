@@ -66,56 +66,57 @@ class PcdReader:
         return self.points, self.colors
 
     def read_directory(self, dir, save_dir):
-        for dir_name in os.listdir(dir):
-            for i, file_name in enumerate(tqdm(os.listdir(dir + '/' + dir_name),
-                                               total=len(os.listdir(dir + '/' + dir_name)), smoothing=0.9)):
+        for i, root, _, file_name in enumerate(os.walk(dir)):
+            # for dir_name in os.listdir(dir):
+            #     for i, file_name in enumerate(tqdm(os.listdir(root + '/' + dir_name),
+            #                                        total=len(os.listdir(root + '/' + dir_name)), smoothing=0.9)):
 
-                points = []
-                colors = []
-                labels = []
-                with open(dir + '/' + dir_name + '/' + file_name, 'r') as f:
+            points = []
+            colors = []
+            labels = []
+            with open(os.path.join(root, file_name), 'r') as f:
 
-                    head_flag = True
-                    while True:
-                        # for i in range(12):
-                        oneline = f.readline()
+                head_flag = True
+                while True:
+                    # for i in range(12):
+                    oneline = f.readline()
 
-                        if head_flag:
-                            if 'DATA ascii' in oneline:
-                                head_flag = False
-                                continue
-                            else:
-                                continue
-
-                        if not oneline:
-                            break
-
-                        x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
-
-                        if x == '0' and y == '0' and z == '0':
+                    if head_flag:
+                        if 'DATA ascii' in oneline:
+                            head_flag = False
                             continue
-                        x, y, z, label = float(x), float(y), float(z), int(label)
-                        points.append(np.array([x, y, z]))
-                        if label == 0:
-                            colors.append(np.array([0, 0, 0]))
-                            labels.append(1)
                         else:
-                            colors.append(np.array([0.5, 0.5, 0.5]))
-                            labels.append(0)
+                            continue
 
-                points = np.asarray(points)
-                colors = np.asarray(colors)
-                labels = np.asarray(labels)
+                    if not oneline:
+                        break
 
-                point_cloud = np.concatenate([points, colors], axis=-1)
-                point_cloud = np.column_stack((point_cloud, labels))
+                    x, y, z, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
 
-                if i % 5 == 0:
-                    save_name = 'Validation_' + file_name.split('.')[0] + '_' + dir_name
-                else:
-                    save_name = 'Training_' + file_name.split('.')[0] + '_' + dir_name
+                    if x == '0' and y == '0' and z == '0':
+                        continue
+                    x, y, z, label = float(x), float(y), float(z), int(label)
+                    points.append(np.array([x, y, z]))
+                    if label == 0:
+                        colors.append(np.array([0, 0, 0]))
+                        labels.append(1)
+                    else:
+                        colors.append(np.array([0.5, 0.5, 0.5]))
+                        labels.append(0)
 
-                np.save(os.path.join(save_dir, save_name), point_cloud)
+            points = np.asarray(points)
+            colors = np.asarray(colors)
+            labels = np.asarray(labels)
+
+            point_cloud = np.concatenate([points, colors], axis=-1)
+            point_cloud = np.column_stack((point_cloud, labels))
+
+            if i % 5 == 0:
+                save_name = 'Validation_' + file_name.split('.')[0] + '_' + root.split('/')[-1]
+            else:
+                save_name = 'Training_' + file_name.split('.')[0] + '_' + root.split('/')[-1]
+
+            np.save(os.path.join(save_dir, save_name), point_cloud)
 
     def save_and_visual_pcd(self, save_dir=None, visualization=False):
         '''
@@ -141,5 +142,5 @@ class PcdReader:
 
 if __name__ == "__main__":
     pcd_reader = PcdReader()
-    pcd_reader.read_pcd_ASCII('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/Motor_002_rot.pcd')
-    pcd_reader.save_and_visual_pcd(save_dir='C:/Users/Lenovo/Desktop/new/Motor_002_rot.pcd')
+    pcd_reader.read_pcd_ASCII('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot.pcd')
+    pcd_reader.save_and_visual_pcd('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot_1.pcd', visualization=True)

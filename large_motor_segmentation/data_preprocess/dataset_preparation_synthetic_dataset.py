@@ -16,7 +16,7 @@ rgb_dic = {'Void': [207, 207, 207],
            }
 
 
-def resave_binary_labelled_pcd(read_directory, save_directory, debug_visualization=False):
+def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualization=False):
     """
     read *.pcd, choose the segment label according to its color, and resave it as *.npy
     :param read_directory: from where, *.pcd is read.
@@ -80,5 +80,5 @@ def prepare_token_label(save_path):
 
 
 if __name__ == "__main__":
-    resave_binary_labelled_pcd('E:/datasets/agiprobot/large_motor_syn/labeled_pcd_600million_points',
+    resave_labelled_pcd_as_npy('E:/datasets/agiprobot/large_motor_syn/labeled_pcd_600million_points',
                                'E:/datasets/agiprobot/large_motor_syn/numpy_files_600million_points')

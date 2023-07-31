@@ -321,7 +321,7 @@ class SegmentationDPP:
 
             IoUs = (torch.tensor(total_correct_class__) / (torch.tensor(total_iou_deno_class__).float() + 1e-6)).to(
                 rank)
-            mIoU = torch.mean(IoUs)
+            mIoU = IoUs.sum() / self.args.num_existing_type  # torch.mean(IoUs)
             torch.distributed.all_reduce(IoUs)
             torch.distributed.all_reduce(mIoU)
             IoUs /= float(world_size)
@@ -413,15 +413,15 @@ class SegmentationDPP:
 
                 IoUs = (torch.Tensor(total_correct_class) / (torch.Tensor(total_iou_deno_class).float() + 1e-6)).to(
                     rank)
-                mIoU = torch.mean(IoUs)
+                mIoU = IoUs.sum() / self.args.num_existing_type  # torch.mean(IoUs)
                 torch.distributed.all_reduce(IoUs)
                 torch.distributed.all_reduce(mIoU)
                 IoUs /= float(world_size)
                 mIoU /= float(world_size)
 
-                eval_class_acc = torch.mean(
+                eval_class_acc = torch.sum(
                     torch.tensor(total_correct_class) / (torch.tensor(total_seen_class).float() + 1e-6)).to(rank)
-                torch.distributed.all_reduce(eval_class_acc)
+                torch.distributed.all_reduce(eval_class_acc) / self.args.num_existing_type
                 eval_class_acc /= float(world_size)
 
                 torch.distributed.all_reduce(loss_sum)
