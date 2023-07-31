@@ -421,7 +421,8 @@ class SegmentationDPP:
 
                 eval_class_acc = torch.sum(
                     torch.tensor(total_correct_class) / (torch.tensor(total_seen_class).float() + 1e-6)).to(rank)
-                torch.distributed.all_reduce(eval_class_acc) / self.args.num_existing_type
+                eval_class_acc = eval_class_acc / self.args.num_existing_type
+                torch.distributed.all_reduce(eval_class_acc)
                 eval_class_acc /= float(world_size)
 
                 torch.distributed.all_reduce(loss_sum)
