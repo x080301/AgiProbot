@@ -126,7 +126,7 @@ def get_arrow(begin=[0, 0, 0], vec=[0, 0, 1]):
 
 
 def visualization_point_cloud(transformation=None, target_point_cloud_with_background=None, source_point_cloud=None,
-                              save_dir='E:/datasets/agiprobot/binlabel/registered_pcd.pcd', save=True):
+                              save_dir=None):
     '''
         visualization(transformation=None, target_point_cloud=None, source_point_cloud=None)
         visualize target and transformed point cloud
@@ -167,7 +167,7 @@ def visualization_point_cloud(transformation=None, target_point_cloud_with_backg
     srcDraw = copy.deepcopy(source_point_cloud)
     srcDraw.paint_uniform_color([1, 1, 0])
 
-    if save:
+    if save_dir is not None:
         o3d.io.write_point_cloud(save_dir, srcDraw + tarDraw, write_ascii=True)
 
     # tarDraw.paint_uniform_color([0, 1, 1])

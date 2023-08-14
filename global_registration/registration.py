@@ -174,8 +174,7 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         if visualization:
             print("coarse_registration")
             visualization_point_cloud(source_point_cloud=registered_point_cloud,
-                                      target_point_cloud_with_background=target_point_cloud,
-                                      save=False)
+                                      target_point_cloud_with_background=target_point_cloud)
 
         # When the coarse registration give an unsuitable,
         # the correspindence set of the fine registration will be too small.
@@ -199,8 +198,72 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         print(time.perf_counter())
         print("fine_registration")
         visualization_point_cloud(source_point_cloud=registered_point_cloud,
-                                  target_point_cloud_with_background=target_point_cloud,
-                                  save=False)
+                                  target_point_cloud_with_background=target_point_cloud)
+
+    return registered_point_cloud
+
+
+def zivid_3d_registration(target_point_cloud, source_point_cloud, algorithm='point2plane_multi_step',
+                          visualization=False):
+    '''
+
+    :param target_point_cloud:
+    :param source_point_cloud:
+    :param algorithm: (string, optimal) 'point2plane_multi_step' or 'point2point_multi_step'
+    :param visualization:
+    :return: registered point cloud
+    '''
+
+    if visualization:
+        time.perf_counter()
+    # target_point_cloud = get_motor_only_pcd(target_point_cloud)
+
+    if algorithm == 'point2plane_multi_step':
+        fine_registration = point2plane
+    elif algorithm == 'point2point_multi_step':
+        fine_registration = point2point
+
+    # global registration and first fine registration
+    for i in range(5):
+        # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
+
+
+        registered_point_cloud = copy.deepcopy(
+            source_point_cloud)  # global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
+        euler_angle = registered_point_cloud.get_rotation_matrix_from_xyz((0, 0, np.pi * 45. / 180))
+        registered_point_cloud.rotate(euler_angle)
+
+        if visualization:
+            registered_point_cloud_V = copy.deepcopy(
+                registered_point_cloud)
+            registered_point_cloud_V.paint_uniform_color([1, 1, 0])
+            print("coarse_registration")
+            visualization_point_cloud(source_point_cloud=registered_point_cloud_V,
+                                      target_point_cloud_with_background=target_point_cloud)
+
+        # When the coarse registration give an unsuitable,
+        # the correspindence set of the fine registration will be too small.
+        # The size of correspindence set is checked here,
+        # too small -> registration_algorithm() returns None
+
+        registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
+                                                   max_correspondence_distance=5,
+                                                   evaluate_coarse_registraion_min_correspindence=100000)
+
+        if registered_point_cloud is not None:
+            break
+    else:
+        raise CoarseRegistrationExceptin
+
+    # registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)
+    registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
+                                               max_correspondence_distance=0.2)
+
+    if visualization:
+        print(time.perf_counter())
+        print("fine_registration")
+        visualization_point_cloud(source_point_cloud=registered_point_cloud,
+                                  target_point_cloud_with_background=target_point_cloud)
 
     return registered_point_cloud
 
@@ -208,30 +271,84 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
 if __name__ == "__main__":
     # data_generation()
 
-    # pipline_point2plane_test(target_point_cloud, source_point_cloud)
-    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_bin.pcd',
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_7.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,
                                                  print_progress=True)
 
-    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
+    source_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_8.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    # rotated_point_cloud = copy.deepcopy(source_point_cloud)
+    # '''-np.pi * 30. / 180'''
+    # euler_angle = rotated_point_cloud.get_rotation_matrix_from_xyz((0, 0, -np.pi * 45. / 180))
+    # rotated_point_cloud.rotate(euler_angle)
+
+    # visualization_point_cloud(source_point_cloud=rotated_point_cloud,
+    #                           target_point_cloud_with_background=target_point_cloud)
+    registered_pcd = zivid_3d_registration(target_point_cloud, source_point_cloud)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_6.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_5.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=False,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    o3d.visualization.draw_geometries([registered_pcd])
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_4.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    o3d.visualization.draw_geometries([registered_pcd])
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_3.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    o3d.visualization.draw_geometries([registered_pcd])
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_2.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    o3d.visualization.draw_geometries([registered_pcd])
+
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_1.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
+    registered_pcd = registered_pcd + target_point_cloud
+
+    o3d.visualization.draw_geometries([registered_pcd])
+'''
+    # pipline_point2plane_test(target_point_cloud, source_point_cloud)
+    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_1.pcd',
+                                                 remove_nan_points=True, remove_infinite_points=True,
+                                                 print_progress=True)
+
+    source_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_2.pcd',
                                                  remove_nan_points=True, remove_infinite_points=True,
                                                  print_progress=True)
 
     # _running_time()
     time.perf_counter()
-    registered_pcd = registration(target_point_cloud, source_point_cloud)
+    registered_pcd = zivid_3d_registration(target_point_cloud, source_point_cloud, visualization=True)
     print(time.perf_counter())
 
     visualization_point_cloud(source_point_cloud=registered_pcd,
-                              target_point_cloud_with_background=target_point_cloud,
-                              save=False)
-'''
-    target_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/one_view_motor_only.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    source_point_cloud = o3d.io.read_point_cloud('E:/datasets/agiprobot/registration/full_model.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    source_point_cloud = global_registration(target_point_cloud, source_point_cloud, visualization=True)
+                              target_point_cloud_with_background=target_point_cloud)
 '''
