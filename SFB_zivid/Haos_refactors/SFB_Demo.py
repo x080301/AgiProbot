@@ -1,21 +1,12 @@
 #! /usr/bin/python3
-from ctypes import sizeof
 import rospy
 import sys
 import moveit_commander
-from std_srvs.srv import SetBoolRequest, SetBool
-from std_msgs.msg import String
-import trimesh
-import numpy as np
-import os
-import rospkg
-import geometry_msgs.msg
+
 from math import pi
 import time
-import os
 from zivid_camera.srv import *
 import ROS_Drehtisch_Call
-import ROS_Drehtisch
 
 
 def capture():
@@ -62,12 +53,12 @@ if __name__ == "__main__":
     rospy.init_node("SFB_Demo")
     ROS_Drehtisch_Call.drehen("absolut", 0)
 
-    # bool for stoppping infinite loop 
+    # bool for stoppping infinite loop
     rospy.set_param('stop_infinite', False)
 
     # movegroup definitions for dual robots
     # tscan_movegroup = moveit_commander.MoveGroupCommander("tscan_ur10e_arm")
-    # tscan_movegroup.set_planner_id("PRMstar")    
+    # tscan_movegroup.set_planner_id("PRMstar")
     zivid_movegroup = moveit_commander.MoveGroupCommander("zivid_ur10e_arm")
     zivid_movegroup.set_planner_id("PRMstar")
     gripper_movegroup = moveit_commander.MoveGroupCommander("gripper")
@@ -76,7 +67,7 @@ if __name__ == "__main__":
     zivid_position = deg_to_rad([94.06, -129.82, -71.37, -120.26, 37.05, 158.25])
     rotation_per_capture = 45
 
-    # while True:    
+    # while True:
     ROS_Drehtisch_Call.drehen("absolut", 0)
     ################################################################################
     # first position Zivid (capture, rotate table, capture again)

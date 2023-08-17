@@ -27,19 +27,14 @@ cd src/agiprobot_control/scripts/SFB_Demo/
 # Start pneumatics --> needed for turning the turntable and clamping the motor
 python3 ROS_Pneumatik.py
 
+
 # Start the model builder --> gets point clouds from zivid, stores whole model and sends success when pc merging is finished
 cd src/agiprobot_control/scripts/SFB_Demo/Haos_refactor
 python3 model_builder_rgb_JPK.py
 
-# delete file pc_combined.pcd in /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models
-
-# start file visualization --> looks or creates file pc_combined.pcd and visualizes it
-python3 visualization.py
-
 # start SFB demo 
 python3 SFB_Demo.py
 
-# above demo runs infinitely and can be stopped with rosparam set stop_infinite true
 
 # release the clamping system
 cd /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/Data_collection/

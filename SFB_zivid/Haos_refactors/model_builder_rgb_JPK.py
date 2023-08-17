@@ -3,11 +3,9 @@
 from cmath import nan
 import rospy
 from std_msgs.msg import String, Float64MultiArray
-from sensor_msgs.msg import PointCloud2, Image
-import sensor_msgs.point_cloud2 as pc2
-import tf2_msgs.msg
+
 import numpy as np
-import datetime
+
 import copy
 from util import *
 import open3d as o3d
@@ -280,7 +278,6 @@ class PointCloudHandler:
         filename_pc = self.location_dir + "/pc_combined.pcd"
         o3d.io.write_point_cloud(filename=filename_pc, pointcloud=self.xyzrgb_global_comb)
         print("Pointcloud saved")
-
 
 if __name__ == '__main__':
     rospy.init_node('model_builder')
