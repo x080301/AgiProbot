@@ -224,35 +224,31 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, algorithm='poi
         fine_registration = point2point
 
     # global registration and first fine registration
-    for i in range(5):
-        # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
+    # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
 
+    registered_point_cloud = copy.deepcopy(
+        source_point_cloud)  # global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
+    euler_angle = registered_point_cloud.get_rotation_matrix_from_xyz((0, 0, np.pi * 45. / 180))
+    registered_point_cloud.rotate(euler_angle)
 
-        registered_point_cloud = copy.deepcopy(
-            source_point_cloud)  # global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
-        euler_angle = registered_point_cloud.get_rotation_matrix_from_xyz((0, 0, np.pi * 45. / 180))
-        registered_point_cloud.rotate(euler_angle)
+    if visualization:
+        registered_point_cloud_V = copy.deepcopy(
+            registered_point_cloud)
+        registered_point_cloud_V.paint_uniform_color([1, 1, 0])
+        print("coarse_registration")
+        visualization_point_cloud(source_point_cloud=registered_point_cloud_V,
+                                  target_point_cloud_with_background=target_point_cloud)
 
-        if visualization:
-            registered_point_cloud_V = copy.deepcopy(
-                registered_point_cloud)
-            registered_point_cloud_V.paint_uniform_color([1, 1, 0])
-            print("coarse_registration")
-            visualization_point_cloud(source_point_cloud=registered_point_cloud_V,
-                                      target_point_cloud_with_background=target_point_cloud)
+    # When the coarse registration give an unsuitable,
+    # the correspindence set of the fine registration will be too small.
+    # The size of correspindence set is checked here,
+    # too small -> registration_algorithm() returns None
 
-        # When the coarse registration give an unsuitable,
-        # the correspindence set of the fine registration will be too small.
-        # The size of correspindence set is checked here,
-        # too small -> registration_algorithm() returns None
+    registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
+                                               max_correspondence_distance=5,
+                                               evaluate_coarse_registraion_min_correspindence=100000)
 
-        registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
-                                                   max_correspondence_distance=5,
-                                                   evaluate_coarse_registraion_min_correspindence=100000)
-
-        if registered_point_cloud is not None:
-            break
-    else:
+    if registered_point_cloud is None:
         raise CoarseRegistrationExceptin
 
     # registered = registration_algorithm(target_point_cloud, registered, max_correspondence_distance=1)

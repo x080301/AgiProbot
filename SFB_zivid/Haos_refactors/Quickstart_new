@@ -1,0 +1,50 @@
+Quickstart Inspection Demo
+
+all files needed are placed here: /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo
+
+1) Turn on the robot
+2) Open a terminal. In the terminal you launch the robot like follows (copy the line below):
+
+# ROS Setup - Robot and Cam connection, Moveit Setup with constrains
+cd dual_ws/
+roslaunch agiprobot_control bringup_dual.launch type:="real"
+Remark: launch scripts are located here: /home/wbk-ur2/dual_ws/src/agiprobot_control/launch
+
+Note: change the planning group in rviz to ur10e_arm if planning with rviz
+
+3) On the robot: Program --> URCaps --> External control
+
+to change the end effector pose: in /home/wbk-ur2/dual_ws/src/ur10_e_gripper/ur10e_gripper_description/urdf/ur10e_robotiq140_macro_xacro
+change the origin of the link tool_centre_point (bottom of file)
+
+this is where the config files are: /home/wbk-ur2/dual_ws/src/ur10_e_gripper/ur10e_gripper_moveit_config/config
+
+old -> cd src/model_builder_inspection/scripts
+
+# change to SFB folder 
+cd src/agiprobot_control/scripts/SFB_Demo/
+
+# Start pneumatics --> needed for turning the turntable and clamping the motor
+python3 ROS_Pneumatik.py
+
+# Start the model builder --> gets point clouds from zivid, stores whole model and sends success when pc merging is finished
+cd src/agiprobot_control/scripts/SFB_Demo/Haos_refactor
+python3 model_builder_rgb_JPK.py
+
+# delete file pc_combined.pcd in /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models
+
+# start file visualization --> looks or creates file pc_combined.pcd and visualizes it
+python3 visualization.py
+
+# start SFB demo 
+python3 SFB_Demo.py
+
+# above demo runs infinitely and can be stopped with rosparam set stop_infinite true
+
+# release the clamping system
+cd /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/Data_collection/
+python3 ROS_Datenaufnahme_Camera_On_Globe.py
+
+
+
+
