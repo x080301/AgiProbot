@@ -217,8 +217,7 @@ class PointCloudHandler:
             print("updating...")
 
             self.xyzrgb_global_comb = zivid_3d_registration(xyzrgb_global_cur, self.xyzrgb_global_comb,
-                                                            rotation_per_capture) + \
-                                      xyzrgb_global_cur
+                                                            rotation_per_capture) + xyzrgb_global_cur
 
         self.xyzrgb_global_comb = self.xyzrgb_global_comb.voxel_down_sample(voxel_size=0.1)
 
