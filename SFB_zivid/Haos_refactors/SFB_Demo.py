@@ -91,7 +91,7 @@ def capture_one_motor():
 
 if __name__ == "__main__":
 
-    while True
+    while True:
         userinput = input(
             "Ist der Motor bereits eingespannt und die Pneumatikansteuerung kann ¨¹bersprungen werden?: \n Ja = 1 \n Nein die Pneumatik muss ge?ffnet werden um Motor einzuspannen = andere Tasten \n")
 
