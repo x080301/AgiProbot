@@ -198,7 +198,7 @@ class PointCloudHandler:
                 idx = int(idx)
                 if idx > max_idx:
                     max_idx = idx
-        self.location_dir += 'scan_' + str(max_idx) + '/'
+        self.location_dir += 'scan_' + str(max_idx + 1) + '/'
 
         print("Location Folder:", self.location_dir)
         if not Path(self.location_dir).is_dir():
@@ -249,6 +249,8 @@ class PointCloudHandler:
             self.add_pointcloud(xyzrgb_global_cur)
 
     def add_pointcloud(self, pointcloud):
+        filename_pc_single = self.location_dir + "/pc_part_" + str(self.idx) + ".pcd"
+
         point_cloud_open3d = create_open3d_point_cloud(pointcloud)
         print("Recieved Pointcloud")
         print(point_cloud_open3d)
@@ -268,16 +270,31 @@ class PointCloudHandler:
 
         point_cloud_open3d_retranslated = point_cloud_open3d_rotated.translate((629.84, 637.226, -214.449))
 
-        self.update_combined_pcd(point_cloud_open3d_retranslated, 45)
-
-        finished_updating_pub.publish(("Finished Updating PC_" + str(self.idx).zfill(2)))
-
-        filename_pc_single = self.location_dir + "/pc_part_" + str(self.idx) + ".pcd"
         o3d.io.write_point_cloud(filename=filename_pc_single, pointcloud=point_cloud_open3d_retranslated)
 
-        filename_pc = self.location_dir + "/pc_combined.pcd"
-        o3d.io.write_point_cloud(filename=filename_pc, pointcloud=self.xyzrgb_global_comb)
         print("Pointcloud saved")
+
+        if self.idx == 8:
+            self.idx = 1
+
+            self.location_dir = "/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/"
+
+            file_list = os.listdir(self.location_dir)
+            max_idx = -1
+            for file_name in file_list:
+                if "scan_" in file_name:
+                    idx = file_name.split('_')[1]
+                    idx = int(idx)
+                    if idx > max_idx:
+                        max_idx = idx
+            self.location_dir += 'scan_' + str(max_idx + 1) + '/'
+
+            print("Location Folder:", self.location_dir)
+            if not Path(self.location_dir).is_dir():
+                Path(self.location_dir).mkdir(parents=True)
+        else:
+            self.idx += 1
+
 
 if __name__ == '__main__':
     rospy.init_node('model_builder')
@@ -286,5 +303,5 @@ if __name__ == '__main__':
     rospy.Subscriber('PointCloud_Channel_global', Float64MultiArray,
                      pc_handler.callback_zivid_listener)
     print("PointCloud_Channel_global Subscribed")
-    finished_updating_pub = rospy.Publisher('PC_Handler_Update', String, queue_size=5)
+    finished_updating_pub = rospy.Publisher('PC_Handler_Update', String, queue_size=10)
     rospy.spin()

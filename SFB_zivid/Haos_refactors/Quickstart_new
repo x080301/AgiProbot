@@ -22,23 +22,25 @@ this is where the config files are: /home/wbk-ur2/dual_ws/src/ur10_e_gripper/ur1
 old -> cd src/model_builder_inspection/scripts
 
 # change to SFB folder 
-cd src/agiprobot_control/scripts/SFB_Demo/
-
 # Start pneumatics --> needed for turning the turntable and clamping the motor
+cd src/agiprobot_control/scripts/SFB_Demo/
 python3 ROS_Pneumatik.py
 
 
 # Start the model builder --> gets point clouds from zivid, stores whole model and sends success when pc merging is finished
-cd src/agiprobot_control/scripts/SFB_Demo/Haos_refactor
+cd Haos_refactors
 python3 model_builder_rgb_JPK.py
 
 # start SFB demo 
 python3 SFB_Demo.py
 
+# registration to get combined model
+# python3 registration.py
+
 
 # release the clamping system
-cd /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/Data_collection/
-python3 ROS_Datenaufnahme_Camera_On_Globe.py
+# cd /home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/Data_collection/
+# python3 ROS_Datenaufnahme_Camera_On_Globe.py
 
 
 
