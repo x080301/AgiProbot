@@ -12,6 +12,7 @@ import open3d as o3d
 from pathlib import Path
 import time
 import os
+import registration
 
 '''Creates RGB Model only. Segmentation is skipped. Is faster when only wanting a RGB model'''
 
@@ -275,6 +276,8 @@ class PointCloudHandler:
         print("Pointcloud saved")
 
         if self.idx == 8:
+            registration.registration_in_folders(pcd_directory=self.location_dir)
+
             self.idx = 1
 
             self.location_dir = "/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/"

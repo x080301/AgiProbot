@@ -149,8 +149,9 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, rotation_per_c
     return registered_point_cloud
 
 
-def registration_in_folders(registrted_folder=[]):
-    for root, _, files in os.walk('/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models'):
+def registration_in_folders(registrted_folder=[],
+                            pcd_directory='/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models'):
+    for root, _, files in os.walk(pcd_directory):
 
         if root in registrted_folder:
             continue
