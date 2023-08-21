@@ -49,7 +49,7 @@ def move_to_pos(mg, position):
         exit(1)
 
 
-def capture_one_motor():
+def capture_one_motor(view_mode="top"):
     # Initialize ROS and MoveIt!
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node("SFB_Demo")
@@ -66,8 +66,11 @@ def capture_one_motor():
     gripper_movegroup = moveit_commander.MoveGroupCommander("gripper")
 
     # define positions
-    zivid_position = deg_to_rad([91.2, -123.65, -41.74, -131.42, 57.83, 129.86])
-    # zivid_position = deg_to_rad([86.98, -110.92, -74.07, -106.37, 50.51, 127.13])
+    if view_mode == "top":
+        zivid_position = deg_to_rad([97.40, -104.09, -97.49, -95.95, 42.49, 128.20])  # top X8
+    else:
+        zivid_position = deg_to_rad([90.40, -92.77, -95.07, -104.55, 50.08, 27.16])  # bottom X 8
+
     rotation_per_capture = 45
 
     # while True:
@@ -92,14 +95,24 @@ def capture_one_motor():
 if __name__ == "__main__":
 
     while True:
-        userinput = input(
-            "Ist der Motor bereits eingespannt und die Pneumatikansteuerung kann ®πbersprungen werden?: \n Ja = 1 \n Nein die Pneumatik muss ge?ffnet werden um Motor einzuspannen = andere Tasten \n")
+        while True:
+            userinput = input(
+                "Ist der Motor bereits eingespannt und die Pneumatikansteuerung kann √úbersprungen werden?: \n Ja = 1 \n Nein die Pneumatik muss ge√∂ffnet werden um Motor einzuspannen = andere Tasten \n")
 
-        if userinput == "1":
-            capture_one_motor()  # _generate_model_dataset(10) #SPECIFY NUM_CAPTURES
-        else:
-            ROS_Pneumatik_Call.pneumatik("end")
-            ROS_Pneumatik_Call.pneumatik("open")
-            ROS_Pneumatik_Call.pneumatik("close")
+            if userinput == "1":
+                break
+            else:
+                ROS_Pneumatik_Call.pneumatik("end")
+                ROS_Pneumatik_Call.pneumatik("open")
+                ROS_Pneumatik_Call.pneumatik("close")
 
-            capture_one_motor()  # _generate_model_dataset(10) #SPECIFY NUM_CAPTURES
+        while True:
+            userinput = input("top view = 1, bottom view = 2")
+            if userinput == "1":
+                capture_one_motor(view_mode="top")  # _generate_model_dataset(10) #SPECIFY NUM_CAPTURES
+                break
+            elif userinput == "2":
+                capture_one_motor(view_mode="bottom")
+                break
+            else:
+                print("unexpected input! \n top view = 1, bottom view = 2\n")

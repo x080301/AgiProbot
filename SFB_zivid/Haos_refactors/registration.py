@@ -3,6 +3,7 @@ import os
 import open3d as o3d
 import numpy as np
 import copy
+import sys
 
 
 def point2point(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
@@ -109,9 +110,10 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, rotation_per_c
     registered_point_cloud = copy.deepcopy(
         source_point_cloud)  # global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
 
-    if rotation_per_capture > 0:
+    if rotation_per_capture != 0:
         euler_angle = registered_point_cloud.get_rotation_matrix_from_xyz((0, 0, np.pi * rotation_per_capture / 180))
-        registered_point_cloud.rotate(euler_angle)
+        registered_point_cloud = registered_point_cloud.rotate(euler_angle)
+        # o3d.visualization.draw_geometries([registered_point_cloud, target_point_cloud])
 
     if visualization:
         registered_point_cloud_v = copy.deepcopy(registered_point_cloud)
@@ -128,7 +130,7 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, rotation_per_c
 
     registered_point_cloud = fine_registration(target_point_cloud, registered_point_cloud,
                                                max_correspondence_distance=5,
-                                               evaluate_coarse_registraion_min_correspindence=100000)
+                                               evaluate_coarse_registraion_min_correspindence=10000)
 
     if registered_point_cloud is None:
         raise CoarseRegistrationExceptin
@@ -150,7 +152,8 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, rotation_per_c
 
 
 def registration_in_folders(registrted_folder=[],
-                            pcd_directory='/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models'):
+                            pcd_directory='/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models',
+                            visualization=False):
     for root, _, files in os.walk(pcd_directory):
 
         if root in registrted_folder:
@@ -162,23 +165,24 @@ def registration_in_folders(registrted_folder=[],
             continue
 
         combined_point_cloud = None
+
+        files.sort()
         for file_name in files:
             if 'pc_part_' in file_name:
-
                 file_direction = os.path.join(root, file_name)
                 target_point_cloud = o3d.io.read_point_cloud(file_direction,
                                                              remove_nan_points=True,
                                                              remove_infinite_points=True,
                                                              print_progress=True)
-
                 target_point_cloud, _ = target_point_cloud.remove_radius_outlier(nb_points=4, radius=0.5)
                 target_point_cloud = target_point_cloud.voxel_down_sample(voxel_size=0.1)
-
                 # o3d.visualization.draw_geometries([target_point_cloud])
                 if combined_point_cloud is None:
                     combined_point_cloud = target_point_cloud
                 else:
+                    print(file_name)
                     if '8' in file_name:
+
                         combined_point_cloud = zivid_3d_registration(target_point_cloud,
                                                                      combined_point_cloud,
                                                                      -45) + target_point_cloud
@@ -189,9 +193,31 @@ def registration_in_folders(registrted_folder=[],
 
                     combined_point_cloud = combined_point_cloud.voxel_down_sample(voxel_size=0.1)
 
-            o3d.io.write_point_cloud(filename=os.path.join(root, 'combined.pcd'),
-                                     pointcloud=combined_point_cloud)
+        if visualization:
+            o3d.visualization.draw_geometries([combined_point_cloud])
+
+        o3d.io.write_point_cloud(filename=os.path.join(root, 'combined.pcd'),
+                                 pointcloud=combined_point_cloud)
 
 
 if __name__ == "__main__":
-    registration_in_folders()
+    '''
+    target_point_cloud = o3d.io.read_point_cloud('/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/scan_5/pc_part_8.pcd',
+                                                             remove_nan_points=True,
+                                                              remove_infinite_points=True,
+                                                            print_progress=True)
+    source_point_cloud = o3d.io.read_point_cloud('/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/scan_5/pc_part_7.pcd',
+                                                             remove_nan_points=True,
+                                                              remove_infinite_points=True,
+                                                             print_progress=True)
+    
+    rotation_per_capture=45
+    euler_angle = target_point_cloud.get_rotation_matrix_from_xyz((0, 0, np.pi * rotation_per_capture / 180))
+    target_point_cloud.rotate(euler_angle)
+
+    o3d.visualization.draw_geometries([target_point_cloud,source_point_cloud])
+    '''
+
+    registration_in_folders(
+        pcd_directory=r'/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/scan_32',
+        visualization=True)

@@ -276,7 +276,9 @@ class PointCloudHandler:
         print("Pointcloud saved")
 
         if self.idx == 8:
-            registration.registration_in_folders(pcd_directory=self.location_dir)
+            # print('registration begin')
+            # registration.registration_in_folders(pcd_directory=self.location_dir, visualization=False)
+            # print('registration complete')
 
             self.idx = 1
 
