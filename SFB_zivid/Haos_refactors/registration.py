@@ -202,7 +202,7 @@ def registration_in_folders(registrted_folder=[],
             o3d.io.write_point_cloud(filename=os.path.join(root, 'combined.pcd'),
                                      pointcloud=combined_point_cloud)
         else:
-            print('save combined point cloud at:' + os.path.join(save_dir, root.split('/')[-1] + '-combined.pcd'))
+            print('save combined point cloud at:' + os.path.join(save_dir, root.split('/')[-1] + '_combined.pcd'))
             o3d.io.write_point_cloud(filename=os.path.join(save_dir, root.split('/')[-1] + '_combined.pcd'),
                                      pointcloud=combined_point_cloud)
 
