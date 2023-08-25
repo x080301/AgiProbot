@@ -3,7 +3,7 @@ import os
 import open3d as o3d
 import numpy as np
 import copy
-import sys
+import platform
 
 
 def point2point(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
@@ -153,7 +153,8 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, rotation_per_c
 
 def registration_in_folders(registrted_folder=[],
                             pcd_directory='/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models',
-                            visualization=False):
+                            visualization=False,
+                            save_dir=None):
     for root, _, files in os.walk(pcd_directory):
 
         if root in registrted_folder:
@@ -196,8 +197,14 @@ def registration_in_folders(registrted_folder=[],
         if visualization:
             o3d.visualization.draw_geometries([combined_point_cloud])
 
-        o3d.io.write_point_cloud(filename=os.path.join(root, 'combined.pcd'),
-                                 pointcloud=combined_point_cloud)
+        if save_dir == None:
+            print('save combined point cloud at:' + os.path.join(root, 'combined.pcd'))
+            o3d.io.write_point_cloud(filename=os.path.join(root, 'combined.pcd'),
+                                     pointcloud=combined_point_cloud)
+        else:
+            print('save combined point cloud at:' + os.path.join(save_dir, root.split('/')[-1] + '-combined.pcd'))
+            o3d.io.write_point_cloud(filename=os.path.join(save_dir, root.split('/')[-1] + '_combined.pcd'),
+                                     pointcloud=combined_point_cloud)
 
 
 if __name__ == "__main__":
@@ -217,7 +224,11 @@ if __name__ == "__main__":
 
     o3d.visualization.draw_geometries([target_point_cloud,source_point_cloud])
     '''
+    system_type = platform.system().lower()  # 'windows' or 'linux'
+    if system_type == 'windows':
+        save_dir = 'E:/SFB_zivid/SFB_Demo/models/'
+    else:
+        save_dir = '/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/'
 
-    registration_in_folders(
-        pcd_directory=r'/home/wbk-ur2/dual_ws/src/agiprobot_control/scripts/SFB_Demo/models/scan_32',
-        visualization=True)
+    pcd_directory = save_dir + 'scan_1'
+    registration_in_folders(pcd_directory=pcd_directory, visualization=False, save_dir=save_dir)
