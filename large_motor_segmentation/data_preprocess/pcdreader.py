@@ -1,7 +1,8 @@
 import numpy as np
-import open3d
 import os
 from tqdm import tqdm
+import open3d as o3d
+import torch
 
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
@@ -129,18 +130,58 @@ class PcdReader:
 
         assert self.points is not None, 'read pcd file first!'
 
-        point_cloud = open3d.geometry.PointCloud()
-        point_cloud.points = open3d.utility.Vector3dVector(self.points)
-        point_cloud.colors = open3d.utility.Vector3dVector(self.colors)
+        point_cloud = o3d.geometry.PointCloud()
+        point_cloud.points = o3d.utility.Vector3dVector(self.points)
+        point_cloud.colors = o3d.utility.Vector3dVector(self.colors)
 
         if save_dir is not None:
-            open3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
+            o3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
 
         if visualization:
-            open3d.visualization.draw_geometries([point_cloud])
+            o3d.visualization.draw_geometries([point_cloud])
+
+
+def _pipeline_change_local_color():
+    labels = []
+    with open(r'C:\Users\Lenovo\Desktop\full_model.pcd', 'r') as f:
+        head_flag = True
+        while True:
+            # for i in range(12):
+            oneline = f.readline()
+
+            if head_flag:
+                if 'DATA ascii' in oneline:
+                    head_flag = False
+                    continue
+                else:
+                    continue
+
+            if not oneline:
+                break
+
+            x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+
+            point_label = list(rgb_dic.keys())[int(label)]
+            if point_label != 'Noise':
+                labels.append(int(label) == 1)
+
+    labels = np.array(labels)
+
+    source_pcd = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\registration\full_model.pcd')
+
+    colors = torch.asarray(np.asarray(source_pcd.colors))
+    color = torch.asarray([a / 255.0 for a in rgb_dic['Main Housing']]).double()
+    colors[labels, :] = color
+
+    source_pcd.colors = o3d.utility.Vector3dVector(colors)
+    o3d.io.write_point_cloud(filename=r'E:\datasets\agiprobot\registration\full_model_2.pcd', pointcloud=source_pcd,
+                             write_ascii=True)
 
 
 if __name__ == "__main__":
+    '''
     pcd_reader = PcdReader()
     pcd_reader.read_pcd_ASCII('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot.pcd')
     pcd_reader.save_and_visual_pcd('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot_1.pcd', visualization=True)
+    '''
+    _pipeline_change_local_color()
