@@ -197,7 +197,9 @@ def registrate_one_folder(files, root, save_dir, visualization, voxel_size):
                                                          print_progress=True)
 
             # target_point_cloud, _ = target_point_cloud.remove_radius_outlier(nb_points=4, radius=0.5)
-            target_point_cloud, _ = remove_black_noise_line(target_point_cloud, nb_points=150, radius=1.5)
+            if 'b' in root:
+                # print('Do remove')
+                target_point_cloud, _ = remove_black_noise_line(target_point_cloud, nb_points=150, radius=1.5)
 
             target_point_cloud = target_point_cloud.voxel_down_sample(voxel_size=voxel_size)
             # o3d.visualization.draw_geometries([target_point_cloud])
