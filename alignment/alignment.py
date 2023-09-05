@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from tqdm import tqdm
+import cv2
 
 import data_visualization
 from point_cloud_operation import get_normal_array
@@ -48,7 +49,19 @@ def _get_alpha_beta_gama_from_z_y(z, y):
     return theta_x, theta_y, theta_z
 
 
-def get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd):
+def get_a_point_on_cylinder_axis(z_axis, point_cloud, visualization=False):
+    # Rotate point cloud so that the point cloud z axis and coordinate z axis coincide
+    segmented_pcd, rotation_matrix_z = alignment_z(z_axis, point_cloud)
+
+    #
+    img = np.array(segmented_pcd.points)[:, 0:2]
+    print(type(img))
+    print(img)
+    if visualization:
+        cv2.imshow(img)
+
+
+def get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd, point_cloud_center_on_zylinder_axis=True):
     solenoid_center = solenoid_pcd.get_center()
     main_housing_center = main_housing_pcd.get_center()
     connector_center = connector_pcd.get_center()
@@ -60,6 +73,11 @@ def get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd):
              * mainhousing_cylinder_axis
 
     # y axis:
+
+    if not point_cloud_center_on_zylinder_axis:
+        solenoid_center = get_a_point_on_cylinder_axis(z_axis, solenoid_pcd, visualization=True)
+        main_housing_center = get_a_point_on_cylinder_axis(z_axis, main_housing_pcd)
+
     y_axis = solenoid_center - main_housing_center - np.dot(z_axis, solenoid_center - main_housing_center) * z_axis
     y_axis /= np.linalg.norm(y_axis)
 
@@ -195,22 +213,112 @@ def get_mainhousing_cylinder_axis(normals, pcd=None, visualization=False):
     return cylinder_axis
 
 
-def pointcloud_alignment(solenoid_pcd, main_housing_pcd, connector_pcd, segmented_pcd):
+def point_cloud_alignment(solenoid_pcd, main_housing_pcd, connector_pcd, segmented_pcd):
     # get z and y axis of the point cloud
-    z, y = get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd)
+    z_axis, y_axis = get_zy_axis(solenoid_pcd, main_housing_pcd, connector_pcd)
 
     # translate the point cloud center to the origin
     translation_vector = segmented_pcd.get_center()
     segmented_pcd.translate(-translation_vector, relative=True)
 
     # Rotate point cloud so that the point cloud z axis and coordinate z axis coincide
-    segmented_pcd, rotation_matrix_z = alignment_z(z, segmented_pcd)
+    segmented_pcd, rotation_matrix_z = alignment_z(z_axis, segmented_pcd)
 
     # Rotate point cloud so that the point cloud y axis and coordinate y axis coincide
-    segmented_pcd, _ = alignment_y(y, segmented_pcd, rotation_matrix_z)
+    segmented_pcd, _ = alignment_y(y_axis, segmented_pcd, rotation_matrix_z)
 
     return segmented_pcd
 
 
+def read_labeled_pcd_as_multi_pcd(direction):
+    points = []
+    solenoid_points = []
+    main_housing_points = []
+    connector_points = []
+    with open(direction, 'r') as f:
+
+        head_flag = True
+        while True:
+            # for i in range(12):
+            oneline = f.readline()
+
+            if head_flag:
+                if 'DATA ascii' in oneline:
+                    head_flag = False
+                    continue
+                else:
+                    continue
+
+            if not oneline:
+                break
+
+            x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+
+            if x == '0' and y == '0' and z == '0':
+                continue
+            x, y, z, label = float(x), float(y), float(z), int(label)
+            points.append(np.array([x, y, z]))
+            if label == 3:
+                connector_points.append(np.array([x, y, z]))
+
+
+            elif label == 5:
+                solenoid_points.append(np.array([x, y, z]))
+            elif label == 7:
+                main_housing_points.append(np.array([x, y, z]))
+
+    solenoid_point_cloud = o3d.geometry.PointCloud()
+    solenoid_point_cloud.points = o3d.utility.Vector3dVector(solenoid_points)
+
+    main_housing_point_cloud = o3d.geometry.PointCloud()
+    main_housing_point_cloud.points = o3d.utility.Vector3dVector(main_housing_points)
+
+    connector_point_cloud = o3d.geometry.PointCloud()
+    connector_point_cloud.points = o3d.utility.Vector3dVector(connector_points)
+
+    whole_point_cloud = o3d.geometry.PointCloud()
+    whole_point_cloud.points = o3d.utility.Vector3dVector(points)
+
+    return solenoid_point_cloud, main_housing_point_cloud, connector_point_cloud, whole_point_cloud
+
+
+class PointCloudAlignment:
+    def __init__(self, solenoid_pcd, main_housing_pcd, connector_pcd):
+        pass
+
+    def get_xyz_axis(self):
+        pass
+
+    def visualization(self):
+        pass
+
+    def get_alignmented_pcd(self, pcd):
+        pass
+
+    def get_rotation_matrix(self):
+        pass
+
+
 if __name__ == "__main__":
-    pass
+    source_point_cloud = o3d.io.read_point_cloud(r'E:\SFB_Demo\models\scan_2\18t_combined.pcd',
+                                                 remove_nan_points=True,
+                                                 remove_infinite_points=True,
+                                                 print_progress=True)
+    solenoid_pcd, main_housing_pcd, connector_pcd, _ = read_labeled_pcd_as_multi_pcd(
+        r'E:\SFB_Demo\models\scan_3\test\18t_labeled.pcd')
+
+    # get z and y axis of the point cloud
+    z_axis, y_axis = get_zy_axis(solenoid_pcd, main_housing_pcd + solenoid_pcd, connector_pcd)
+    #z_axis = -z_axis
+
+    # translate the point cloud center to the origin
+    translation_vector = source_point_cloud.get_center()
+    source_point_cloud.translate(-translation_vector, relative=True)
+
+    # Rotate point cloud so that the point cloud z axis and coordinate z axis coincide
+    source_point_cloud, rotation_matrix_z = alignment_z(z_axis, source_point_cloud)
+
+    source_point_cloud.translate(translation_vector, relative=True)
+
+    o3d.io.write_point_cloud(filename=r'E:\SFB_Demo\models\scan_3\test\18t_alignment.pcd',
+                             pointcloud=source_point_cloud)

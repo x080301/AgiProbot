@@ -67,7 +67,9 @@ def capture_one_motor(view_mode="top"):
 
     # define positions
     if view_mode == "top":
-        zivid_position = deg_to_rad([97.40, -104.09, -97.49, -95.95, 42.49, 128.20])  # top X8
+        # zivid_position = deg_to_rad([94.51, -98.09, -98.32, -97.46, 44.5, 122.05])  # top X8
+        # zivid_position = deg_to_rad([97.40, -103.11, -92.68, -102.92, 42.49, 128.20])
+        zivid_position = deg_to_rad([97.40, -102.11, -88.97, -107.92, 42.56, 128.32])
     else:
         zivid_position = deg_to_rad([90.40, -92.77, -95.07, -104.55, 50.08, 27.16])  # bottom X 8
 
