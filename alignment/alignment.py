@@ -299,7 +299,7 @@ class PointCloudAlignment:
         pass
 
 
-if __name__ == "__main__":
+def _pipeline_demo_registration_for_zivid_3d_pcd():
     source_point_cloud = o3d.io.read_point_cloud(r'E:\SFB_Demo\models\scan_2\18t_combined.pcd',
                                                  remove_nan_points=True,
                                                  remove_infinite_points=True,
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     # get z and y axis of the point cloud
     z_axis, y_axis = get_zy_axis(solenoid_pcd, main_housing_pcd + solenoid_pcd, connector_pcd)
-    #z_axis = -z_axis
+    # z_axis = -z_axis
 
     # translate the point cloud center to the origin
     translation_vector = source_point_cloud.get_center()
@@ -322,3 +322,7 @@ if __name__ == "__main__":
 
     o3d.io.write_point_cloud(filename=r'E:\SFB_Demo\models\scan_3\test\18t_alignment.pcd',
                              pointcloud=source_point_cloud)
+
+
+if __name__ == "__main__":
+    _pipeline_demo_registration_for_zivid_3d_pcd()

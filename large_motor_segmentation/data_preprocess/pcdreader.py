@@ -50,7 +50,7 @@ class PcdReader:
                 if not oneline:
                     break
 
-                x, y, z, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+                x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
 
                 point_label = list(rgb_dic.keys())[int(label)]
                 if point_label != 'Noise':
@@ -178,10 +178,65 @@ def _pipeline_change_local_color():
                              write_ascii=True)
 
 
+def _pipeline_generate_background_only_pcd():
+    source_pcd = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\registration\one_view_bin.pcd',
+                                         remove_nan_points=True,
+                                         remove_infinite_points=True,
+                                         print_progress=True)
+
+    print(source_pcd)
+    points = torch.asarray(np.asarray(source_pcd.points))
+    colors = torch.asarray(np.asarray(source_pcd.colors))
+
+    index = colors[:, 1]
+    index = [a < 0.1 for a in index]
+
+    background_only_pcd = o3d.geometry.PointCloud()
+    background_only_pcd.points = o3d.utility.Vector3dVector(points[index, :])
+    background_only_pcd.colors = o3d.utility.Vector3dVector(colors[index, :])
+    print(background_only_pcd)
+
+    o3d.io.write_point_cloud(filename=r'E:\datasets\agiprobot\registration\one_view_background_only.pcd',
+                             pointcloud=background_only_pcd,
+                             write_ascii=True)
+
+
+def _pipeline_get_screw_only_pcd():
+    source_pcd = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\registration\full_model_2.pcd',
+                                         remove_nan_points=True,
+                                         remove_infinite_points=True,
+                                         print_progress=True)
+
+    print(source_pcd)
+    points = torch.asarray(np.asarray(source_pcd.points))
+    colors = torch.asarray(np.asarray(source_pcd.colors))
+
+    index = colors[:, 2]
+    index = [(a < 0.35) and (a > 0.3) for a in index]
+
+    screw_only_pcd = o3d.geometry.PointCloud()
+    screw_only_pcd.points = o3d.utility.Vector3dVector(points[index, :])
+    screw_only_pcd.colors = o3d.utility.Vector3dVector(colors[index, :])
+    print(screw_only_pcd)
+
+    o3d.io.write_point_cloud(filename=r'E:\datasets\agiprobot\registration\screw_only_only.pcd',
+                             pointcloud=screw_only_pcd,
+                             write_ascii=True)
+
+
+def _pipeline_color_pcd_from_label_tool():
+    pcdreader = PcdReader()
+    pcdreader.read_pcd_ASCII(r'C:\Users\Lenovo\Desktop\screw_only_only.pcd')
+    pcdreader.save_and_visual_pcd(r'E:\datasets\agiprobot\registration\screw_only_only_colored.pcd')
+
+
 if __name__ == "__main__":
     '''
     pcd_reader = PcdReader()
     pcd_reader.read_pcd_ASCII('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot.pcd')
     pcd_reader.save_and_visual_pcd('E:/datasets/agiprobot/fromJan/pcd_tscan_31/labeled/_Motor_006_rot_1.pcd', visualization=True)
     '''
-    _pipeline_change_local_color()
+    # _pipeline_change_local_color()
+    # _pipeline_generate_background_only_pcd()
+    # _pipeline_get_screw_only_pcd()
+    _pipeline_color_pcd_from_label_tool()

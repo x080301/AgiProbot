@@ -169,10 +169,9 @@ def registration(target_point_cloud, source_point_cloud, algorithm='point2plane_
         # coarse_registered = _coarse_registration_hard_coding(target_point_cloud, source_point_cloud)
         registered_point_cloud = global_registration(target_point_cloud, copy.deepcopy(source_point_cloud))
 
-        registered_point_cloud.paint_uniform_color([1, 1, 0])
-
         if visualization:
             print("coarse_registration")
+            registered_point_cloud.paint_uniform_color([1, 1, 0])
             visualization_point_cloud(source_point_cloud=registered_point_cloud,
                                       target_point_cloud_with_background=target_point_cloud)
 
@@ -264,72 +263,26 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, algorithm='poi
     return registered_point_cloud
 
 
+def _pipeline_registration_and_save():
+    target_point_cloud = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\registration\one_view_motor_only.pcd',
+                                                 remove_nan_points=True,
+                                                 remove_infinite_points=True,
+                                                 print_progress=True)
+    source_point_cloud = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\registration\full_model_2.pcd',
+                                                 remove_nan_points=True,
+                                                 remove_infinite_points=True,
+                                                 print_progress=True)
+
+    registered_point_cloud = registration(target_point_cloud, source_point_cloud)
+
+    o3d.io.write_point_cloud(filename=r'E:\datasets\agiprobot\registration\full_model_2_registered.pcd',
+                             pointcloud=registered_point_cloud,
+                             write_ascii=True)
+
+
 if __name__ == "__main__":
-    # data_generation()
+    _pipeline_registration_and_save()
 
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_7.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    source_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_8.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-
-    # rotated_point_cloud = copy.deepcopy(source_point_cloud)
-    # '''-np.pi * 30. / 180'''
-    # euler_angle = rotated_point_cloud.get_rotation_matrix_from_xyz((0, 0, -np.pi * 45. / 180))
-    # rotated_point_cloud.rotate(euler_angle)
-
-    # visualization_point_cloud(source_point_cloud=rotated_point_cloud,
-    #                           target_point_cloud_with_background=target_point_cloud)
-    registered_pcd = zivid_3d_registration(target_point_cloud, source_point_cloud)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_6.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_5.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=False,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    o3d.visualization.draw_geometries([registered_pcd])
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_4.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    o3d.visualization.draw_geometries([registered_pcd])
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_3.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    o3d.visualization.draw_geometries([registered_pcd])
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_2.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    o3d.visualization.draw_geometries([registered_pcd])
-
-    target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_1.pcd',
-                                                 remove_nan_points=True, remove_infinite_points=True,
-                                                 print_progress=True)
-    registered_pcd = zivid_3d_registration(target_point_cloud, registered_pcd, visualization=True)
-    registered_pcd = registered_pcd + target_point_cloud
-
-    o3d.visualization.draw_geometries([registered_pcd])
 '''
     # pipline_point2plane_test(target_point_cloud, source_point_cloud)
     target_point_cloud = o3d.io.read_point_cloud('C:/Users/Lenovo/Desktop/zivid 3d/pc_part_1.pcd',
