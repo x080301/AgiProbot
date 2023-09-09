@@ -6,6 +6,10 @@ import copy
 import platform
 import torch
 import einops
+from tqdm import tqdm
+import cupy as cp
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def point2point(target_point_cloud, source_point_cloud, max_correspondence_distance=10):
@@ -167,7 +171,10 @@ def registration_in_folders(registrted_folder=[],
         files = [item for item in files if os.path.isfile(os.path.join(pcd_directory, item))]
 
         if len(files) > 0:
-            registrate_one_folder(files, pcd_directory, save_dir, visualization, voxel_size)
+            try:
+                registrate_one_folder(files, pcd_directory, save_dir, visualization, voxel_size)
+            except Exception:
+                pass
 
     for root, _, files in os.walk(pcd_directory):
 
@@ -176,10 +183,11 @@ def registration_in_folders(registrted_folder=[],
         else:
             registrted_folder.append(root)
 
-        if len(files) == 0:
-            continue
-
-        registrate_one_folder(files, root, save_dir, visualization, voxel_size)
+        if len(files) > 0:
+            try:
+                registrate_one_folder(files, root, save_dir, visualization, voxel_size)
+            except Exception:
+                pass
 
     return registrted_folder
 
@@ -377,6 +385,189 @@ def remove_black_noise_line(source_pcd, threshold=0.5, nb_points=150, radius=1.5
     return inlier_pcd, outlier_pcd
 
 
+def num_neighbor_in_cuboid_one_point(point, pointcloud, length):
+    # print(point)
+    upper_bound = point + length / 2
+    lower_bound = point - length / 2
+
+    # is_point_in_cuboid = torch.zeros_like(pointcloud)
+    is_point_in_cuboid = torch.where(pointcloud >= lower_bound, 1, 0) \
+                         + torch.where(pointcloud <= upper_bound, 1, 0)
+    '''
+    for i in range(3):
+        if i == 0:
+            is_point_in_cuboid = torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                 + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+        else:
+            is_point_in_cuboid += torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                  + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+    '''
+    is_point_in_cuboid = torch.sum(is_point_in_cuboid, dim=1)
+    is_point_in_cuboid = torch.where(is_point_in_cuboid == 6, 1, 0)
+
+    num_points_in_cuboid = torch.sum(is_point_in_cuboid)
+    # print(num_points_in_cuboid)
+
+    return num_points_in_cuboid
+
+
+def num_neighbor_in_cuboid_one_point_torch(point, pointcloud, length):
+    # print(point)
+    torch.cuda.empty_cache()
+    pointcloud = pointcloud.cuda()
+    upper_bound = point + length / 2
+    lower_bound = point - length / 2
+
+    # is_point_in_cuboid = torch.zeros_like(pointcloud)
+    is_point_in_cuboid = torch.where(pointcloud >= lower_bound, 1, 0) \
+                         + torch.where(pointcloud <= upper_bound, 1, 0)
+    '''
+    for i in range(3):
+        if i == 0:
+            is_point_in_cuboid = torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                 + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+        else:
+            is_point_in_cuboid += torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                  + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+    '''
+    is_point_in_cuboid = torch.sum(is_point_in_cuboid, dim=1)
+    is_point_in_cuboid = torch.where(is_point_in_cuboid == 6, 1, 0)
+
+    num_points_in_cuboid = torch.sum(is_point_in_cuboid)
+    # print(num_points_in_cuboid)
+
+    return num_points_in_cuboid
+
+
+def num_neighbor_in_cuboid_one_point_numpy(index, pointcloud, length):
+    # print(index)
+    point = pointcloud[index, :]
+    upper_bound = point + length / 2
+    lower_bound = point - length / 2
+
+    # is_point_in_cuboid = torch.zeros_like(pointcloud)
+    is_point_in_cuboid = np.where(pointcloud >= lower_bound, 1, 0) \
+                         + np.where(pointcloud <= upper_bound, 1, 0)
+    '''
+    for i in range(3):
+        if i == 0:
+            is_point_in_cuboid = torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                 + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+        else:
+            is_point_in_cuboid += torch.where(pointcloud[:, i] >= lower_bound[i], 1, 0) \
+                                  + torch.where(pointcloud[:, i] <= upper_bound[i], 1, 0)
+    '''
+    is_point_in_cuboid = cp.sum(is_point_in_cuboid, axis=1)
+    is_point_in_cuboid = cp.where(is_point_in_cuboid == 6, 1, 0)
+
+    num_points_in_cuboid = cp.sum(is_point_in_cuboid)
+    # print(num_points_in_cuboid)
+
+    return num_points_in_cuboid
+
+
+class RunningTimer:
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        time.perf_counter()
+        self.func(*args, **kwargs)
+        print(time.perf_counter())
+
+
+def num_neighbor_in_cuboid_kd(point_cloud, radius):
+    pcd_tree = o3d.geometry.KDTreeFlann(point_cloud)
+    nums_points_in_cuboid = []
+    for i in tqdm(range(np.asarray(point_cloud.points).shape[0])):
+        k, _, _ = pcd_tree.search_radius_vector_3d(point_cloud.points[i], radius)
+        nums_points_in_cuboid.append(k)
+    return nums_points_in_cuboid
+
+
+@RunningTimer
+def num_neighbor_in_cuboid_np_vectorized(pointcloud, length, outputgpu=False):
+    """
+    :param pointcloud: open3d.geometry.PointCloud
+    :param length: length of cuboid
+    :return: list numbers of neighbors
+    """
+
+    points = cp.asarray(pointcloud.points)
+
+    vectorized_num_neighbor_in_cuboid_one_point = cp.vectorize(num_neighbor_in_cuboid_one_point_numpy,
+                                                               excluded=['pointcloud', 'length'])
+
+    index = cp.asarray(range(points.shape[0]))
+    nums_points_in_cuboid = vectorized_num_neighbor_in_cuboid_one_point(index, pointcloud=points, length=length)
+
+    if not outputgpu:
+        nums_points_in_cuboid = cp.asnumpy(nums_points_in_cuboid)
+
+    return nums_points_in_cuboid
+
+
+def num_neighbor_in_cuboid_torch_vectorized(pointcloud, length, outputgpu=False):
+    """
+    :param pointcloud: open3d.geometry.PointCloud
+    :param length: length of cuboid
+    :return: list numbers of neighbors
+    """
+
+    points = torch.asarray(np.asarray(pointcloud.points), requires_grad=False).cuda()
+
+    # index = torch.asarray(range(points.shape[0]))
+    torch.cuda.empty_cache()
+    vectorized_num_neighbor_in_cuboid_one_point = torch.vmap(
+        num_neighbor_in_cuboid_one_point_torch, in_dims=(0, None, None), out_dims=0)
+
+    index_interval = list(range(0, points.shape[0], 100))
+    for i in tqdm(range(len(index_interval))):
+        lower_index = index_interval[i]
+        if i == len(index_interval) - 1:
+            upper_index = -1
+        else:
+            upper_index = index_interval[i + 1]
+
+        if i == 0:
+            nums_points_in_cuboid = vectorized_num_neighbor_in_cuboid_one_point(
+                points[lower_index:upper_index, :], points, length)
+        else:
+            nums_points_in_cuboid = torch.cat(
+                (nums_points_in_cuboid,
+                 vectorized_num_neighbor_in_cuboid_one_point(points[lower_index:upper_index, :], points, length)),
+                dim=0)
+            # CHOUXIANG!!!
+
+    if not outputgpu:
+        nums_points_in_cuboid = nums_points_in_cuboid.cpu()
+    return nums_points_in_cuboid
+
+
+def num_neighbor_in_cuboid(pointcloud, length, outputgpu=False):
+    """
+    :param outputgpu:
+    :param pointcloud: open3d.geometry.PointCloud
+    :param length: length of cuboid
+    :return: list numbers of neighbors
+    """
+    points = torch.asarray(np.asarray(pointcloud.points)).cuda()
+    '''
+
+    nums_points_in_cuboid = []
+    for i in tqdm(range(points.shape[0])):
+        nums_points_in_cuboid.append(num_neighbor_in_cuboid_one_point(points[i, :], points, length))
+    '''
+    nums_points_in_cuboid = [num_neighbor_in_cuboid_one_point(points[i, :], points, length)
+                             for i in tqdm(range(points.shape[0]))]
+    # for i in range(points.shape[0])]
+
+    nums_points_in_cuboid = torch.asarray(nums_points_in_cuboid)
+    if not outputgpu:
+        nums_points_in_cuboid = nums_points_in_cuboid.cpu()
+    return nums_points_in_cuboid
+
+
 def _test_remove_black_noise_line():
     source_pcd = o3d.io.read_point_cloud(r'E:\SFB_Demo\models\clean\17b\pc_part_1.pcd',
                                          remove_nan_points=True,
@@ -419,7 +610,146 @@ def _pipeline_registration():
                             save_dir='E:/SFB_Demo/models/registered')
 
 
+def _pipeline_registration_continue():
+    registrted_folder = os.listdir(r'E:\SFB_Demo\models\registered')
+    registrted_folder = ['E:/SFB_Demo/models/scan_3' + '\\' + a.split('_')[0] for a in registrted_folder]
+
+    registration_in_folders(pcd_directory='E:/SFB_Demo/models/scan_3',
+                            save_dir='E:/SFB_Demo/models/registered', registrted_folder=registrted_folder)
+
+
+def _test_num_neighbor_in_cuboid():
+    source_pcd = o3d.io.read_point_cloud(r'E:\SFB_Demo\models\clean\17b\pc_part_1.pcd',
+                                         remove_nan_points=True,
+                                         remove_infinite_points=True,
+                                         print_progress=True)
+
+    darker_pcd = o3d.geometry.PointCloud()
+    points = torch.asarray(np.asarray(source_pcd.points))
+    colors = torch.asarray(np.asarray(source_pcd.colors))
+
+    lighter_index = torch.sum(colors, dim=1) > 0.5
+
+    darker_index = ~lighter_index
+    darker_pcd.points = o3d.utility.Vector3dVector(points[darker_index, :])
+    darker_pcd.colors = o3d.utility.Vector3dVector(colors[darker_index, :])
+
+    print('search begin')
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 10)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\10.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\10.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 0.1)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\0.1.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\0.1.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 0.2)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\0.2.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\0.2.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 0.5)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\0.5.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\0.5.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 1)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\1.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\1.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 2)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\2.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\2.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 5)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\5.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\5.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 20)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\20.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\20.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 40)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\40.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\40.png')
+
+    plt.figure(clear=True)
+    nums = num_neighbor_in_cuboid_kd(darker_pcd, 100)
+    torch.save(torch.asarray(nums), r'C:\Users\Lenovo\Desktop\100.pt')
+    plt.hist(nums, bins=50, color='blue', alpha=0.7)
+    plt.xlabel('value')
+    plt.ylabel('frequence')
+    plt.savefig(r'C:\Users\Lenovo\Desktop\100.png')
+
+
+def _test_remove_black_noise_line_crop():
+    nums_02 = torch.load(r'C:\Users\Lenovo\Desktop\0.2.pt')
+    nums_05 = torch.load(r'C:\Users\Lenovo\Desktop\0.5.pt')
+    nums_1 = torch.load(r'C:\Users\Lenovo\Desktop\1.pt')
+    nums_2 = torch.load(r'C:\Users\Lenovo\Desktop\2.pt')
+    nums_5 = torch.load(r'C:\Users\Lenovo\Desktop\5.pt')
+    nums_10 = torch.load(r'C:\Users\Lenovo\Desktop\10.pt')
+    nums_20 = torch.load(r'C:\Users\Lenovo\Desktop\20.pt')
+    nums_40 = torch.load(r'C:\Users\Lenovo\Desktop\40.pt')
+    nums_100 = torch.load(r'C:\Users\Lenovo\Desktop\100.pt')
+
+    result_dict = {'0.2': nums_02, '0.5': nums_05, '1': nums_1, '2': nums_2, '5': nums_5, '10': nums_10, '20': nums_20,
+                   '40': nums_40, '100': nums_100}
+    dict_keys = list(result_dict.keys())
+    for i in range(0, len(dict_keys) - 1, 1):
+        nums_lower = result_dict[dict_keys[i]]
+        for j in range(i + 1, len(dict_keys), 1):
+            nums_upper = result_dict[dict_keys[j]]
+            plt.figure(clear=True)
+            plt.xlabel('value')
+            plt.ylabel('frequence')
+            plt.yscale('log')
+            plt.xlim(1, (float(dict_keys[j])/float(dict_keys[i]))**2*1.1)
+            plt.hist(nums_upper / nums_lower, bins=1000, color='blue', alpha=0.7)
+            plt.savefig(
+                r'C:\Users\Lenovo\Desktop' + '\\' + dict_keys[i] + '_' + dict_keys[j] + '.png')
+            plt.clf()
+            plt.close()
+
+
 if __name__ == "__main__":
     # _test_remove_black_noise_line()
     # _test_remove_black_noise_line_knn()
-    _pipeline_registration()
+    # _pipeline_registration()
+    # _pipeline_registration_continue()
+    # _test_num_neighbor_in_cuboid()
+    _test_remove_black_noise_line_crop()
