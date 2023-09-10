@@ -230,6 +230,16 @@ def _pipeline_color_pcd_from_label_tool():
     pcdreader.save_and_visual_pcd(r'E:\datasets\agiprobot\registration\screw_only_only_colored.pcd')
 
 
+def _pipeline_color_pcd_from_label_tool_directory():
+    pcdreader = PcdReader()
+
+    read_dir = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\labeled pcd'
+    save_dir = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored'
+    for file_name in tqdm(os.listdir(read_dir)):
+        pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
+        pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
+
+
 if __name__ == "__main__":
     '''
     pcd_reader = PcdReader()
@@ -239,4 +249,5 @@ if __name__ == "__main__":
     # _pipeline_change_local_color()
     # _pipeline_generate_background_only_pcd()
     # _pipeline_get_screw_only_pcd()
-    _pipeline_color_pcd_from_label_tool()
+    # _pipeline_color_pcd_from_label_tool()
+    _pipeline_color_pcd_from_label_tool_directory()
