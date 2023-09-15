@@ -604,18 +604,16 @@ def _pipeline_registration():
 
     pcd_directory = save_dir + 'scan_1'
 
-    registration_in_folders(pcd_directory='E:/SFB_Demo/models/scan_2',
-                            save_dir='E:/SFB_Demo/models/registered')
     registration_in_folders(pcd_directory='E:/SFB_Demo/models/scan_3',
                             save_dir='E:/SFB_Demo/models/registered')
 
 
 def _pipeline_registration_continue():
-    registrted_folder = os.listdir(r'E:\SFB_Demo\models\registered')
-    registrted_folder = ['E:/SFB_Demo/models/scan_3' + '\\' + a.split('_')[0] for a in registrted_folder]
+    # registrted_folder = os.listdir(r'E:\SFB_Demo\models\registered')
+    # registrted_folder = ['E:/SFB_Demo/models/scan_3' + '\\' + a.split('_')[0] for a in registrted_folder]
 
     registration_in_folders(pcd_directory='E:/SFB_Demo/models/scan_3',
-                            save_dir='E:/SFB_Demo/models/registered', registrted_folder=registrted_folder)
+                            save_dir='E:/SFB_Demo/models/registered', registrted_folder=[])
 
 
 def _test_num_neighbor_in_cuboid():
@@ -738,7 +736,7 @@ def _test_remove_black_noise_line_crop():
             plt.xlabel('value')
             plt.ylabel('frequence')
             plt.yscale('log')
-            plt.xlim(1, (float(dict_keys[j])/float(dict_keys[i]))**2*1.1)
+            plt.xlim(1, (float(dict_keys[j]) / float(dict_keys[i])) ** 2 * 1.1)
             plt.hist(nums_upper / nums_lower, bins=1000, color='blue', alpha=0.7)
             plt.savefig(
                 r'C:\Users\Lenovo\Desktop' + '\\' + dict_keys[i] + '_' + dict_keys[j] + '.png')
@@ -752,4 +750,5 @@ if __name__ == "__main__":
     # _pipeline_registration()
     # _pipeline_registration_continue()
     # _test_num_neighbor_in_cuboid()
-    _test_remove_black_noise_line_crop()
+    # _test_remove_black_noise_line_crop()
+    _pipeline_registration_continue()
