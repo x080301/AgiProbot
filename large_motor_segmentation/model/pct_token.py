@@ -458,10 +458,10 @@ class PCTToken(nn.Module):
         return point_segmentation_pred, bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, transform_matrix
 
 
-class PCTPretain(nn.Module):
+class PCTPipeline(nn.Module):
 
     def __init__(self, args):
-        super(PCTPretain, self).__init__()
+        super(PCTPipeline, self).__init__()
         self.args = args
 
         self.input_embedding = InputEmbedding(self.args)

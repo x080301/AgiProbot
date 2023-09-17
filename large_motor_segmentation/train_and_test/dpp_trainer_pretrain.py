@@ -13,7 +13,7 @@ from tqdm import tqdm
 import copy
 
 from utilities.config import get_parser
-from model.pct_token import PCTPretain
+from model.pct_token import PCTPipeline
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
@@ -112,7 +112,7 @@ class SegmentationDPP:
         # load ML model
         # ******************* #
 
-        self.model = PCTPretain(self.args)
+        self.model = PCTPipeline(self.args)
 
         # if fine tune is true, the the best.pth will be loaded first
 
