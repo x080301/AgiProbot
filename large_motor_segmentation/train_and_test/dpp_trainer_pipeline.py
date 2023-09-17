@@ -54,7 +54,6 @@ class SegmentationDPP:
                 self.data_set_direction = self.args.pretrain_server_data_dir
             else:
                 self.data_set_direction = self.args.fine_tune_server_data_dir
-            self.data_set_direction = self.args.data_dir
 
         # ******************* #
         # make directions
