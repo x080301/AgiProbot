@@ -41,8 +41,6 @@ def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_norma
 
         pred = F.sigmoid(logits)
         loss += args.model.token.bolt_normals_loss * F.huber_loss(pred, target, delta=1)
-        # Todo :MSE metric， loss or MSE，delta
-        # 增加mask，跟着bolt_existing_label 的 ground truth走
 
     return loss
 
@@ -214,7 +212,7 @@ def square_distance(src, dst):
     """
     Calculate Euclid distance between each two points.
 
-    src^T * dst = xn * xm + yn * ym + zn * zm；
+    src^T * dst = xn * xm + yn * ym + zn * zm;
     sum(src^2, dim=-1) = xn*xn + yn*yn + zn*zn;
     sum(dst^2, dim=-1) = xm*xm + ym*ym + zm*zm;
     dist = (xn - xm)^2 + (yn - ym)^2 + (zn - zm)^2
@@ -551,3 +549,39 @@ class PTransformerDecoder(nn.Module):
         output = self.last_layer(output, memory)
 
         return output
+
+
+def refactor_pretrained_checkpoint(checkpoint):
+    model_state_dict = checkpoint['model_state_dict']
+    for k, v in model_state_dict.items():
+        print(k)
+        if 'conv7.weight' in k:
+            model_state_dict[k] = v[2:, :, :]
+            print(model_state_dict[k].shape)
+        if 'conv7.bias' in k:
+            model_state_dict[k] = v[2:]
+            print(model_state_dict[k].shape)
+    checkpoint['model_state_dict'] = model_state_dict
+
+    mIoU = checkpoint['mIoU']
+    mIoU = mIoU / 6 * 8
+    print(mIoU)
+    checkpoint['mIoU'] = mIoU
+
+    return checkpoint
+
+
+def _pipeline_refactor_pretrained_checkpoint():
+    import torch
+
+    checkpoint = torch.load(r'D:\Jupyter\AgiProbot\large_motor_segmentation\best_m.pth')
+    checkpoint = refactor_pretrained_checkpoint(checkpoint)
+
+    torch.save(checkpoint, r'C:\Users\Lenovo\Desktop\best_m.pth')
+
+    # checkpoint = torch.load(r'C:\Users\Lenovo\Desktop\best_m.pth')
+    # refactor_pretrained_checkpoint(checkpoint)
+
+
+if __name__ == "__main__":
+    _pipeline_refactor_pretrained_checkpoint()

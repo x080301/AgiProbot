@@ -204,7 +204,7 @@ class InputEmbedding(nn.Module):
 
 
 class SegmentationMLP(nn.Module):
-    def __init__(self, args):
+    def __init__(self, num_segmentation_type):
         super(SegmentationMLP, self).__init__()
 
         self.bn4 = nn.BatchNorm1d(1024)
@@ -216,7 +216,7 @@ class SegmentationMLP(nn.Module):
 
         self.bn6 = nn.BatchNorm1d(256)
         self.conv6 = nn.Conv1d(512, 256, kernel_size=1)
-        self.conv7 = nn.Conv1d(256, args.num_segmentation_type, 1)
+        self.conv7 = nn.Conv1d(256, num_segmentation_type, 1)
 
     def forward(self, x):
         _, _, num_points = x.shape  # _                 input (B,512,N)
@@ -425,7 +425,7 @@ class PCTToken(nn.Module):
         self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
         self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
 
-        self.segmentation_mlp = SegmentationMLP(self.args)
+        self.segmentation_mlp = SegmentationMLP(self.args.num_segmentation_type)
         self.bolt_token_mlp = BoltTokenMLP(self.args)
 
     def forward(self, x):
@@ -471,7 +471,7 @@ class PCTPipeline(nn.Module):
         self.sa3 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
         self.sa4 = SelfAttentionLayer(in_channels=128, out_channels=128, num_heads=args.model_para.attentionhead)
 
-        self.segmentation_mlp = SegmentationMLP(self.args)
+        self.segmentation_mlp = SegmentationMLP(self.args.num_segmentation_type)
 
     def forward(self, x):
         batch_size, _, num_points = x.shape  # _        input (B,3,N)
