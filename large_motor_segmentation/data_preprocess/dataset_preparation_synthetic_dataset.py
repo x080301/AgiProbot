@@ -2,6 +2,7 @@ import numpy as np
 import open3d as o3d
 import os
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 rgb_dic = {'Void': [207, 207, 207],
            'Background': [0, 0, 128],
@@ -16,16 +17,20 @@ rgb_dic = {'Void': [207, 207, 207],
            }
 
 
-def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualization=False):
+def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualization=False, label_rgb_dic=None,
+                               valid_list=None):
     """
     read *.pcd, choose the segment label according to its color, and resave it as *.npy
+    :param label_rgb_dic:
     :param read_directory: from where, *.pcd is read.
     :param save_directory: to where, *.npy is saved
     :param debug_visualization:
     :return: no return
     """
+    if label_rgb_dic is None:
+        label_rgb_dic = rgb_dic
 
-    rgb_dic_values = list(rgb_dic.values())
+    rgb_dic_values = list(label_rgb_dic.values())
     rgb_dic_values_sum = [sum(x) for x in rgb_dic_values]  # [621, 128, 497, 459, 401, 420, 510, 100, 623, 575]
 
     i = 0
@@ -48,15 +53,29 @@ def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualizati
                 rgb_sum_j = int(rgb_sum[j])
                 label.append(rgb_dic_values_sum.index(rgb_sum_j))
 
+            if debug_visualization:
+                plt.figure(clear=True)
+
+                plt.hist(label, bins=50, color='blue', alpha=0.7)
+                plt.show()
+
             label = np.asarray(label)
 
             point_cloud = np.column_stack((point_cloud, label))
 
-            if i % 5 == 0:
-                save_name = 'Validation_' + file_name.split('.')[0]
+            if valid_list is None:
+                if i % 5 == 0:
+                    save_name = 'Validation_' + file_name.split('.')[0]
+                else:
+                    save_name = 'Training_' + file_name.split('.')[0]
+                i += 1
             else:
-                save_name = 'Training_' + file_name.split('.')[0]
-            i += 1
+                for test_name in valid_list:
+                    if test_name in file_name:
+                        save_name = 'Validation_' + file_name.split('.')[0]
+                        break
+                else:
+                    save_name = 'Training_' + file_name.split('.')[0]
 
             np.save(os.path.join(save_directory, save_name), point_cloud)
 
@@ -79,6 +98,23 @@ def prepare_token_label(save_path):
     pass
 
 
+def _pipline_resave_fine_tune_label():
+    label_rgb_dic = {
+        'Gear': [102, 140, 255],
+        'Connector': [102, 255, 102],
+        'Screws': [247, 77, 77],
+        'Solenoid': [255, 165, 0],
+        'Electrical Connector': [255, 255, 0],
+        'Main Housing': [0, 100, 0]
+    }
+    valid_list = ['002', '004', '011']
+    resave_labelled_pcd_as_npy(r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored',
+                               r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\np',
+                               label_rgb_dic=label_rgb_dic,
+                               valid_list=valid_list
+                               # , debug_visualization=True
+                               )
+
+
 if __name__ == "__main__":
-    resave_labelled_pcd_as_npy('E:/datasets/agiprobot/large_motor_syn/labeled_pcd_600million_points',
-                               'E:/datasets/agiprobot/large_motor_syn/numpy_files_600million_points')
+    _pipline_resave_fine_tune_label()
