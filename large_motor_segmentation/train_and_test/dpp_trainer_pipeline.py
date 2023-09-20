@@ -13,7 +13,7 @@ from tqdm import tqdm
 import copy
 
 from utilities.config import get_parser
-from model.pct_token import PCTPipeline
+from models.pct_token import PCTPipeline
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
@@ -373,7 +373,6 @@ class SegmentationDPP:
             if rank == 0:
                 print('-----valid-----')
             with torch.no_grad():
-                pass
                 valid_sampler.set_epoch(epoch)
                 model.eval()
 

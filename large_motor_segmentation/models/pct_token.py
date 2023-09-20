@@ -9,7 +9,7 @@ import einops
 import numpy as np
 
 # from utilities.util import *
-from model.attention import SelfAttentionLayer
+from models.attention import SelfAttentionLayer
 
 
 def knn(x, k):

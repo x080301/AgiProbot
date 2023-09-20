@@ -13,7 +13,7 @@ from tqdm import tqdm
 import copy
 
 from utilities.config import get_parser
-from model.pct_token import PCTToken
+from models.pct_token import PCTToken
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util

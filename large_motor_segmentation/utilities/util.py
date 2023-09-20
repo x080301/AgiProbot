@@ -1,10 +1,10 @@
 import copy
 import random
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 
 def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, ground_truth, args):
@@ -80,7 +80,7 @@ def cal_loss(point_segmentation_pred, target, weights, transform_matrix,
     return loss
 
 
-def cal_loss_pretrain(pred, gold, weights, smoothing=False, using_weight=False):
+def cal_loss_pretrain(pred, gold, weights=1, smoothing=False, using_weight=False):
     """
         Calculate cross entropy loss, apply label smoothing if needed.
         pred: (B*N, segment_type)
@@ -581,6 +581,37 @@ def _pipeline_refactor_pretrained_checkpoint():
 
     # checkpoint = torch.load(r'C:\Users\Lenovo\Desktop\best_m.pth')
     # refactor_pretrained_checkpoint(checkpoint)
+
+
+def get_result_distribution_matrix(num_classes, predictions=None, groundtruth=None, class_counts=None):
+    if class_counts is None:
+        class_counts = torch.zeros(num_classes, num_classes)
+
+        for i in range(num_classes):
+            for j in range(num_classes):
+                class_counts[i, j] = torch.sum((predictions == i) * (groundtruth == j))
+
+    # Create a table
+    fig, ax = plt.subplots()
+
+    # Draw the table
+    cax = ax.matshow(class_counts, cmap='viridis')
+
+    # Set x and y axis labels
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('True')
+
+    # Set x and y axis tick labels
+    ax.set_xticks(np.arange(num_classes))
+    ax.set_yticks(np.arange(num_classes))
+    ax.set_xticklabels(np.arange(num_classes))
+    ax.set_yticklabels(np.arange(num_classes))
+
+    # Add a colorbar
+    fig.colorbar(cax)
+
+    # Show the table
+    plt.show()
 
 
 if __name__ == "__main__":

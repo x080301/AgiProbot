@@ -38,7 +38,7 @@ class MotorDatasetTest(Dataset):
         duplicate_data_mark = [0] * self.points.shape[0]
         self.duplicate_data_mark_to_choose = []
 
-        points_index = range(self.points.shape[0])
+        points_index = list(range(self.points.shape[0]))
         random.shuffle(points_index)
         start = 0
         self.points_index_to_choose = []
