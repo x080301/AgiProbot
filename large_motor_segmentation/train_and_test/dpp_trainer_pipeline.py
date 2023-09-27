@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import copy
 
+import models.attention
 from utilities.config import get_parser
 from models.pct_token import PCTPipeline
 from data_preprocess.data_loader import MotorDataset
@@ -284,10 +285,10 @@ class SegmentationDPP:
                 # forwards
                 # ******************* #
                 points, target = points.cuda(non_blocking=True), target.cuda(non_blocking=True)
-                points = util.normalize_data(points)
+                points = models.attention.normalize_data(points)
 
                 # rotation augmentation
-                points, _ = util.rotate_per_batch(points, None)
+                points, _ = models.attention.rotate_per_batch(points, None)
 
                 points = points.permute(0, 2, 1).float()
                 batch_size = points.size()[0]
@@ -332,6 +333,12 @@ class SegmentationDPP:
             IoUs /= float(world_size)
             mIoU /= float(world_size)
 
+            train_class_acc = torch.sum(
+                torch.tensor(total_correct_class) / (torch.tensor(total_seen_class).float() + 1e-6)).to(rank)
+            train_class_acc = train_class_acc / self.args.num_existing_type
+            torch.distributed.all_reduce(train_class_acc)
+            train_class_acc /= float(world_size)
+
             torch.distributed.all_reduce(loss_sum)
             loss_sum /= float(world_size)
             train_loss = loss_sum / num_train_batch
@@ -343,7 +350,8 @@ class SegmentationDPP:
             train_point_acc = total_correct / float(total_seen)
 
             if rank == 0:
-                save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, train_loss, train_point_acc)
+                save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, train_loss, train_point_acc, train_class_acc,
+                                     'train_pipeline')
 
             # ******************* #
             # lr step
@@ -384,8 +392,8 @@ class SegmentationDPP:
                 for i, (points, seg) in tqdm_structure:
 
                     points, seg = points.cuda(non_blocking=True), seg.cuda(non_blocking=True)
-                    points = util.normalize_data(points)
-                    points, _ = util.rotate_per_batch(points, None)
+                    points = models.attention.normalize_data(points)
+                    points, _ = models.attention.rotate_per_batch(points, None)
                     points = points.permute(0, 2, 1)
                     batch_size = points.size()[0]
 
@@ -432,19 +440,8 @@ class SegmentationDPP:
                 valid_point_acc = total_correct / float(total_seen)
 
                 if rank == 0:
-                    log_writer.add_scalar('loss/eval_loss', valid_loss, epoch)
-                    log_writer.add_scalar('point_acc/eval_point_acc', valid_point_acc, epoch)
-                    log_writer.add_scalar('point_acc/eval_class_acc', eval_class_acc, epoch)
-                    log_writer.add_scalar('mIoU/eval_mIoU', mIoU, epoch)
-                    log_writer.add_scalar('IoU_background/eval_IoU_background', IoUs[0], epoch)
-                    log_writer.add_scalar('IoU_motor/eval_IoU_motor', IoUs[1], epoch)
-
-                    outstr = 'Epoch %d,  eval loss %.6f, eval point acc %.6f, eval avg class acc %.6f' % (
-                        epoch, valid_loss,
-                        valid_point_acc,
-                        eval_class_acc)
-                    print(outstr)
-                    print('Valid mean ioU %.6f' % mIoU)
+                    save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, valid_loss, valid_point_acc,
+                                         eval_class_acc, 'valid_pipeline')
 
                     if mIoU >= best_mIoU:
                         best_mIoU = mIoU

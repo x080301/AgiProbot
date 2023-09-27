@@ -1,12 +1,12 @@
 import math
+import random
 
 import numpy as np
 import torch
 
-from torch import nn, nn as nn
+from torch import nn
 from torch.nn import functional as F
-
-from utilities.util import _get_clones
+import copy
 
 
 def split_heads(x, heads, depth):
@@ -407,7 +407,12 @@ class PTransformerDecoder(nn.Module):
 
     def __init__(self, decoder_layer, num_layers, last_layer, norm=None):
         super(PTransformerDecoder, self).__init__()
-        self.layers = _get_clones(decoder_layer, num_layers)  # repeat the decoder layers
+        self.layers = nn.ModuleList(
+            [copy.deepcopy(decoder_layer) for i in range(num_layers)])  # repeat the decoder layers
+
+        def _get_clones(module, N):
+            return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
+
         self.last_layer = last_layer
         self.num_layers = num_layers
         self.norm = norm
@@ -452,3 +457,112 @@ class PTransformerDecoder(nn.Module):
         output = self.last_layer(output, memory)
 
         return output
+
+
+def normalize_data(batch_data):
+    """ Normalize the batch data, use coordinates of the block centered at origin,
+        Input:
+            BxNxC array
+        Output:
+            BxNxC array
+    """
+    B, N, C = batch_data.shape
+    for b in range(B):
+        pc = batch_data[b]
+        centroid = torch.mean(pc, dim=0, keepdim=True)
+        pc = pc - centroid
+        m = torch.max(torch.sqrt(torch.sum(pc ** 2, dim=1, keepdim=True)))
+        pc = pc / m
+        batch_data[b] = pc
+    return batch_data
+
+
+def rotate_per_batch(data, goals, angle_clip=np.pi * 1):
+    """ Randomly perturb the point clouds by small rotations
+        Input:
+          BXNx6 array, original batch of point clouds and point normals
+        Return:
+          BXNx3 array, rotated batch of point clouds
+    """
+    if goals != None:
+        data = data.float()
+        goals = goals.float()
+        rotated_data = torch.zeros(data.shape, dtype=torch.float32)
+        rotated_data = rotated_data.cuda()
+
+        rotated_goals = torch.zeros(goals.shape, dtype=torch.float32).cuda()
+        batch_size = data.shape[0]
+        rotation_matrix = torch.zeros((batch_size, 3, 3), dtype=torch.float32).cuda()
+        for k in range(data.shape[0]):
+            angles = []
+            for i in range(3):
+                angles.append(random.uniform(-angle_clip, angle_clip))
+            angles = np.array(angles)
+            Rx = np.array([[1, 0, 0],
+                           [0, np.cos(angles[0]), -np.sin(angles[0])],
+                           [0, np.sin(angles[0]), np.cos(angles[0])]])
+            Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
+                           [0, 1, 0],
+                           [-np.sin(angles[1]), 0, np.cos(angles[1])]])
+            Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
+                           [np.sin(angles[2]), np.cos(angles[2]), 0],
+                           [0, 0, 1]])
+            R = np.dot(Rz, np.dot(Ry, Rx))
+            R = torch.from_numpy(R).float().cuda()
+            rotated_data[k, :, :] = torch.matmul(data[k, :, :], R)
+            rotated_goals[k, :, :] == torch.matmul(goals[k, :, :], R)
+            rotation_matrix[k, :, :] = R
+        return rotated_data, rotated_goals, rotation_matrix
+    else:
+        data = data.float()
+        rotated_data = torch.zeros(data.shape, dtype=torch.float32)
+        rotated_data = rotated_data.cuda()
+
+        batch_size = data.shape[0]
+        rotation_matrix = torch.zeros((batch_size, 3, 3), dtype=torch.float32).cuda()
+        for k in range(data.shape[0]):
+            angles = []
+            for i in range(3):
+                angles.append(random.uniform(-angle_clip, angle_clip))
+
+            angles = np.array(angles)
+            Rx = np.array([[1, 0, 0],
+                           [0, np.cos(angles[0]), -np.sin(angles[0])],
+                           [0, np.sin(angles[0]), np.cos(angles[0])]])
+            Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
+                           [0, 1, 0],
+                           [-np.sin(angles[1]), 0, np.cos(angles[1])]])
+            Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
+                           [np.sin(angles[2]), np.cos(angles[2]), 0],
+                           [0, 0, 1]])
+            R = np.dot(Rz, np.dot(Ry, Rx))
+            R = torch.from_numpy(R).float().cuda()
+
+            rotated_data[k, :, :] = torch.matmul(data[k, :, :], R)
+
+            rotation_matrix[k, :, :] = R
+        return rotated_data, rotation_matrix
+
+
+def square_distance(src, dst):
+    """
+    Calculate Euclid distance between each two points.
+
+    src^T * dst = xn * xm + yn * ym + zn * zm;
+    sum(src^2, dim=-1) = xn*xn + yn*yn + zn*zn;
+    sum(dst^2, dim=-1) = xm*xm + ym*ym + zm*zm;
+    dist = (xn - xm)^2 + (yn - ym)^2 + (zn - zm)^2
+         = sum(src**2,dim=-1)+sum(dst**2,dim=-1)-2*src^T*dst
+
+    Input:
+        src: source points, [B, N, C]
+        dst: target points, [B, M, C]
+    Output:
+        dist: per-point square distance, [B, N, M]
+    """
+    B, N, _ = src.shape
+    _, M, _ = dst.shape
+    dist = -2 * torch.matmul(src, dst.permute(0, 2, 1))
+    dist += torch.sum(src ** 2, -1).view(B, N, 1)
+    dist += torch.sum(dst ** 2, -1).view(B, 1, M)
+    return dist

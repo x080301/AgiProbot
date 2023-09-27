@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import copy
 
+import models.attention
 from utilities.config import get_parser
 from models.pct_token import PCTToken
 from data_preprocess.data_loader import MotorDataset
@@ -280,10 +281,10 @@ class SegmentationDPP:
                 target = target.cuda(non_blocking=True)
 
                 points = points.cuda(non_blocking=True)
-                points = util.normalize_data(points, )
+                points = models.attention.normalize_data(points, )
 
                 # rotation augmentation
-                points, _ = util.rotate_per_batch(points, None)
+                points, _ = models.attention.rotate_per_batch(points, None)
 
                 points = points.permute(0, 2, 1).float()
                 batch_size = points.size()[0]
@@ -401,8 +402,8 @@ class SegmentationDPP:
 
                     points, target = points.cuda(non_blocking=True), target.cuda(
                         non_blocking=True)
-                    points = util.normalize_data(points)
-                    points, _ = util.rotate_per_batch(points, None)
+                    points = models.attention.normalize_data(points)
+                    points, _ = models.attention.rotate_per_batch(points, None)
                     points = points.permute(0, 2, 1)
                     batch_size = points.size()[0]
 

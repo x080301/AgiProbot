@@ -1,4 +1,6 @@
 import torch
+
+import models.attention
 from utilities.config import get_parser
 from torch.utils.data import DataLoader
 from data_preprocess.data_loader import MotorDatasetTest
@@ -17,55 +19,6 @@ label_rgb_dic = {
     'Electrical Connector': [255, 255, 0],
     'Main Housing': [0, 100, 0]
 }
-
-
-def _pipeline_visualize_3_test_models():
-    files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
-    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch' + r'\visualization'
-    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch\checkpoints\0.779434084892273_best_finetune.pth'
-    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml'
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    for file_name in os.listdir(files_folder):
-        if '001' not in file_name:
-            if '002' not in file_name:
-                if '004' not in file_name:
-                    continue
-
-        data_set_dir = os.path.join(files_folder, file_name)
-        pcd_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.pcd')
-        plt_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.png')
-        print(pcd_save_dir)
-        tester = TestTrainedModel(
-            config_dir=config_dir,
-            model_name='pct pipeline',
-            data_set_dir=data_set_dir,
-            check_point_dir=check_point_dir,
-            pcd_save_dir=pcd_save_dir,
-            plt_save_dir=plt_save_dir
-        )
-        tester.run_test()
-
-
-def _pipeline_test_trained_model():
-    files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
-    for file_name in os.listdir(files_folder):
-        data_set_dir = os.path.join(files_folder, file_name)
-        pcd_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.pcd')
-        plt_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.png')
-
-        tester = TestTrainedModel(
-            config_dir='D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml',
-            model_name='pct pipeline',
-            data_set_dir=data_set_dir,
-            check_point_dir=r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26\checkpoints\0.779434084892273_best_finetune.pth',
-            pcd_save_dir=pcd_save_dir,
-            plt_save_dir=plt_save_dir
-        )
-        tester.run_test()
-    # output should be the same size as input
 
 
 def save_pcd(points, labels, save_name):
@@ -150,8 +103,8 @@ class TestTrainedModel():
                                                                  smoothing=0.9):
                 raw_points = points
                 points, labels = points.cuda(non_blocking=True), labels.cuda(non_blocking=True)
-                points = util.normalize_data(points)
-                points, _ = util.rotate_per_batch(points, None)
+                points = models.attention.normalize_data(points)
+                points, _ = models.attention.rotate_per_batch(points, None)
                 points = points.permute(0, 2, 1)
                 batch_size = points.size()[0]
 
@@ -221,10 +174,62 @@ class TestTrainedModel():
 
             util.get_result_distribution_matrix(self.args.num_segmentation_type, all_predictions, all_labels,
                                                 xyticks=list(label_rgb_dic.keys()),
-                                                show_plt=False, plt_save_dir=self.plt_save_dir)
+                                                show_plt=False, plt_save_dir=self.plt_save_dir, sqrt_value=False)
+            util.get_result_distribution_matrix(self.args.num_segmentation_type, all_predictions, all_labels,
+                                                xyticks=list(label_rgb_dic.keys()),
+                                                show_plt=False, plt_save_dir=self.plt_save_dir, sqrt_value=True)
 
             if self.save_dir is not None:
                 save_pcd(all_points, all_predictions, self.save_dir)
+
+
+def _pipeline_visualize_3_test_models():
+    files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
+    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch' + r'\visualization'
+    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch\checkpoints\0.779434084892273_best_finetune.pth'
+    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml'
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    for file_name in os.listdir(files_folder):
+        if '001' not in file_name:
+            if '002' not in file_name:
+                if '004' not in file_name:
+                    continue
+
+        data_set_dir = os.path.join(files_folder, file_name)
+        pcd_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.pcd')
+        plt_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.png')
+        print(pcd_save_dir)
+        tester = TestTrainedModel(
+            config_dir=config_dir,
+            model_name='pct pipeline',
+            data_set_dir=data_set_dir,
+            check_point_dir=check_point_dir,
+            pcd_save_dir=pcd_save_dir,
+            plt_save_dir=plt_save_dir
+        )
+        tester.run_test()
+
+
+def _pipeline_test_trained_model():
+    files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
+    for file_name in os.listdir(files_folder):
+        data_set_dir = os.path.join(files_folder, file_name)
+        pcd_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.pcd')
+        plt_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.png')
+
+        tester = TestTrainedModel(
+            config_dir='D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml',
+            model_name='pct pipeline',
+            data_set_dir=data_set_dir,
+            check_point_dir=r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26\checkpoints\0.779434084892273_best_finetune.pth',
+            pcd_save_dir=pcd_save_dir,
+            plt_save_dir=plt_save_dir
+        )
+        tester.run_test()
+    # output should be the same size as input
 
 
 if __name__ == "__main__":
