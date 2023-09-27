@@ -17,6 +17,7 @@ from models.pct_token import PCTPipeline
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
+from utilities.util import save_tensorboard_log
 
 
 class SegmentationDPP:
@@ -238,7 +239,7 @@ class SegmentationDPP:
         # ******************* #
         # loss function and weights
         # ******************* #
-        criterion = util.cal_loss_pretrain
+        criterion = util.loss_calculation
 
         weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         # print(weights)
@@ -342,15 +343,7 @@ class SegmentationDPP:
             train_point_acc = total_correct / float(total_seen)
 
             if rank == 0:
-                log_writer.add_scalar('lr', opt.param_groups[0]['lr'], epoch)
-                log_writer.add_scalar('IoU_background/train_IoU_background', IoUs[0], epoch)
-                log_writer.add_scalar('IoU_motor/train_IoU_motor', IoUs[1], epoch)
-                log_writer.add_scalar('mIoU/train_mIoU', mIoU, epoch)
-                log_writer.add_scalar('loss/train_loss', train_loss, epoch)
-                log_writer.add_scalar('point_acc/train_point_acc', train_point_acc, epoch)
-                print('Epoch %d, train loss: %.6f, train point acc: %.6f ' % (
-                    epoch, train_loss, train_point_acc))
-                print('Train mean ioU %.6f' % mIoU)
+                save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, train_loss, train_point_acc)
 
             # ******************* #
             # lr step

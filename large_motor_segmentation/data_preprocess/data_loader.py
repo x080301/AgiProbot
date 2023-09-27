@@ -4,12 +4,12 @@ import numpy as np
 from tqdm import tqdm  # used to display the circulation position, to see where the code is running at
 from torch.utils.data import Dataset
 import random
+import open3d as o3d
 
 
 class MotorDatasetTest(Dataset):
     def __init__(self, point_cloud_dir='directory to training data', num_class=2, num_points=4096):
         super().__init__()
-        import open3d as o3d
 
         self.num_points = num_points
         self.num_class = num_class
@@ -19,7 +19,7 @@ class MotorDatasetTest(Dataset):
         # ******************* #
         if point_cloud_dir.split('.')[-1] == 'npy':
             motor_data = np.load(point_cloud_dir)
-            self.points = motor_data[:, 0:6]
+            self.points = motor_data[:, 0:3]
             self.labels = motor_data[:, 6]
         elif point_cloud_dir.split('.')[-1] == 'pcd':
             point_cloud = o3d.io.read_point_cloud(point_cloud_dir,
@@ -34,47 +34,32 @@ class MotorDatasetTest(Dataset):
         # ******************* #
         # prepare index list to chose
         # ******************* #
-        # if points.shape[0] % num_points != 0, the last sublist should be padded. And this padding should be marked.
-        duplicate_data_mark = [0] * self.points.shape[0]
-        self.duplicate_data_mark_to_choose = []
+        points_index = np.arange(0, self.points.shape[0], 1)
+        np.random.shuffle(points_index)
 
-        points_index = list(range(self.points.shape[0]))
-        random.shuffle(points_index)
-        start = 0
-        self.points_index_to_choose = []
-        while True:
-            end = start + self.num_points
-            if end >= self.points.shape[0]:
-                self.points_index_to_choose.append(points_index[start:])
-                self.duplicate_data_mark_to_choose.append(duplicate_data_mark[start:])
-                break
-            else:
-                self.points_index_to_choose.append(points_index[start:end])
-                self.duplicate_data_mark_to_choose.append(duplicate_data_mark[start:end])
-                start = end
+        num_batch = self.points.shape[0] // num_points
+        points_index = np.append(points_index,
+                                 points_index[0: (num_batch + 1) * num_points - self.points.shape[0]])
+        redundant_data_mask = np.ones_like(points_index)
+        redundant_data_mask[self.points.shape[0] - (num_batch + 1) * num_points:] = 0
 
-        # ******************* #
-        # handle sublist, whose size < num_points
-        # ******************* #
-        size_last_sublist = len(self.points_index_to_choose[-1])
-        if size_last_sublist != self.num_points:
-            self.points_index_to_choose[-1].extend(points_index[0:(self.num_points - size_last_sublist)])
-            self.duplicate_data_mark_to_choose[-1].extend(([1] * self.num_points - size_last_sublist))
+        self.points_index_to_choose = points_index.reshape(-1, num_points)
+        self.redundant_data_mask = redundant_data_mask.reshape(-1, num_points)
 
     def __getitem__(self, index):
-        points = self.points[self.points_index_to_choose[index], :]
+        points = self.points[self.points_index_to_choose[index, :], :]
 
         if self.labels is None:
             labels = None
         else:
             labels = self.labels[self.points_index_to_choose[index]]
 
-        duplicate_data_mark = self.duplicate_data_mark_to_choose[index]
+        redundant_data_mask = self.redundant_data_mask[index, :]
 
-        return points, labels, duplicate_data_mark
+        return points, labels, redundant_data_mask
 
     def __len__(self):
-        return len(self.points_index_to_choose)
+        return self.points_index_to_choose.shape[0]
 
 
 class MotorDataset(Dataset):
