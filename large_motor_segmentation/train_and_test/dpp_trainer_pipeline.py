@@ -269,8 +269,8 @@ class SegmentationDPP:
             total_correct = 0
             total_seen = 0
             loss_sum = 0
-            total_correct_class__ = [0 for _ in range(self.args.num_segmentation_type)]
-            total_iou_deno_class__ = [0 for _ in range(self.args.num_segmentation_type)]
+            total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
+            total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
 
             if rank == 0 and epoch == start_epoch:
                 tqdm_structure = tqdm(enumerate(train_loader), total=len(train_loader), smoothing=0.9)
@@ -322,10 +322,10 @@ class SegmentationDPP:
                 total_seen += (batch_size * self.args.npoints)
                 loss_sum += loss
                 for l in range(self.args.num_segmentation_type):
-                    total_correct_class__[l] += torch.sum((pred_choice == l) & (batch_label == l))
-                    total_iou_deno_class__[l] += torch.sum(((pred_choice == l) | (batch_label == l)))
+                    total_correct_class[l] += torch.sum((pred_choice == l) & (batch_label == l))
+                    total_iou_deno_class[l] += torch.sum(((pred_choice == l) | (batch_label == l)))
 
-            IoUs = (torch.tensor(total_correct_class__) / (torch.tensor(total_iou_deno_class__).float() + 1e-6)).to(
+            IoUs = (torch.tensor(total_correct_class) / (torch.tensor(total_iou_deno_class).float() + 1e-6)).to(
                 rank)
             mIoU = IoUs.sum() / self.args.num_existing_type  # torch.mean(IoUs)
             torch.distributed.all_reduce(IoUs)
