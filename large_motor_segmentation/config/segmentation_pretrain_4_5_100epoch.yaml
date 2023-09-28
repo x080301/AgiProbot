@@ -24,7 +24,7 @@ train:
   train_batch_size: 4
   training: 1
 
-  finetune: 1
+  finetune: 0
   pretrained_model_path: 'best_m.pth'
 
   test: 0
