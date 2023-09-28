@@ -185,9 +185,9 @@ class TestTrainedModel():
 
 def _pipeline_visualize_3_test_models():
     files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
-    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch' + r'\visualization'
-    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26_fine_tune_5_7_100epoch\checkpoints\0.779434084892273_best_finetune.pth'
-    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml'
+    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_28_21_15' + r'\visualization'
+    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_28_21_15\checkpoints\0.8212851881980896_best_finetune.pth'
+    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_4_5_100epoch.yaml'
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

@@ -4,7 +4,7 @@ DATA:
   exp_name: 'STN_16_2048_100'
   num_segmentation_type: 8
   num_existing_type: 6
-  npoints: 2048
+  npoints: 4096
   sample_rate: 1
 
 train:

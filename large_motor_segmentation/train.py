@@ -16,7 +16,7 @@ train_txt = None
 if __name__ == "__main__":
     from train_and_test.dpp_trainer_pipeline import SegmentationDPP
 
-    config_dir = 'config/segmentation_fine_tune_4_5_100epoch.yaml'
+    config_dir = 'config/segmentation_pretrain_4_5_100epoch.yaml'
     print(config_dir)
     bsdpp = SegmentationDPP(train_txt, config_dir)
     bsdpp.train_dpp()
