@@ -1,8 +1,14 @@
+# pretrain with 4096 points
+# 4->5 100 epochs
+# 2023 09 29
 DATA:
-  data_dir: '/data/users/fu/large_motor_syn'
-  which_dataset: 'Motor_Dataset4'
-  exp_name: 'STN_16_2048_100'
-  num_segmentation_type: 8
+  pretrain_server_data_dir: '/data/users/fu/large_motor_syn'
+  pretrain_local_data_dir: 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
+  fine_tune_server_data_dir: '/data/users/fu/large_motor_tscan_npy'
+  fine_tune_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
+
+
+  num_segmentation_type: 6
   num_existing_type: 6
   npoints: 4096
   sample_rate: 1
@@ -18,7 +24,7 @@ train:
   train_batch_size: 4
   training: 1
 
-  finetune: 0
+  finetune: 1
   pretrained_model_path: 'best_m.pth'
 
   test: 0
@@ -27,7 +33,7 @@ train:
   screw_weight: 1.0
   use_sgd: 0
   lr: 0.0001
-  end_lr: 0.00001
+  end_lr: 0.000001
   momentum: 0.9
   epochs: 100
 
