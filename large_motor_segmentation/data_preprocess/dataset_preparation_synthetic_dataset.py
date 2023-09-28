@@ -18,7 +18,7 @@ rgb_dic = {'Void': [207, 207, 207],
 
 
 def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualization=False, label_rgb_dic=None,
-                               valid_list=None):
+                               valid_list=None, excluding_list=[]):
     """
     read *.pcd, choose the segment label according to its color, and resave it as *.npy
     :param label_rgb_dic:
@@ -36,6 +36,8 @@ def resave_labelled_pcd_as_npy(read_directory, save_directory, debug_visualizati
     i = 0
     for root, _, files in os.walk(read_directory):
         for file_name in tqdm(files):
+            if file_name in excluding_list:
+                continue
 
             point_cloud = o3d.io.read_point_cloud(os.path.join(root, file_name), remove_nan_points=True,
                                                   remove_infinite_points=True, print_progress=True)
@@ -109,9 +111,10 @@ def _pipline_resave_fine_tune_label():
     }
     valid_list = ['002', '004', '011']
     resave_labelled_pcd_as_npy(r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored',
-                               r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\np',
+                               r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy',
                                label_rgb_dic=label_rgb_dic,
-                               valid_list=valid_list
+                               valid_list=valid_list,
+                               excluding_list=['Motor_025_Motor_025.pcd']
                                # , debug_visualization=True
                                )
 
