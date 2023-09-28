@@ -4,7 +4,6 @@ import numpy as np
 from tqdm import tqdm  # used to display the circulation position, to see where the code is running at
 from torch.utils.data import Dataset
 import random
-import open3d as o3d
 
 
 class MotorDatasetTest(Dataset):
@@ -22,6 +21,7 @@ class MotorDatasetTest(Dataset):
             self.points = motor_data[:, 0:3]
             self.labels = motor_data[:, 6]
         elif point_cloud_dir.split('.')[-1] == 'pcd':
+            import open3d as o3d
             point_cloud = o3d.io.read_point_cloud(point_cloud_dir,
                                                   remove_nan_points=True, remove_infinite_points=True,
                                                   print_progress=True)
