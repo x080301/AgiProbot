@@ -269,6 +269,7 @@ class SegmentationDPP:
             total_correct = 0
             total_seen = 0
             loss_sum = 0
+            total_seen_class = [0 for _ in range(self.args.num_segmentation_type)]
             total_correct_class = [0 for _ in range(self.args.num_segmentation_type)]
             total_iou_deno_class = [0 for _ in range(self.args.num_segmentation_type)]
 
@@ -322,6 +323,7 @@ class SegmentationDPP:
                 total_seen += (batch_size * self.args.npoints)
                 loss_sum += loss
                 for l in range(self.args.num_segmentation_type):
+                    total_seen_class[l] += torch.sum((batch_label == l))
                     total_correct_class[l] += torch.sum((pred_choice == l) & (batch_label == l))
                     total_iou_deno_class[l] += torch.sum(((pred_choice == l) | (batch_label == l)))
 
