@@ -1,9 +1,6 @@
-import copy
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 
 
 def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals, ground_truth, args):
@@ -161,6 +158,8 @@ def _pipeline_refactor_pretrained_checkpoint():
 def get_result_distribution_matrix(num_classes, predictions, groundtruth,
                                    xyticks=None, class_counts=None,
                                    show_plt=True, plt_save_dir=None, sqrt_value=False):
+    import matplotlib.pyplot as plt
+
     if class_counts is None:
         class_counts = torch.zeros(num_classes, num_classes)
 
