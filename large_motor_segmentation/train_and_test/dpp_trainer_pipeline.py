@@ -457,9 +457,9 @@ class SegmentationDPP:
                         if self.args.finetune == 1:
                             savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_finetune.pth'
                         else:
-                            savepath = '/home/ies/fu/codes/large_motor_segmentation/best_m.pth'
-                            print('Saving best model at %s' % savepath)
-                            torch.save(state, savepath)
+                            # savepath = '/home/ies/fu/codes/large_motor_segmentation/best_m.pth'
+                            # print('Saving best model at %s' % savepath)
+                            # torch.save(state, savepath)
 
                             savepath = self.checkpoints_direction + str(mIoU.item()) + '_best_m.pth'
 
