@@ -100,7 +100,7 @@ def prepare_token_label(save_path):
     pass
 
 
-def _pipline_resave_fine_tune_label():
+def _pipline_resave_fine_tune_npy():
     label_rgb_dic = {
         'Gear': [102, 140, 255],
         'Connector': [102, 255, 102],
@@ -109,7 +109,7 @@ def _pipline_resave_fine_tune_label():
         'Electrical Connector': [255, 255, 0],
         'Main Housing': [0, 100, 0]
     }
-    valid_list = ['002', '004', '011']
+    valid_list = ['002', '004', '009']
     resave_labelled_pcd_as_npy(r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored',
                                r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy',
                                label_rgb_dic=label_rgb_dic,
@@ -120,4 +120,4 @@ def _pipline_resave_fine_tune_label():
 
 
 if __name__ == "__main__":
-    _pipline_resave_fine_tune_label()
+    _pipline_resave_fine_tune_npy()

@@ -226,7 +226,7 @@ def save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, loss, point_acc, cl
     elif mode == 'valid_binary':
         log_writer.add_scalar('loss/eval_loss', loss, epoch)
         log_writer.add_scalar('point_acc/eval_point_acc', point_acc, epoch)
-        log_writer.add_scalar('point_acc/eval_class_acc', class_acc, epoch)
+        log_writer.add_scalar('class_acc/eval_class_acc', class_acc, epoch)
         log_writer.add_scalar('mIoU/eval_mIoU', mIoU, epoch)
         log_writer.add_scalar('IoU_background/eval_IoU_background', IoUs[0], epoch)
         log_writer.add_scalar('IoU_motor/eval_IoU_motor', IoUs[1], epoch)

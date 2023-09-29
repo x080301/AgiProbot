@@ -215,16 +215,23 @@ def _pipeline_visualize_3_test_models():
 
 def _pipeline_test_trained_model():
     files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
+    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_29_03_27' + r'\visualization'
+    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_29_03_27\checkpoints\0.8161222338676453_best_m.pth'
+    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_4_5_100epoch.yaml'
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     for file_name in os.listdir(files_folder):
         data_set_dir = os.path.join(files_folder, file_name)
-        pcd_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.pcd')
-        plt_save_dir = os.path.join(r'C:\Users\Lenovo\Desktop\results', file_name.split('.')[0] + '.png')
-
+        pcd_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.pcd')
+        plt_save_dir = os.path.join(save_dir, file_name.split('.')[0] + '.png')
+        print(pcd_save_dir)
         tester = TestTrainedModel(
-            config_dir='D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_5_7_100epoch.yaml',
+            config_dir=config_dir,
             model_name='pct pipeline',
             data_set_dir=data_set_dir,
-            check_point_dir=r'E:\datasets\agiprobot\train_Output\2023_09_18_02_26\checkpoints\0.779434084892273_best_finetune.pth',
+            check_point_dir=check_point_dir,
             pcd_save_dir=pcd_save_dir,
             plt_save_dir=plt_save_dir
         )
@@ -234,4 +241,5 @@ def _pipeline_test_trained_model():
 
 if __name__ == "__main__":
     # _pipeline_test_trained_model()
-    _pipeline_visualize_3_test_models()
+    # _pipeline_visualize_3_test_models()
+    _pipeline_test_trained_model()
