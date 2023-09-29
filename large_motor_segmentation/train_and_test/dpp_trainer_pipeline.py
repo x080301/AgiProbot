@@ -22,7 +22,7 @@ from utilities.util import save_tensorboard_log
 
 
 class SegmentationDPP:
-    files_to_save = ['config', 'data_preprocess', 'ideas', 'model', 'train_and_test', 'utilities',
+    files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test', 'utilities',
                      'train.py', 'train_line.py', 'best_m.pth']
 
     def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
