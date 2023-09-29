@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm  # used to display the circulation position, to see where the code is running at
 from torch.utils.data import Dataset
 import random
+import torch
 
 
 class MotorDatasetTest(Dataset):
@@ -104,9 +105,10 @@ class MotorDataset(Dataset):
         persentage = label_num_eachtype__ / np.sum(label_num_eachtype__)
         print(persentage)
         ####reversed order
-        label_weights = label_num_eachtype / np.sum(label_num_eachtype)
-        label_weights = np.power(np.max(label_weights) / label_weights, 1)  # 1 / 3)
-        label_weights = label_weights / np.sum(label_weights)
+        # label_weights = label_num_eachtype / np.sum(label_num_eachtype)
+        # label_weights = np.max(label_weights) / label_weights
+        # label_weights = label_weights / np.sum(label_weights)
+        label_weights = np.max(label_num_eachtype) / label_num_eachtype
         ############################################################################################
 
         #############caculate the index for choose of points from the motor according to the number of points of a specific motor#########

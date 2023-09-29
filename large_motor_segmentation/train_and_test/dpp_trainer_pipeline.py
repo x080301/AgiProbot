@@ -244,11 +244,11 @@ class SegmentationDPP:
 
         weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         # print(weights)
-        percentage = torch.Tensor(self.train_dataset.persentage_each_type).cuda()
-        scale = weights * percentage
-        scale = 1 / scale.sum()
-        # print(scale)
-        weights *= scale
+        # percentage = torch.Tensor(self.train_dataset.persentage_each_type).cuda()
+        # scale = weights * percentage
+        # scale = 1 / scale.sum()
+        # # print(scale)
+        # weights *= scale
         # print(weights)
         if self.args.use_class_weight == 0:
             for i in range(self.args.num_segmentation_type):
