@@ -1,4 +1,4 @@
-# pretrain with 4096 points
+# pretrain with 2048 points
 # 4->5 100 epochs
 # 2023 09 29
 DATA:
@@ -10,7 +10,7 @@ DATA:
 
   num_segmentation_type: 6
   num_existing_type: 6
-  npoints: 4096
+  npoints: 2048
   sample_rate: 1
 
 train:

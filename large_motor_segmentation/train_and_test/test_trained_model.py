@@ -193,7 +193,7 @@ def _pipeline_visualize_3_test_models():
         os.makedirs(save_dir)
 
     for file_name in os.listdir(files_folder):
-        if '001' not in file_name:
+        if '011' not in file_name:
             if '002' not in file_name:
                 if '004' not in file_name:
                     continue

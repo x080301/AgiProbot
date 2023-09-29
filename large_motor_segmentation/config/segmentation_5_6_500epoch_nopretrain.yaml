@@ -1,6 +1,6 @@
-# First fine tune for pipeline paper
-# 4->5 100 epochs, 5->7 100 epochs
-# 2023 09 17
+# no pretraining
+# 5->6 500 epochs
+# 2023 09 29
 DATA:
   pretrain_server_data_dir: '/data/users/fu/large_motor_tscan_npy'
   pretrain_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
