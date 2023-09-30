@@ -109,7 +109,7 @@ def _pipline_resave_fine_tune_npy():
         'Electrical Connector': [255, 255, 0],
         'Main Housing': [0, 100, 0]
     }
-    valid_list = ['002', '004', '009']
+    valid_list = ['002', '004']
     resave_labelled_pcd_as_npy(r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored',
                                r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy',
                                label_rgb_dic=label_rgb_dic,

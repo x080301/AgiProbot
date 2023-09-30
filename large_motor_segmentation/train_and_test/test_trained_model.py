@@ -214,10 +214,14 @@ def _pipeline_visualize_3_test_models():
 
 
 def _pipeline_test_trained_model():
+    file_dir = '2023_09_29_22_59'
+    pth_name = '0.8110136389732361_best_m.pth'
+    config_dir = 'segmentation_4_5_500epoch_nopretrain.yaml'
+
     files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
-    save_dir = r'E:\datasets\agiprobot\train_Output\2023_09_29_03_27' + r'\visualization'
-    check_point_dir = r'E:\datasets\agiprobot\train_Output\2023_09_29_03_27\checkpoints\0.8161222338676453_best_m.pth'
-    config_dir = 'D:\Jupyter\AgiProbot\large_motor_segmentation\config\segmentation_fine_tune_4_5_100epoch.yaml'
+    save_dir = 'E:/datasets/agiprobot/train_Output/' + file_dir + r'/visualization'
+    check_point_dir = 'E:/datasets/agiprobot/train_Output/' + file_dir + '/checkpoints/' + pth_name
+    config_dir = 'D:/Jupyter/AgiProbot/large_motor_segmentation/config/' + config_dir
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

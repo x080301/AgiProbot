@@ -262,7 +262,7 @@ def save_tensorboard_log(IoUs, epoch, log_writer, mIoU, opt, loss, point_acc, cl
         log_writer.add_scalar('mIoU/eval_mIoU', mIoU, epoch)
         log_writer.add_scalar('loss/eval_loss', loss, epoch)
         log_writer.add_scalar('point_acc/eval_point_acc', point_acc, epoch)
-        log_writer.add_scalar('point_acc/eval_class_acc', class_acc, epoch)
+        log_writer.add_scalar('class_acc/eval_class_acc', class_acc, epoch)
 
         log_writer.add_scalar('valid_IoU/mIoU', mIoU, epoch)
         log_writer.add_scalar('valid_IoU/Gear', IoUs[0], epoch)
