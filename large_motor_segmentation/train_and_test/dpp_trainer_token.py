@@ -13,6 +13,7 @@ from tqdm import tqdm
 import copy
 
 import models.attention
+import utilities.loss_calculation
 from utilities.config import get_parser
 from models.pct_token import PCTToken
 from data_preprocess.data_loader import MotorDataset
@@ -301,9 +302,9 @@ class SegmentationDPP:
                 # backwards
                 # ******************* #
                 # loss
-                loss = util.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
-                                     bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
-                                     self.args)
+                loss = utilities.loss_calculation.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
+                                                           bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                                                           self.args)
 
                 loss.backward()
                 opt.step()
@@ -415,9 +416,9 @@ class SegmentationDPP:
                     # (B,3,3)
 
                     # loss
-                    loss = util.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
-                                         bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
-                                         self.args)
+                    loss = utilities.loss_calculation.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
+                                                               bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                                                               self.args)
                     loss_sum += loss
 
                     batch_label = target.view(-1, 1)[:, 0].data

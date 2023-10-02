@@ -13,6 +13,7 @@ from tqdm import tqdm
 import copy
 
 import models.attention
+import utilities.loss_calculation
 from utilities.config import get_parser
 from models.pct_token import PCTPipeline
 from data_preprocess.data_loader import MotorDataset
@@ -240,7 +241,7 @@ class SegmentationDPP:
         # ******************* #
         # loss function and weights
         # ******************* #
-        criterion = util.loss_calculation
+        criterion = utilities.loss_calculation.loss_calculation
 
         weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         # print(weights)

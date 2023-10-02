@@ -1,6 +1,7 @@
 import torch
 
 import models.attention
+import utilities.loss_calculation
 from utilities.config import get_parser
 from torch.utils.data import DataLoader
 from data_preprocess.data_loader import MotorDatasetTest
@@ -78,7 +79,7 @@ class TestTrainedModel():
         self.save_dir = pcd_save_dir
         self.plt_save_dir = plt_save_dir
 
-        self.criterion = util.cal_loss
+        self.criterion = utilities.loss_calculation.cal_loss
 
     def run_test(self):
         with torch.no_grad():
@@ -118,9 +119,9 @@ class TestTrainedModel():
                 seg_pred = seg_pred[redundant_data_mask, :]
                 labels = labels[redundant_data_mask]
 
-                loss = util.loss_calculation(seg_pred,
-                                             labels,
-                                             using_weight=self.args.use_class_weight)  # a scalar
+                loss = utilities.loss_calculation.loss_calculation(seg_pred,
+                                                                   labels,
+                                                                   using_weight=0)  # a scalar
                 seg_pred = seg_pred.contiguous().view(-1, self.args.num_segmentation_type)
                 pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
 
@@ -214,9 +215,9 @@ def _pipeline_visualize_3_test_models():
 
 
 def _pipeline_test_trained_model():
-    file_dir = '2023_09_29_22_59'
-    pth_name = '0.8110136389732361_best_m.pth'
-    config_dir = 'segmentation_4_5_500epoch_nopretrain.yaml'
+    file_dir = '2023_09_30_21_29'
+    pth_name = '0.8759808540344238_best_finetune.pth'
+    config_dir = 'segmentation_fine_tune_4_5_500epoch_weights.yaml'
 
     files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
     save_dir = 'E:/datasets/agiprobot/train_Output/' + file_dir + r'/visualization'
