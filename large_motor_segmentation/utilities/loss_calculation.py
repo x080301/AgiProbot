@@ -104,9 +104,9 @@ def loss_calculation(pred, labels, weights=1, smoothing=False, using_weight=Fals
 
     else:
 
-        if using_weight:
-            loss = F.cross_entropy(pred, labels, weight=weights, reduction='mean')
-        else:
+        if using_weight is False or using_weight == 0:
             loss = F.cross_entropy(pred, labels, reduction='mean')
+        else:
+            loss = F.cross_entropy(pred, labels, weight=weights, reduction='mean')
 
     return loss

@@ -243,7 +243,6 @@ class SegmentationDPP:
         # ******************* #
         criterion = utilities.loss_calculation.loss_calculation
 
-        weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         # print(weights)
         # percentage = torch.Tensor(self.train_dataset.persentage_each_type).cuda()
         # scale = weights * percentage
@@ -251,9 +250,18 @@ class SegmentationDPP:
         # # print(scale)
         # weights *= scale
         # print(weights)
+        weights = torch.Tensor(self.train_dataset.label_weights).cuda()
         if self.args.use_class_weight == 0:
             for i in range(self.args.num_segmentation_type):
                 weights[i] = 1
+        elif self.args.use_class_weight == 1:
+            pass
+        elif self.args.use_class_weight == 0.5:
+            weights = torch.pow(weights, 1 / 2)
+        elif self.args.use_class_weight == 0.33:
+            weights = torch.pow(weights, 1 / 3)
+        else:
+            raise NotImplemented
 
         if rank == 0:
             print('train %d epochs' % (end_epoch - start_epoch))

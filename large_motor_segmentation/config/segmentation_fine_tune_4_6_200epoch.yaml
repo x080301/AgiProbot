@@ -1,6 +1,5 @@
-# First fine tune for pipeline paper
-# 4->5 100 epochs, 5->7 100 epochs
-# 2023 09 17
+# 4->5 100 epochs, 4->6 200 epochs
+# 2023 10 02
 DATA:
   pretrain_server_data_dir: '/data/users/fu/large_motor_syn'
   pretrain_local_data_dir: 'E:/datasets/agiprobot/binary_label/big_motor_blendar_binlabel_4debug'
@@ -58,6 +57,3 @@ train:
 test:
   test_symbol: 'Train'
   test_batch_size: 2
-
-
-

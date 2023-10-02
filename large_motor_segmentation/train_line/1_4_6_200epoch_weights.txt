@@ -1,6 +1,6 @@
 from train_and_test.dpp_trainer_pipeline import SegmentationDPP
 
-config_dir = 'config/segmentation_4_5_500epoch_nopretrain.yaml'
+config_dir = 'config/segmentation_fine_tune_4_6_200epoch_weights.yaml'
 print(config_dir)
 bsdpp = SegmentationDPP(train_txt, config_dir)
 bsdpp.train_dpp()

@@ -1,4 +1,4 @@
-# 4->5 100 epochs, 4->6 100 epochs
+# 4->5 100 epochs, 4->6 300 epochs
 # 2023 10 02
 DATA:
   pretrain_server_data_dir: '/data/users/fu/large_motor_syn'
@@ -34,7 +34,7 @@ train:
   lr: 0.0001
   end_lr: 0.000001
   momentum: 0.9
-  epochs: 100
+  epochs: 300
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
