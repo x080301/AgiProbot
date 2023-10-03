@@ -1,9 +1,0 @@
-from train_and_test.dpp_trainer_pipeline import SegmentationDPP
-import os
-
-for config_name in os.listdir('config'):
-    if '4_6_200epoch_cross_validation_' in config_name:
-        config_dir = 'config/' + config_name
-        print(config_dir)
-        bsdpp = SegmentationDPP(train_txt, config_dir)
-        bsdpp.train_dpp()
