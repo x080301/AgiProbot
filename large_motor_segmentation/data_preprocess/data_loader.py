@@ -65,17 +65,27 @@ class MotorDatasetTest(Dataset):
 
 class MotorDataset(Dataset):
     def __init__(self, mode='train', data_dir='directory to training data', num_class=2, num_points=4096,
-                 test_area='Validation', sample_rate=1.0):
+                 test_area='Validation', sample_rate=1.0, args=None):
 
         super().__init__()
         self.num_points = num_points
         self.num_class = num_class
         motor_list = sorted(os.listdir(data_dir))  # list all subdirectory
 
-        if mode == 'train':  # load training files or validation files
-            motor_positions = [motor for motor in motor_list if '{}'.format(test_area) not in motor]
+        try:
+            valid_index_list = args.validation_index.split(',')
+        except AttributeError:
+            if mode == 'train':  # load training files or validation files
+                motor_positions = [motor for motor in motor_list if '{}'.format(test_area) not in motor]
+            else:
+                motor_positions = [motor for motor in motor_list if '{}'.format(test_area) in motor]
         else:
-            motor_positions = [motor for motor in motor_list if '{}'.format(test_area) in motor]
+            if mode == 'train':
+                motor_positions = [motor for motor in motor_list if
+                                   (valid_index_list[0] not in motor) and (valid_index_list[1] not in motor)]
+            else:
+                motor_positions = [motor for motor in motor_list if
+                                   (valid_index_list[0] in motor) or (valid_index_list[1] in motor)]
 
         ######################load the np file###################################################
 

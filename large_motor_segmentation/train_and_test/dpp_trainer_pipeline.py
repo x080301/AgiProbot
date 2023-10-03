@@ -27,6 +27,7 @@ class SegmentationDPP:
                      'train.py', 'train_line.py', 'best_m.pth']
 
     def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
+
         # ******************* #
         # load arguments
         # ******************* #
