@@ -37,7 +37,7 @@ train:
 
 
   momentum: 0.9
-  epochs: 200
+  epochs: 100
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
