@@ -32,7 +32,7 @@ if __name__ == "__main__":
                         with open('train_line' + '/' + txt_file_name) as f:
                             executable_str = f.read()
 
-                        valid_motors = cross_valid_motor.split('&')
+                        valid_motors = cross_valid_motor
                         train_txt = 'train_line' + '/' + txt_file_name
 
                         break
