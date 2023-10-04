@@ -65,7 +65,7 @@ class MotorDatasetTest(Dataset):
 
 class MotorDataset(Dataset):
     def __init__(self, mode='train', data_dir='directory to training data', num_class=2, num_points=4096,
-                 test_area='Validation', sample_rate=1.0, args=None):
+                 test_area='Validation', sample_rate=1.0, valid_motors=None):
 
         super().__init__()
         self.num_points = num_points
@@ -73,7 +73,7 @@ class MotorDataset(Dataset):
         motor_list = sorted(os.listdir(data_dir))  # list all subdirectory
 
         try:
-            valid_index_list = args.validation_index.split(',')
+            valid_index_list = valid_motors.split('&')
         except AttributeError:
             if mode == 'train':  # load training files or validation files
                 motor_positions = [motor for motor in motor_list if '{}'.format(test_area) not in motor]

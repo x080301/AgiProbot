@@ -26,7 +26,7 @@ class SegmentationDPP:
     files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test', 'utilities',
                      'train.py', 'train_line.py', 'best_m.pth']
 
-    def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml'):
+    def __init__(self, train_txt, config_dir='config/binary_segmentation.yaml', valid_motors=None):
 
         # ******************* #
         # load arguments
@@ -63,10 +63,19 @@ class SegmentationDPP:
         # make directions
         # ******************* #
         if self.is_local:
-            direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+            if valid_motors is None:
+                direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime(
+                    '%Y_%m_%d_%H_%M')
+            else:
+                direction = 'outputs/' + self.args.titel + '_' + datetime.datetime.now().strftime(
+                    '%Y_%m_%d_%H_%M') + '_' + valid_motors
         else:
-            direction = '/data/users/fu/' + self.args.titel + '_outputs/' + \
-                        datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+            if valid_motors is None:
+                direction = '/data/users/fu/' + self.args.titel + '_outputs/' + \
+                            datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+            else:
+                direction = '/data/users/fu/' + self.args.titel + '_outputs/' + \
+                            datetime.datetime.now().strftime('%Y_%m_%d_%H_%M') + '_' + valid_motors
         if not os.path.exists(direction + '/checkpoints'):
             os.makedirs(direction + '/checkpoints')
         if not os.path.exists(direction + '/train_log'):
@@ -101,13 +110,14 @@ class SegmentationDPP:
                                           data_dir=self.data_set_direction,
                                           num_class=self.args.num_segmentation_type, num_points=self.args.npoints,
                                           # 4096
-                                          test_area='Validation', sample_rate=self.args.sample_rate)
+                                          test_area='Validation', sample_rate=self.args.sample_rate,
+                                          valid_motors=valid_motors)
         print("start loading test data ...")
         self.valid_dataset = MotorDataset(mode='valid',
                                           data_dir=self.data_set_direction,
                                           num_class=self.args.num_segmentation_type, num_points=self.args.npoints,
                                           # 4096
-                                          test_area='Validation', sample_rate=1.0)
+                                          test_area='Validation', sample_rate=1.0, valid_motors=valid_motors)
 
         # ******************* #
         # dpp

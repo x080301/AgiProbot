@@ -42,12 +42,18 @@ train_case_dic = {'2023_05_11_13_09_2048': '2048', '2023_05_10_06_00_4096': '409
                   '2023_10_02_09_08_56_np': '5->6 no pretrain',
                   '2023_10_02_06_37_56': '5->6',
                   '2023_10_01_21_14_46_np': '4->6 no pretrain',
-                  '2023_10_01_19_20_46': '4->6',
+                  '2023_10_01_19_20_46': '4->6 500epoch',
                   '2023_10_01_08_02_45_np': '4->5 no pretrain',
-                  '2023_09_30_20_51_45': '4->5'
+                  '2023_09_30_20_51_45': '4->5',
+                  '2023_10_02_23_56_46_100ep': '4->6 100epoch',
+                  '2023_10_03_02_26_46_200ep': '4->6 200epoch',
+                  '2023_10_03_07_19_46_300ep': '4->6 300epoch',
+                  '2023_10_03_14_55_weights': 'with weights 1',
+                  '2023_10_03_19_29_weights2': 'with weights 1/2',
+                  '2023_10_04_00_04_weights3': 'with weights 1/3'
                   }
-show_list = ['5->6 no pretrain', '5->6', '4->6 no pretrain', '4->6', '4->5 no pretrain', '4->5']
-plt.title("mIoU different learning rate")
+show_list = ['4->6 200epoch', 'with weights 1', 'with weights 1/2', 'with weights 1/3']
+plt.title("mIoU weights")
 
 mIoU_dict = {}
 for train_case in os.listdir('E:/datasets/agiprobot/train_Output'):
@@ -80,14 +86,14 @@ for i, key in enumerate(show_list):
 plt.yscale('log')
 
 # Set the y-axis limits
-plt.ylim(0.7, 0.9)
-xmin = 0
-xmax = 200
-#plt.xlim(xmin, xmax)
+plt.ylim(0.8, 0.91)
+xmin = 90
+xmax = 310
+plt.xlim(xmin, xmax)
 
 # Draw a horizontal line at the maximum y value
 plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
-plt.annotate(f'{y_max:.6f}', xy=(xmin + 5, y_max), xytext=(0, 5),
+plt.annotate(f'{y_max:.6f}', xy=(xmin + 5, y_max), xytext=(xmin, y_max + 5),
              textcoords='offset points', ha='center', va='bottom')
 # Add title and axis labels
 

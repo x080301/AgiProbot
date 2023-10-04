@@ -10,6 +10,8 @@ def crop_cuboid(point_cloud_dir, save_dir, x_min=None, x_max=None, y_min=None, y
         pcd = o3d.io.read_point_cloud(point_cloud_dir)
 
         points = np.asarray(pcd.points)
+        # colors = np.asarray(pcd.colors) * 255
+        # pcd.colors = o3d.utility.Vector3dVector(colors)
 
         bounding_box_list = [x_min, x_max, y_min, y_max, z_min, z_max]
 
@@ -41,22 +43,22 @@ def crop_cuboid(point_cloud_dir, save_dir, x_min=None, x_max=None, y_min=None, y
             pcd_inlier_part = pcd.select_by_index(selection_index_1, invert=False)
             save_file_name = os.path.join(save_dir,
                                           'inlier_' + os.path.basename(point_cloud_dir).split('.')[0] + '_1.pcd')
-            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part, write_ascii=True)
+            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part)  # , write_ascii=True)
 
             pcd_inlier_part = pcd.select_by_index(selection_index_2, invert=False)
             save_file_name = os.path.join(save_dir,
                                           'inlier_' + os.path.basename(point_cloud_dir).split('.')[0] + '_2.pcd')
-            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part, write_ascii=True)
+            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part)  # , write_ascii=True)
 
             pcd_inlier_part = pcd.select_by_index(selection_index_3, invert=False)
             save_file_name = os.path.join(save_dir,
                                           'inlier_' + os.path.basename(point_cloud_dir).split('.')[0] + '_3.pcd')
-            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part, write_ascii=True)
+            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part)  # , write_ascii=True)
 
             pcd_inlier_part = pcd.select_by_index(selection_index_4, invert=False)
             save_file_name = os.path.join(save_dir,
                                           'inlier_' + os.path.basename(point_cloud_dir).split('.')[0] + '_4.pcd')
-            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part, write_ascii=True)
+            o3d.io.write_point_cloud(filename=save_file_name, pointcloud=pcd_inlier_part)  # , write_ascii=True)
         else:
             pcd_inlier = pcd.select_by_index(selection_index, invert=False)
             inlier_save_file_name = os.path.join(save_dir, 'inlier_' + os.path.basename(point_cloud_dir))
