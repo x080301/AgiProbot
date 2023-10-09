@@ -61,8 +61,8 @@ class PcdReader:
         self.points = np.array(points)
         self.colors = np.array(colors)
 
-        print(self.points.shape)
-        print(self.colors.shape)
+        # print(self.points.shape)
+        # print(self.colors.shape)
 
         return self.points, self.colors
 

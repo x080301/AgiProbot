@@ -3,6 +3,8 @@ import os
 from tqdm import tqdm
 import numpy as np
 
+from data_preprocess.pcdreader import PcdReader
+
 
 def crop_cuboid(point_cloud_dir, save_dir, x_min=None, x_max=None, y_min=None, y_max=None, z_min=None, z_max=None,
                 split=False):
@@ -82,5 +84,30 @@ def _pipeline_crop_cuboid():
                 )
 
 
+def _pipeline_generate_colored_pcd_from_label_tool():
+    pcdreader = PcdReader()
+
+    read_dir = r'E:\datasets\agiprobot\SFB_Demo\models\labelled\teil'
+    save_dir = r'E:\datasets\agiprobot\SFB_Demo\models\labelled\combine'
+    for file_name in tqdm(sorted(os.listdir(read_dir))):
+        # print(file_name)
+        points, colors = pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
+
+        # pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
+
+        point_cloud = o3d.geometry.PointCloud()
+        point_cloud.points = o3d.utility.Vector3dVector(points)
+        point_cloud.colors = o3d.utility.Vector3dVector(colors)
+
+        if '_1.pcd' in file_name:
+            combined_pcd = point_cloud
+        else:
+            combined_pcd = combined_pcd + point_cloud
+
+        if '_4.pcd' in file_name:
+            o3d.io.write_point_cloud(os.path.join(save_dir, file_name.split('_4.pcd')[0] + '.pcd'), combined_pcd,
+                                     write_ascii=False)
+
+
 if __name__ == "__main__":
-    _pipeline_crop_cuboid()
+    _pipeline_generate_colored_pcd_from_label_tool()
