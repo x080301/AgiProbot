@@ -1,6 +1,6 @@
 from train_and_test.dpp_trainer_pipeline import SegmentationDPP
 
-config_dir = 'config/segmentation_fine_tune_4_6_200epoch.yaml'
+config_dir = 'config/segmentation_fine_tune_4_6_200epoch_no_warmup.yaml'
 print(config_dir)
 bsdpp = SegmentationDPP(train_txt, config_dir, valid_motors)
 bsdpp.train_dpp()

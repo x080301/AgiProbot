@@ -303,7 +303,8 @@ class SegmentationDPP:
                 # ******************* #
                 # loss
                 loss = utilities.loss_calculation.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
-                                                           bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                                                           bolt_existing_label, bolt_type_pred, bolt_centers,
+                                                           bolt_normals,
                                                            self.args)
 
                 loss.backward()
@@ -372,6 +373,8 @@ class SegmentationDPP:
             elif self.args.scheduler == 'cos_warmupLR':
                 # print(self.opt.param_groups[0]['lr'])
                 scheduler.step()
+            else:
+                raise NotImplemented
 
             # ******************* #
             # valid
@@ -416,8 +419,10 @@ class SegmentationDPP:
                     # (B,3,3)
 
                     # loss
-                    loss = utilities.loss_calculation.cal_loss(point_segmentation_pred, target, weights, transform_matrix,
-                                                               bolt_existing_label, bolt_type_pred, bolt_centers, bolt_normals,
+                    loss = utilities.loss_calculation.cal_loss(point_segmentation_pred, target, weights,
+                                                               transform_matrix,
+                                                               bolt_existing_label, bolt_type_pred, bolt_centers,
+                                                               bolt_normals,
                                                                self.args)
                     loss_sum += loss
 
