@@ -110,49 +110,8 @@ class SegmentationDPP:
         os.environ['MASTER_ADDR'] = 'localhost'
         os.environ['MASTER_PORT'] = '12355'
 
-        # ******************* #
-        # load ML model
-        # ******************* #
-
-        self.model = PCTToken(self.args)
-
-        # if fine tune is true, the the best.pth will be loaded first
-
-        if self.args.finetune == 1:
-            if os.path.exists(self.args.pretrained_model_path):
-                checkpoint = torch.load(self.args.pretrained_model_path)
-                print('Use pretrained model for fine tune')
-            else:
-                print('no exiting pretrained model')
-                exit(-1)
-
-            start_epoch = checkpoint['epoch']
-
-            end_epoch = start_epoch
-            end_epoch += 2 if self.is_local else self.args.epochs
-
-            if 'mIoU' in checkpoint:
-                print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
-            else:
-                print('train begin with %dth epoch' % start_epoch)
-
-            state_dict = checkpoint['model_state_dict']
-            new_state_dict = {}
-            for k, v in state_dict.items():
-                if k[0:7] == 'module.':
-                    new_state_dict[k[7:]] = v
-                else:
-                    break
-            self.model.load_state_dict(new_state_dict)  # .to(rank)
-        else:
-            start_epoch = 0
-            end_epoch = 2 if self.is_local else self.args.epochs
-
-        self.start_epoch = start_epoch
-        self.end_epoch = end_epoch
-        # self.model = nn.DataParallel(self.model)
-
     def train(self, rank, world_size):
+
         best_mIoU = 0
         # ******************* #
         # dpp and load ML model
@@ -161,13 +120,45 @@ class SegmentationDPP:
         backend = 'gloo' if self.is_local else 'nccl'
         dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
 
-        start_epoch = self.start_epoch
-        end_epoch = self.end_epoch
+        # ******************* #
+        # load ML model
+        # ******************* #
 
-        model = copy.deepcopy(self.model)
-        model.to(rank)
-        model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
+        model = PCTToken(self.args).to(rank)
+
+        # if fine tune is true, the the best.pth will be loaded first
+        if rank == 0:
+            if self.args.finetune == 1:
+                if os.path.exists(self.args.pretrained_model_path):
+                    checkpoint = torch.load(self.args.pretrained_model_path,
+                                            map_location={'cuda:%d' % 0: 'cuda:%d' % rank})
+                    print('Use pretrained model for fine tune')
+                else:
+                    print('no exiting pretrained model')
+                    exit(-1)
+
+                start_epoch = checkpoint['epoch']
+                end_epoch = start_epoch + 2 if self.is_local else start_epoch + self.args.epochs
+
+                if 'mIoU' in checkpoint:
+                    print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
+                else:
+                    print('train begin with %dth epoch' % start_epoch)
+
+                state_dict = checkpoint['model_state_dict']
+                new_state_dict = {}
+                for k, v in state_dict.items():
+                    if k[0:7] == 'module.':
+                        new_state_dict[k[7:]] = v
+                    else:
+                        break
+                model.load_state_dict(new_state_dict)  # .to(rank)
+            else:
+                start_epoch = 0
+                end_epoch = 2 if self.is_local else self.args.epochs
+
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
 
         torch.manual_seed(self.random_seed)
 
@@ -237,9 +228,9 @@ class SegmentationDPP:
         # loss function and weights
         # ******************* #
 
-        weights = torch.Tensor(self.train_dataset.label_weights).cuda()
+        weights = torch.Tensor(self.train_dataset.label_weights).to(rank)
         # print(weights)
-        percentage = torch.Tensor(self.train_dataset.persentage_each_type).cuda()
+        percentage = torch.Tensor(self.train_dataset.persentage_each_type).to(rank)
         scale = weights * percentage
         scale = 1 / scale.sum()
         # print(scale)
@@ -251,6 +242,7 @@ class SegmentationDPP:
 
         if rank == 0:
             print('train %d epochs' % (end_epoch - start_epoch))
+
         for epoch in range(start_epoch, end_epoch):
 
             # ******************* #
@@ -500,6 +492,8 @@ class SegmentationDPP:
                         torch.save(state, savepath)
 
                     print('\n')
+
+        dist.destroy_process_group()
 
     def train_dpp(self):
         world_size = torch.cuda.device_count()
