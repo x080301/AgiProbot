@@ -14,12 +14,6 @@
 train_txt = None
 
 if __name__ == "__main__":
-    from train_and_test.ddp_trainer_pipeline import SegmentationDPP
-
-    # config_dir = 'config/4_6_200epoch_cross_validation_2,4.yaml'
-    # print(config_dir)
-    # bsdpp = SegmentationDPP(train_txt, config_dir)
-    # bsdpp.train_dpp()
 
     config_dir = 'config/segmentation_fine_tune_4_6_200epoch.yaml'
     print(config_dir)
