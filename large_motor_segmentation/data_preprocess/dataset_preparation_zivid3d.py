@@ -89,24 +89,30 @@ def _pipeline_generate_colored_pcd_from_label_tool():
 
     read_dir = r'E:\datasets\agiprobot\SFB_Demo\models\labelled\teil'
     save_dir = r'E:\datasets\agiprobot\SFB_Demo\models\labelled\combine'
+
+    saved_pcd = list(os.listdir(save_dir))
+    saved_pcd = [x.split('.')[0] for x in saved_pcd]
+    # saved_pcd=[]
+
     for file_name in tqdm(sorted(os.listdir(read_dir))):
-        # print(file_name)
-        points, colors = pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
 
-        # pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
+        if file_name.split('_combined_')[0] + '_combined' not in saved_pcd:
+            points, colors = pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
 
-        point_cloud = o3d.geometry.PointCloud()
-        point_cloud.points = o3d.utility.Vector3dVector(points)
-        point_cloud.colors = o3d.utility.Vector3dVector(colors)
+            # pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
 
-        if '_1.pcd' in file_name:
-            combined_pcd = point_cloud
-        else:
-            combined_pcd = combined_pcd + point_cloud
+            point_cloud = o3d.geometry.PointCloud()
+            point_cloud.points = o3d.utility.Vector3dVector(points)
+            point_cloud.colors = o3d.utility.Vector3dVector(colors)
 
-        if '_4.pcd' in file_name:
-            o3d.io.write_point_cloud(os.path.join(save_dir, file_name.split('_4.pcd')[0] + '.pcd'), combined_pcd,
-                                     write_ascii=False)
+            if '_1.pcd' in file_name:
+                combined_pcd = point_cloud
+            else:
+                combined_pcd = combined_pcd + point_cloud
+
+            if '_4.pcd' in file_name:
+                o3d.io.write_point_cloud(os.path.join(save_dir, file_name.split('_4.pcd')[0] + '.pcd'), combined_pcd,
+                                         write_ascii=False)
 
 
 if __name__ == "__main__":
