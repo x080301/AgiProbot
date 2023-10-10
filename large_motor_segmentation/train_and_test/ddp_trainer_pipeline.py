@@ -187,8 +187,6 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
 
-    print(model.state_dict()['module.segmentation_mlp.conv7.bias'])
-
     if rank == 0:
         log_writer = SummaryWriter(save_direction + '/tensorboard_log')
 
@@ -284,7 +282,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
         # train
         # ******************* #
         if rank == 0:
-            print('-----train-----')
+            print('\n-----train-----')
         train_sampler.set_epoch(epoch)
         model.train()
 
@@ -490,8 +488,6 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
 
                     print('Saving best model at %s' % savepath)
                     torch.save(state, savepath)
-
-                print('\n')
 
     dist.destroy_process_group()
 
