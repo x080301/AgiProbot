@@ -1,1 +1,1 @@
-0_4_6_200epoch_cross_valid.txt03&05,0_4_6_200epoch_cross_valid.txt03&06,0_4_6_200epoch_cross_valid.txt03&13,0_4_6_200epoch_cross_valid.txt03&18
+0_4_6_200epoch_cross_valid.txt03&05,0_4_6_200epoch_cross_valid.txt03&06,0_4_6_200epoch_cross_valid.txt03&13,0_4_6_200epoch_cross_valid.txt03&18,0_4_6_200epoch_cross_valid.txt03&36,0_4_6_200epoch_cross_valid.txt05&06

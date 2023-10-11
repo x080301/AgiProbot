@@ -308,6 +308,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
             points: (B,N,3)
             target: (B,N)
             '''
+            print(points.size())
             # ******************* #
             # forwards
             # ******************* #
