@@ -5,6 +5,7 @@ DATA:
   num_segmentation_type: 2
   npoints: 2048
   sample_rate: 1
+  accumulation_steps: 1
 
 model_para:
   token:

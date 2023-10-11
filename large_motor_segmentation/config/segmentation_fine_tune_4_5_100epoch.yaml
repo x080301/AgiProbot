@@ -12,6 +12,7 @@ DATA:
   num_existing_type: 6
   npoints: 2048
   sample_rate: 1
+  accumulation_steps: 1
 
 train:
   random_seed: 0 # 0->random choose a seed

@@ -15,7 +15,7 @@ train_txt = None
 
 if __name__ == "__main__":
 
-    config_dir = 'config/pointnet.yaml'
+    config_dir = 'config/1024_4_6_200epoch.yaml'
     print(config_dir)
 
     from train_and_test.ddp_trainer_pipeline import train_ddp_func
