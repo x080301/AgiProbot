@@ -15,7 +15,8 @@ import copy
 import models.attention
 import utilities.loss_calculation
 from utilities.config import get_parser
-from models.pct_token import PCTPipeline
+from models.pct import PCTPipeline
+from models.pointnet import PointNetSegmentation
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
@@ -42,9 +43,6 @@ def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid
     system_type = platform.system().lower()  # 'windows' or 'linux'
     is_local = True if system_type == 'windows' else False
     if is_local:
-        args.npoints = 1024
-        args.sample_rate = 1.
-        args.ddp.gpus = 1
         if args.finetune == 0:
             data_set_direction = args.pretrain_local_data_dir
         else:
@@ -139,8 +137,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # ******************* #
     # load ML model
     # ******************* #
-
-    model = PCTPipeline(args).to(rank)
+    if args.model_para.model == 'pct':
+        model = PCTPipeline(args).to(rank)
+    elif args.model_para.model == 'pointnet':
+        model = PointNetSegmentation(num_segmentation_type=args.num_segmentation_type, feature_transform=True).to(rank)
+    else:
+        raise NotImplemented
 
     if args.finetune == 1:
         if rank == 0:
@@ -194,11 +196,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # ******************* #
     # load dataset
     # ******************* #
-    train_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(train_dataset),
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
                                                                     num_replicas=world_size,
                                                                     rank=rank
                                                                     )
-    valid_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(valid_dataset),
+    valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset,
                                                                     num_replicas=world_size,
                                                                     rank=rank
                                                                     )
@@ -253,7 +255,10 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # ******************* #
     # loss function and weights
     # ******************* #
-    criterion = utilities.loss_calculation.loss_calculation
+    if args.model_para.model == 'pct':
+        criterion = utilities.loss_calculation.loss_calculation
+    elif args.model_para.model == 'pointnet':
+        criterion = utilities.loss_calculation.loss_calculation_pointnet
 
     # print(weights)
     # percentage = torch.Tensor(train_dataset.persentage_each_type).cuda()
@@ -322,6 +327,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
             opt.zero_grad()
 
             seg_pred, trans = model(points)  # (B,segment_type,N),(B,3,3)
+
             # print(seg_pred)
 
             # ******************* #
@@ -330,10 +336,22 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
             seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (B,segment_type,N) -> (B,N,segment_type)
 
             batch_label = target.view(-1, 1)[:, 0].data
-            loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
-                             weights, using_weight=args.use_class_weight)  # a scalar
-            if not args.stn_loss_weight == 0:
-                loss = loss + util.feature_transform_reguliarzer(trans) * args.stn_loss_weight
+
+            if args.model_para.model == 'pct':
+                loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
+                                 weights, using_weight=args.use_class_weight)  # a scalar
+                if not args.stn_loss_weight == 0:
+                    loss = loss + util.feature_transform_reguliarzer(trans) * args.stn_loss_weight
+
+            elif args.model_para.model == 'pointnet':
+                if args.use_class_weight == 0:
+                    weights = None
+                loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(), trans,
+                                 weights)
+
+            else:
+                raise NotImplemented
+
             loss.backward()
             opt.step()
 
@@ -418,9 +436,9 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 tqdm_structure = tqdm(enumerate(validation_loader), total=len(validation_loader), smoothing=0.9)
             else:
                 tqdm_structure = enumerate(validation_loader)
-            for i, (points, seg) in tqdm_structure:
+            for i, (points, target) in tqdm_structure:
 
-                points, seg = points.to(rank, non_blocking=True), seg.to(rank, non_blocking=True)
+                points, target = points.to(rank, non_blocking=True), target.to(rank, non_blocking=True)
                 points = models.attention.normalize_data(points)
                 points, _ = models.attention.rotate_per_batch(points, None)
                 points = points.permute(0, 2, 1)
@@ -429,9 +447,23 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 seg_pred, trans = model(points.float())
 
                 seg_pred = seg_pred.permute(0, 2, 1).contiguous()
-                batch_label = seg.view(-1, 1)[:, 0].data  # array(batch_size*num_points)
-                loss = criterion(seg_pred.view(-1, args.num_segmentation_type), seg.view(-1, 1).squeeze(),
-                                 weights, using_weight=args.use_class_weight)  # a scalar
+                batch_label = target.view(-1, 1)[:, 0].data  # array(batch_size*num_points)
+
+                if args.model_para.model == 'pct':
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
+                                     weights, using_weight=args.use_class_weight)  # a scalar
+                    if not args.stn_loss_weight == 0:
+                        loss = loss + util.feature_transform_reguliarzer(trans) * args.stn_loss_weight
+
+                elif args.model_para.model == 'pointnet':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(), trans,
+                                     weights)
+
+                else:
+                    raise NotImplemented
+
                 seg_pred = seg_pred.contiguous().view(-1, args.num_segmentation_type)
                 pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
                 correct = torch.sum(pred_choice == batch_label)

@@ -42,6 +42,15 @@ def cal_token_loss(bolt_existing_label, bolt_type_pred, bolt_centers, bolt_norma
     return loss
 
 
+def feature_transform_reguliarzer_pointnet(trans):
+    d = trans.size()[1]
+    I = torch.eye(d)[None, :, :]
+    if trans.is_cuda:
+        I = I.cuda()
+    loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2, 1)) - I, dim=(1, 2)))
+    return loss
+
+
 def cal_segment_loss(pred, target, weights, args):
     """
         Calculate cross entropy loss, apply label smoothing if needed.
@@ -110,3 +119,12 @@ def loss_calculation(pred, labels, weights=1, smoothing=False, using_weight=Fals
             loss = F.cross_entropy(pred, labels, weight=weights, reduction='mean')
 
     return loss
+
+
+def loss_calculation_pointnet(pred, target, trans_feat, weight=None, mat_diff_loss_scale=0.001):
+    # loss = F.nll_loss(pred, target, weight=weight)
+    target = target.type(torch.int64)
+    loss = F.cross_entropy(pred, target, reduction='mean', weight=weight)
+    mat_diff_loss = feature_transform_reguliarzer_pointnet(trans_feat)
+    total_loss = loss + mat_diff_loss * mat_diff_loss_scale
+    return total_loss

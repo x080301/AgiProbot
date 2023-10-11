@@ -51,10 +51,10 @@ class TestTrainedModel():
         self.args = get_parser(config_dir=config_dir)
 
         if model_name == 'pct pipeline':
-            from models.pct_token import PCTPipeline
+            from models.pct import PCTPipeline
             self.model = PCTPipeline(self.args)
         elif model_name == 'pct token':
-            from models.pct_token import PCTToken
+            from models.pct import PCTToken
             self.model = PCTToken(self.args)
         else:
             raise Exception("Not implemented")

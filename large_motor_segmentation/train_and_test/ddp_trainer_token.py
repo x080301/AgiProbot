@@ -15,7 +15,7 @@ import copy
 import models.attention
 import utilities.loss_calculation
 from utilities.config import get_parser
-from models.pct_token import PCTToken
+from models.pct import PCTToken
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
