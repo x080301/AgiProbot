@@ -195,11 +195,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # load dataset
     # ******************* #
     train_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(train_dataset),
-                                                                    num_replicas=args.ddp.world_size,
+                                                                    num_replicas=world_size,
                                                                     rank=rank
                                                                     )
     valid_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(valid_dataset),
-                                                                    num_replicas=args.ddp.world_size,
+                                                                    num_replicas=world_size,
                                                                     rank=rank
                                                                     )
 
