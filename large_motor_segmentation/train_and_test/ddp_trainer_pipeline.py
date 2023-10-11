@@ -4,13 +4,13 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn as nn
 import platform
-import time
 import datetime
 import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import time
+import copy
 
 import models.attention
 import utilities.loss_calculation
@@ -194,11 +194,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # ******************* #
     # load dataset
     # ******************* #
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
+    train_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(train_dataset),
                                                                     num_replicas=args.ddp.world_size,
                                                                     rank=rank
                                                                     )
-    valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset,
+    valid_sampler = torch.utils.data.distributed.DistributedSampler(copy.deepcopy(valid_dataset),
                                                                     num_replicas=args.ddp.world_size,
                                                                     rank=rank
                                                                     )
@@ -308,7 +308,6 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
             points: (B,N,3)
             target: (B,N)
             '''
-            print(points.size())
             # ******************* #
             # forwards
             # ******************* #
