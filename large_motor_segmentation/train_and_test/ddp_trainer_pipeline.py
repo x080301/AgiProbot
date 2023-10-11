@@ -10,6 +10,7 @@ import shutil
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import time
 
 import models.attention
 import utilities.loss_calculation
@@ -123,7 +124,7 @@ def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid
     return args, random_seed, is_local, save_direction, train_dataset, valid_dataset
 
 
-def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset):
+def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time):
     best_mIoU = 0
     checkpoints_direction = save_direction + '/checkpoints/'
     torch.manual_seed(random_seed)
@@ -277,6 +278,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     if rank == 0:
         print('train %d epochs' % (end_epoch - start_epoch))
     for epoch in range(start_epoch, end_epoch):
+
+        if rank == 0:
+            running_time = (time.time() - start_time) / 60
+            log_writer.add_scalar('running time', running_time, epoch)
+            print('running time: %.2f ' % running_time)
 
         # ******************* #
         # train
@@ -499,8 +505,11 @@ def train_ddp_func(train_txt,
                                                                                               config_dir=config_dir,
                                                                                               valid_motors=valid_motors)
 
+    start_time = time.time()
     world_size = torch.cuda.device_count()
-    mp.spawn(train_ddp, args=(world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset),
+
+    mp.spawn(train_ddp,
+             args=(world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time),
              nprocs=world_size, join=True)
 
 
