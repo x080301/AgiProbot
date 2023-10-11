@@ -204,5 +204,115 @@ def _pipeline_valid_sample_for_cross_validation():
     plt.show()
 
 
+def _pipeline_valid_sample_for_cross_validation():
+    train_case_dic = {
+        '2023_10_03_02_26_46_200ep': '2,4',
+        'cross_validation/2023_10_04_22_41_02&07': '2,7',
+        'cross_validation/2023_10_05_03_13_02&08': '2,8',
+        'cross_validation/2023_10_05_07_45_02&09': '2,9',
+        'cross_validation/2023_10_05_12_17_02&17': '2,17',
+        'cross_validation/2023_10_05_16_51_04&07': '4,7',
+        'cross_validation/2023_10_05_21_24_04&08': '4,8',
+        'cross_validation/2023_10_06_01_59_04&09': '4,9',
+        'cross_validation/2023_10_06_03_38_04&17': '4,17',
+        'cross_validation/2023_10_06_06_31_07&08': '7,8',
+        'cross_validation/2023_10_06_08_08_07&09': '7,9',
+        'cross_validation/2023_10_06_11_04_07&17': '7,17',
+        'cross_validation/2023_10_06_12_33_08&09': '8,9',
+        'cross_validation/2023_10_06_15_32_08&17': '8,17',
+        'cross_validation/2023_10_06_16_56_09&17': '9,17',
+        'cross_validation2/2023_10_11_17_14_08&05': '8,5',
+        'cross_validation2/2023_10_10_10_10_03&13': '3,13',
+        'cross_validation2/2023_10_10_05_15_03&06': '3,6',
+        'cross_validation2/2023_10_10_00_50_03&05': '3,5',
+        'cross_validation2/2023_10_10_15_06_03&18': '3,18',
+        'cross_validation2/2023_10_11_22_11_09&03': '9,3',
+        'cross_validation2/2023_10_11_14_48_03&04': '3,4',
+        'cross_validation2/2023_10_11_19_43_09&06': '9,6',
+        'cross_validation2/2023_10_11_12_08_03&36': '3,36'
+    }
+    show_list = ['8,5', '3,13', '3,6', '3,5', '3,18', '9,3', '3,4', '9,6',
+                 '3,36',
+                 '2,4', '2,7', '2,8', '2,9', '2,17', '4,7', '4,8', '4,9', '4,17', '7,8', '7,9', '7,17', '8,9', '8,17',
+                 '9,17']
+    plt.title("cross validation")
+    # emphasize_list = ['8,5', '3,13', '3,6', '3,5', '3,18', '9,3', '3,4', '9,6', '3,36']
+    # emphasize_list = ['9,17', '4,17', '2,4', '2,9', '9,17', '2,17']
+    emphasize_list = ['8,17', '2,4', '4,17', '9,6', '3,13']
+
+    mIoU_dict = {}
+
+    for train_case_direction in train_case_dic:
+        directory = 'E:/datasets/agiprobot/train_Output/' + train_case_direction + '/tensorboard_log'
+        for file_name in os.listdir(directory):
+            ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
+            ea.Reload()
+            mIoU = ea.scalars.Items('mIoU/eval_mIoU')
+            if '09&06' in train_case_direction:
+                mIoU_x = [2 * (i.step-97)+97 for i in mIoU]
+            else:
+                mIoU_x = [i.step for i in mIoU]
+            mIoU_y = [i.value for i in mIoU]
+
+            x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
+            y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
+
+            mIoU_dict[train_case_dic[train_case_direction]] = [mIoU_x, mIoU_y, x_smooth, y_smooth]
+
+    for key in show_list:
+        x = mIoU_dict[key][0]
+        y = mIoU_dict[key][1]  # [i / 6 * 8 for i in mIoU_dict[key][1]]
+        #     plt.plot(x, y, color=(0.9, 0.9, 0.9))
+        print(key + ': %(ymax)f' % {'ymax': max(y)})
+
+    y_max = 0
+    y_mean = 0
+    for key in emphasize_list:
+        x = mIoU_dict[key][0]
+        y = mIoU_dict[key][1]  # [i / 6 * 8 for i in mIoU_dict[key][1]]
+        #     plt.plot(x, y, color=(0.9, 0.9, 0.9))
+        y_max = max(max(y), y_max)
+        y_mean += max(y)
+    y_mean = y_mean / len(emphasize_list)
+    print(y_mean)
+
+    for i, key in enumerate(show_list):
+
+        x_smooth = mIoU_dict[key][2]
+        y_smooth = mIoU_dict[key][3]  # [i / 6 * 8 for i in mIoU_dict[key][3]]
+        if key in emphasize_list:
+            plt.plot(x_smooth, y_smooth, label=key)
+        else:
+            plt.plot(x_smooth, y_smooth, color=(0.9, 0.9, 0.9))
+
+    # Set y-axis to logarithmic scale
+    plt.yscale('log')
+
+    # Set the y-axis limits
+    plt.ylim(0.6, 0.91)
+    xmin = 90
+    xmax = 310
+    plt.xlim(xmin, xmax)
+
+    # Draw a horizontal line at the maximum y value
+    plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
+    plt.annotate(f'{y_max:.6f}', xy=(xmin + 5, y_max), xytext=(xmin, y_max + 5),
+                 textcoords='offset points', ha='center', va='bottom')
+
+    plt.axhline(y_mean, color='green', linestyle=':', label='mean mIoU')
+    plt.annotate(f'{y_mean:.6f}', xy=(xmin + 5, y_mean), xytext=(xmin, y_mean + 5),
+                 textcoords='offset points', ha='center', va='bottom')
+    # Add title and axis labels
+
+    plt.xlabel("epoch")
+    plt.ylabel("val mIoU (log scale)")
+
+    # Show the legend with data labels
+    plt.legend()
+
+    # Display the chart
+    plt.show()
+
+
 if __name__ == '__main__':
     _pipeline_valid_sample_for_cross_validation()
