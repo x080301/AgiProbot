@@ -249,7 +249,7 @@ def _pipeline_valid_sample_for_cross_validation():
             ea.Reload()
             mIoU = ea.scalars.Items('mIoU/eval_mIoU')
             if '09&06' in train_case_direction:
-                mIoU_x = [2 * (i.step-97)+97 for i in mIoU]
+                mIoU_x = [2 * (i.step - 97) + 97 for i in mIoU]
             else:
                 mIoU_x = [i.step for i in mIoU]
             mIoU_y = [i.value for i in mIoU]
@@ -314,5 +314,60 @@ def _pipeline_valid_sample_for_cross_validation():
     plt.show()
 
 
+def _pipeline_valid_sample_visualization():
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\cross_valid_1024'
+
+
+    for train_case_direction in os.listdir(train_case_dir):
+        directory = train_case_dir+'/' + train_case_direction + '/tensorboard_log'
+
+        y_max = 0
+        y_mean = 0
+
+        for file_name in os.listdir(directory):
+            ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
+            ea.Reload()
+            mIoU = ea.scalars.Items('mIoU/eval_mIoU')
+
+        mIoU_x = [i.step for i in mIoU]
+        mIoU_y = [i.value for i in mIoU]
+
+        x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
+        y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
+        plt.plot(x_smooth, y_smooth)
+
+        y_max = max(max(mIoU_y), y_max)
+        y_mean += max(mIoU_y)
+
+    y_mean = y_mean / len(list(os.listdir(train_case_dir)))
+    # Set y-axis to logarithmic scale
+    plt.yscale('log')
+
+    # Set the y-axis limits
+    #plt.ylim(0.6, 0.91)
+    xmin = 90
+    xmax = 310
+    plt.xlim(xmin, xmax)
+
+    # Draw a horizontal line at the maximum y value
+    plt.axhline(y_max, color='green', linestyle='--', label='max mIoU')
+    plt.annotate(f'{y_max:.6f}', xy=(xmin + 5, y_max), xytext=(xmin, y_max + 5),
+                 textcoords='offset points', ha='center', va='bottom')
+
+    plt.axhline(y_mean, color='green', linestyle=':', label='mean mIoU')
+    plt.annotate(f'{y_mean:.6f}', xy=(xmin + 5, y_mean), xytext=(xmin, y_mean + 5),
+                 textcoords='offset points', ha='center', va='bottom')
+    # Add title and axis labels
+
+    plt.xlabel("epoch")
+    plt.ylabel("val mIoU (log scale)")
+
+    # Show the legend with data labels
+    plt.legend()
+
+    # Display the chart
+    plt.show()
+
+
 if __name__ == '__main__':
-    _pipeline_valid_sample_for_cross_validation()
+    _pipeline_valid_sample_visualization()
