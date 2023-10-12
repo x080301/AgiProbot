@@ -315,21 +315,19 @@ def _pipeline_valid_sample_for_cross_validation():
 
 
 def _pipeline_valid_sample_visualization():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\cross_valid_1024'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\cross_valid_no_warm_up'
 
-
+    y_max = 0
+    y_mean = 0
     for train_case_direction in os.listdir(train_case_dir):
-        directory = train_case_dir+'/' + train_case_direction + '/tensorboard_log'
-
-        y_max = 0
-        y_mean = 0
+        directory = train_case_dir + '/' + train_case_direction + '/tensorboard_log'
 
         for file_name in os.listdir(directory):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
             mIoU = ea.scalars.Items('mIoU/eval_mIoU')
 
-        mIoU_x = [i.step for i in mIoU]
+        mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
@@ -339,12 +337,12 @@ def _pipeline_valid_sample_visualization():
         y_max = max(max(mIoU_y), y_max)
         y_mean += max(mIoU_y)
 
-    y_mean = y_mean / len(list(os.listdir(train_case_dir)))
+    y_mean = y_mean / 5
     # Set y-axis to logarithmic scale
     plt.yscale('log')
 
     # Set the y-axis limits
-    #plt.ylim(0.6, 0.91)
+    plt.ylim(0.5, 0.91)
     xmin = 90
     xmax = 310
     plt.xlim(xmin, xmax)
