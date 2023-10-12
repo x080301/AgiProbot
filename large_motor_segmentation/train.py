@@ -15,7 +15,7 @@ train_txt = None
 
 if __name__ == "__main__":
 
-    config_dir = 'config/pointnet2.yaml'
+    config_dir = 'config/dgcnn.yaml'
     print(config_dir)
 
     from train_and_test.ddp_trainer_pipeline import train_ddp_func

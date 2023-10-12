@@ -23,6 +23,7 @@ from utilities.util import save_tensorboard_log
 from models.pct import PCTPipeline
 from models.pointnet import PointNetSegmentation
 from models.pointnet2 import PointNet2Segmentation
+from models.dgcnn import DGCNN_semseg
 
 files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test', 'utilities',
                  'train.py', 'train_line.py', 'best_m.pth']
@@ -148,6 +149,8 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
         model = PointNetSegmentation(num_segmentation_class=args.num_segmentation_type, feature_transform=True)
     elif args.model_para.model == 'pointnet2':
         model = PointNet2Segmentation(num_segmentation_class=args.num_segmentation_type)
+    elif args.model_para.model == 'dgcnn':
+        model = DGCNN_semseg(num_classes=args.num_segmentation_type)
     else:
         raise NotImplemented
 
@@ -272,7 +275,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     elif args.model_para.model == 'pointnet':
         criterion = utilities.loss_calculation.loss_calculation_pointnet
     elif args.model_para.model == 'pointnet2':
-        criterion = utilities.loss_calculation.loss_calculation_pointnet2
+        criterion = utilities.loss_calculation.loss_calculation_cross_entropy
+    elif args.model_para.model == 'dgcnn':
+        criterion = utilities.loss_calculation.loss_calculation_cross_entropy
+    else:
+        raise NotImplemented
 
     # print(weights)
     # percentage = torch.Tensor(train_dataset.persentage_each_type).cuda()
@@ -372,7 +379,11 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                         loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
                                          target.view(-1, 1).squeeze(),
                                          weights)
-
+                    elif args.model_para.model == 'dgcnn':
+                        if args.use_class_weight == 0:
+                            weights = None
+                        loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                         target.view(-1, 1).squeeze(), weights)
 
                     else:
                         raise NotImplemented
@@ -408,7 +419,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                         weights = None
                     loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
                                      weights)
+                elif args.model_para.model == 'dgcnn':
 
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(), weights)
 
                 else:
                     raise NotImplemented
@@ -528,6 +544,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                     loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
                                      target.view(-1, 1).squeeze(),
                                      weights)
+                elif args.model_para.model == 'dgcnn':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(), weights)
+
                 else:
                     raise NotImplemented
 

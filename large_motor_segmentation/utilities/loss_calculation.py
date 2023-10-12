@@ -130,7 +130,7 @@ def loss_calculation_pointnet(pred, target, trans_feat, weight=None, mat_diff_lo
     return total_loss
 
 
-def loss_calculation_pointnet2(pred, target, weight=None):
+def loss_calculation_cross_entropy(pred, target, weight=None):
     target = target.type(torch.int64)
     loss = F.cross_entropy(pred, target, reduction='mean', weight=weight)
 

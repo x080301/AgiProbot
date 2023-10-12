@@ -346,7 +346,7 @@ class PointNet2Segmentation(nn.Module):
         x = self.conv2(x)
         # x = F.log_softmax(x, dim=1)
         # x = x.permute(0, 2, 1)
-        return x, None  # (B,segment_type,N)
+        return x, None  # (B,segment_type,N), None
 
 
 if __name__ == '__main__':
