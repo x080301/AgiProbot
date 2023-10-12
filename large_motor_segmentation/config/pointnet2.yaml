@@ -37,7 +37,7 @@ train:
   cos_warmupLR:
     warmup_epochs: 5  # number of epochs the warmup process takes
   model_para:
-    model: 'pointnet'
+    model: 'pointnet2'
     dropout: 0.5
     emb_dims: 1024
     k: 20 # k in knn

@@ -128,3 +128,10 @@ def loss_calculation_pointnet(pred, target, trans_feat, weight=None, mat_diff_lo
     mat_diff_loss = feature_transform_reguliarzer_pointnet(trans_feat)
     total_loss = loss + mat_diff_loss * mat_diff_loss_scale
     return total_loss
+
+
+def loss_calculation_pointnet2(pred, target, weight=None):
+    target = target.type(torch.int64)
+    loss = F.cross_entropy(pred, target, reduction='mean', weight=weight)
+
+    return loss

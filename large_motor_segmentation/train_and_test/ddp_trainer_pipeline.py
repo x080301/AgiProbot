@@ -15,12 +15,14 @@ import copy
 import models.attention
 import utilities.loss_calculation
 from utilities.config import get_parser
-from models.pct import PCTPipeline
-from models.pointnet import PointNetSegmentation
 from data_preprocess.data_loader import MotorDataset
 from utilities.lr_scheduler import CosineAnnealingWithWarmupLR
 from utilities import util
 from utilities.util import save_tensorboard_log
+
+from models.pct import PCTPipeline
+from models.pointnet import PointNetSegmentation
+from models.pointnet2 import PointNet2Segmentation
 
 files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test', 'utilities',
                  'train.py', 'train_line.py', 'best_m.pth']
@@ -141,11 +143,15 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
     # load ML model
     # ******************* #
     if args.model_para.model == 'pct':
-        model = PCTPipeline(args).to(rank)
+        model = PCTPipeline(args)
     elif args.model_para.model == 'pointnet':
-        model = PointNetSegmentation(num_segmentation_type=args.num_segmentation_type, feature_transform=True).to(rank)
+        model = PointNetSegmentation(num_segmentation_class=args.num_segmentation_type, feature_transform=True)
+    elif args.model_para.model == 'pointnet2':
+        model = PointNet2Segmentation(num_segmentation_class=args.num_segmentation_type)
     else:
         raise NotImplemented
+
+    model.to(rank)
 
     if args.finetune == 1:
         if rank == 0:
@@ -243,7 +249,10 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs,
                                                                eta_min=args.end_lr)
     elif args.scheduler == 'step':
-        scheduler = torch.optim.lr_scheduler.StepLR(opt, 20, 0.1, args.epochs)
+        if args.model_para.model == 'pointnet' or args.model_para.model == 'pointnet2':
+            scheduler = torch.optim.lr_scheduler.StepLR(opt, 10, 0.7, -1)
+        else:
+            scheduler = torch.optim.lr_scheduler.StepLR(opt, 20, 0.1, args.epochs)
     elif args.scheduler == 'cos_warmupLR':
         scheduler = CosineAnnealingWithWarmupLR(opt,
                                                 T_max=args.epochs - args.cos_warmupLR.warmup_epochs,
@@ -262,6 +271,8 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
         criterion = utilities.loss_calculation.loss_calculation
     elif args.model_para.model == 'pointnet':
         criterion = utilities.loss_calculation.loss_calculation_pointnet
+    elif args.model_para.model == 'pointnet2':
+        criterion = utilities.loss_calculation.loss_calculation_pointnet2
 
     # print(weights)
     # percentage = torch.Tensor(train_dataset.persentage_each_type).cuda()
@@ -351,8 +362,17 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                     elif args.model_para.model == 'pointnet':
                         if args.use_class_weight == 0:
                             weights = None
-                        loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
-                                         trans, weights)
+                        loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                         target.view(-1, 1).squeeze(),
+                                         trans,
+                                         weights)
+                    elif args.model_para.model == 'pointnet2':
+                        if args.use_class_weight == 0:
+                            weights = None
+                        loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                         target.view(-1, 1).squeeze(),
+                                         weights)
+
 
                     else:
                         raise NotImplemented
@@ -382,6 +402,13 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                         weights = None
                     loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(), trans,
                                      weights)
+
+                elif args.model_para.model == 'pointnet2':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
+                                     weights)
+
 
                 else:
                     raise NotImplemented
@@ -495,7 +522,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                         weights = None
                     loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(), trans,
                                      weights)
-
+                elif args.model_para.model == 'pointnet2':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(),
+                                     weights)
                 else:
                     raise NotImplemented
 

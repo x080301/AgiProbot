@@ -152,9 +152,9 @@ class PointNetCls(nn.Module):
 
 
 class PointNetSegmentation(nn.Module):
-    def __init__(self, num_segmentation_type=2, feature_transform=False):
+    def __init__(self, num_segmentation_class=2, feature_transform=False):
         super(PointNetSegmentation, self).__init__()
-        self.k = num_segmentation_type
+        self.k = num_segmentation_class
         self.feature_transform = feature_transform
         self.feat = PointNetfeat(global_feat_only=False, feature_transform=feature_transform)
         self.conv1 = torch.nn.Conv1d(1088, 512, 1)
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     # out, _, _ = cls(sim_data)
     # print('class', out.size())
 
-    seg = PointNetSegmentation(num_segmentation_type=7, feature_transform=True)
+    seg = PointNetSegmentation(num_segmentation_class=7, feature_transform=True)
     out, trans_fea = seg(sim_data)
     print('seg', out.size())
     print(trans_fea.size())
