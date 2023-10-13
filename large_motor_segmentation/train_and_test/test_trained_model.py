@@ -215,9 +215,9 @@ def _pipeline_visualize_3_test_models():
 
 
 def _pipeline_test_trained_model():
-    file_dir = '2023_09_30_21_29'
-    pth_name = '0.8759808540344238_best_finetune.pth'
-    config_dir = 'segmentation_fine_tune_4_5_500epoch_weights.yaml'
+    file_dir = 'Outputs3/2023_10_13_09_25_08-17'
+    pth_name = '0.49370676279067993_best_finetune.pth'
+    config_dir = '4096_4_6_200epoch.yaml'
 
     files_folder = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\large_motor_tscan_npy'
     save_dir = 'E:/datasets/agiprobot/train_Output/' + file_dir + r'/visualization'
