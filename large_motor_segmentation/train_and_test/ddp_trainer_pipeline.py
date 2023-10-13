@@ -392,8 +392,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 raise NotImplemented
 
             loss.backward()
-
-            if i + 1 % args.accumulation_steps == 0:
+            if (i + 1) % args.accumulation_steps == 0:
                 opt.step()
                 opt.zero_grad()
 
