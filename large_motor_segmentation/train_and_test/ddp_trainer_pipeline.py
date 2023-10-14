@@ -348,50 +348,51 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
             points = points.permute(0, 2, 1).float()
             batch_size = points.size()[0]
 
-            # mcontext = model.no_sync if world_size > 1 and i + 1 % args.accumulation_steps != 0 else nullcontext
+            mcontext = model.no_sync if world_size > 1 and (i + 1) % args.accumulation_steps != 0 else nullcontext
             #
-            # with mcontext():
+            with mcontext():
 
-            seg_pred, trans = model(points)  # (B,segment_type,N),(B,3,3)
+                seg_pred, trans = model(points)  # (B,segment_type,N),(B,3,3)
 
-            # print(seg_pred)
+                # print(seg_pred)
 
-            # ******************* #
-            # backwards
-            # ******************* #
-            seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (B,segment_type,N) -> (B,N,segment_type)
+                # ******************* #
+                # backwards
+                # ******************* #
+                seg_pred = seg_pred.permute(0, 2, 1).contiguous()  # (B,segment_type,N) -> (B,N,segment_type)
 
-            batch_label = target.view(-1, 1)[:, 0].data
+                batch_label = target.view(-1, 1)[:, 0].data
 
-            if args.model_para.model == 'pct':
-                loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
-                                 weights, using_weight=args.use_class_weight)  # a scalar
-                if not args.stn_loss_weight == 0:
-                    loss = loss + util.feature_transform_reguliarzer(trans) * args.stn_loss_weight
+                if args.model_para.model == 'pct':
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type), target.view(-1, 1).squeeze(),
+                                     weights, using_weight=args.use_class_weight)  # a scalar
+                    if not args.stn_loss_weight == 0:
+                        loss = loss + util.feature_transform_reguliarzer(trans) * args.stn_loss_weight
 
-            elif args.model_para.model == 'pointnet':
-                if args.use_class_weight == 0:
-                    weights = None
-                loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
-                                 target.view(-1, 1).squeeze(),
-                                 trans,
-                                 weights)
-            elif args.model_para.model == 'pointnet2':
-                if args.use_class_weight == 0:
-                    weights = None
-                loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
-                                 target.view(-1, 1).squeeze(),
-                                 weights)
-            elif args.model_para.model == 'dgcnn':
-                if args.use_class_weight == 0:
-                    weights = None
-                loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
-                                 target.view(-1, 1).squeeze(), weights)
+                elif args.model_para.model == 'pointnet':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(),
+                                     trans,
+                                     weights)
+                elif args.model_para.model == 'pointnet2':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(),
+                                     weights)
+                elif args.model_para.model == 'dgcnn':
+                    if args.use_class_weight == 0:
+                        weights = None
+                    loss = criterion(seg_pred.view(-1, args.num_segmentation_type),
+                                     target.view(-1, 1).squeeze(), weights)
 
-            else:
-                raise NotImplemented
+                else:
+                    raise NotImplemented
 
-            loss.backward()
+                loss.backward()
+
             if (i + 1) % args.accumulation_steps == 0:
                 opt.step()
                 opt.zero_grad()
