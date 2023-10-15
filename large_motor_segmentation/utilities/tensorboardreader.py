@@ -315,7 +315,8 @@ def _pipeline_valid_sample_for_cross_validation():
 
 
 def _pipeline_valid_sample_visualization():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\cross_valid_no_warm_up'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\Outputs\pointnet'
+    plt.title("4096")
 
     y_max = 0
     y_mean = 0
@@ -327,12 +328,17 @@ def _pipeline_valid_sample_visualization():
             ea.Reload()
             mIoU = ea.scalars.Items('mIoU/eval_mIoU')
 
-        mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
+        # mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
+        mIoU_x = [i.step * 2 for i in mIoU]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
         y_smooth = np.interp(x_smooth, mIoU_x, mIoU_y)
-        plt.plot(x_smooth, y_smooth)
+
+        key = train_case_direction.split('_')[-1]
+
+        plt.plot(mIoU_x, mIoU_y, color=(0.9, 0.9, 0.9))
+        plt.plot(x_smooth, y_smooth, label=key)
 
         y_max = max(max(mIoU_y), y_max)
         y_mean += max(mIoU_y)
@@ -342,9 +348,9 @@ def _pipeline_valid_sample_visualization():
     plt.yscale('log')
 
     # Set the y-axis limits
-    plt.ylim(0.5, 0.91)
-    xmin = 90
-    xmax = 310
+    # plt.ylim(0.5, 0.91)
+    xmin = -10  # 90
+    xmax = 210  # 310
     plt.xlim(xmin, xmax)
 
     # Draw a horizontal line at the maximum y value
