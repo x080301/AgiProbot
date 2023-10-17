@@ -391,6 +391,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 else:
                     raise NotImplemented
 
+                loss = loss / args.accumulation_steps
                 loss.backward()
 
             if (i + 1) % args.accumulation_steps == 0:
