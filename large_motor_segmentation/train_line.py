@@ -1,7 +1,7 @@
 import os
 
 if __name__ == "__main__":
-    local_training=False
+    local_training = False
 
     while True:
         with open("cross_valid_motor_list.txt", 'r') as f:
