@@ -1,8 +1,9 @@
 import os
 
-if __name__ == "__main__":
-    local_training=False
+train_local = ['11_200.txt', '10_cross_valid_no_pretrain.txt']
 
+if __name__ == "__main__":
+    local_training = True
     while True:
         with open("cross_valid_motor_list.txt", 'r') as f:
             x = f.readlines()
@@ -11,7 +12,7 @@ if __name__ == "__main__":
             else:
                 cross_valid_motor_list = x[0].split(',')
 
-        with open("/data/users/fu/trained.txt", 'r') as f:
+        with open("trained.txt", 'r') as f:
             x = f.readlines()
             if len(x) == 0:
                 file_list = []
@@ -21,7 +22,7 @@ if __name__ == "__main__":
         executable_str = None
         valid_motors = None
         train_txt = None
-        for txt_file_name in sorted(os.listdir('train_line')):
+        for txt_file_name in train_local:
             if executable_str is not None:
                 break
 
@@ -49,13 +50,10 @@ if __name__ == "__main__":
         if executable_str is None:
             break
         else:
-            with open("/data/users/fu/trained.txt", 'w') as f:
+            with open("trained.txt", 'w') as f:
                 for i, trained_file_name in enumerate(file_list):
                     if i != 0:
                         f.write(',')
                     f.write(trained_file_name)
 
-            try:
-                exec(executable_str)
-            except Exception:
-                pass
+            exec(executable_str)

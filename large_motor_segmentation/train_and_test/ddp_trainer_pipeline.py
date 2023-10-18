@@ -30,7 +30,7 @@ files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test
                  'train.py', 'train_line.py', 'best_m.pth']
 
 
-def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid_motors=None):
+def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid_motors=None, local_training=False):
     # ******************* #
     # load arguments
     # ******************* #
@@ -50,7 +50,9 @@ def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid
     system_type = platform.system().lower()  # 'windows' or 'linux'
     is_local = True if system_type == 'windows' else False
     if is_local:
-        if args.finetune == 0:
+        if local_training:
+            data_set_direction = args.local_training_data_dir
+        elif args.finetune == 0:
             data_set_direction = args.pretrain_local_data_dir
         else:
             data_set_direction = args.fine_tune_local_data_dir
@@ -130,7 +132,8 @@ def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid
     return args, random_seed, is_local, save_direction, train_dataset, valid_dataset
 
 
-def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time):
+def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time,
+              local_training):
     best_mIoU = 0
     checkpoints_direction = save_direction + '/checkpoints/'
     torch.manual_seed(random_seed)
@@ -170,7 +173,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
 
             start_epoch = checkpoint['epoch']
 
-            end_epoch = start_epoch + 2 if is_local else start_epoch + args.epochs
+            if local_training:
+                end_epoch = start_epoch + args.epochs
+            elif is_local:
+                end_epoch = start_epoch + 2
+            else:
+                end_epoch = start_epoch + args.epochs
 
             if 'mIoU' in checkpoint:
                 print('train begin at %dth epoch with mIoU %.6f' % (start_epoch, checkpoint['mIoU']))
@@ -185,7 +193,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
 
             start_epoch = checkpoint['epoch']
 
-            end_epoch = start_epoch + 2 if is_local else start_epoch + args.epochs
+            if local_training:
+                end_epoch = start_epoch + args.epochs
+            elif is_local:
+                end_epoch = start_epoch + 2
+            else:
+                end_epoch = start_epoch + args.epochs
 
         state_dict = checkpoint['model_state_dict']
 
@@ -199,7 +212,12 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
         model.load_state_dict(new_state_dict)  # .to(rank)
     else:
         start_epoch = 0
-        end_epoch = 2 if is_local else args.epochs
+        if local_training:
+            end_epoch = start_epoch + args.epochs
+        elif is_local:
+            end_epoch = start_epoch + 2
+        else:
+            end_epoch = start_epoch + args.epochs
 
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])
@@ -518,7 +536,6 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 else:
                     raise NotImplemented
 
-
                 seg_pred = seg_pred.contiguous().view(-1, args.num_segmentation_type)
                 pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
                 correct = torch.sum(pred_choice == batch_label)
@@ -587,16 +604,19 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
 
 def train_ddp_func(train_txt,
                    config_dir,
-                   valid_motors=None):
+                   valid_motors=None,
+                   local_training=False):
     args, random_seed, is_local, save_direction, train_dataset, valid_dataset = init_training(train_txt,
                                                                                               config_dir=config_dir,
-                                                                                              valid_motors=valid_motors)
+                                                                                              valid_motors=valid_motors,
+                                                                                              local_training=local_training)
 
     start_time = time.time()
     world_size = torch.cuda.device_count()
 
     mp.spawn(train_ddp,
-             args=(world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time),
+             args=(world_size, args, random_seed, is_local, save_direction, train_dataset, valid_dataset, start_time,
+                   local_training),
              nprocs=world_size, join=True)
 
 
