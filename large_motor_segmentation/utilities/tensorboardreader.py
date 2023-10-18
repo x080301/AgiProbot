@@ -315,21 +315,23 @@ def _pipeline_valid_sample_for_cross_validation():
 
 
 def _pipeline_valid_sample_visualization():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\Outputs'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_11_23_55_cross_valid_no_warm_up'
     plt.title("DGCNN")
 
     y_max = 0
     y_mean = 0
     for train_case_direction in os.listdir(train_case_dir):
         directory = train_case_dir + '/' + train_case_direction + '/tensorboard_log'
+        # if '03-13' in directory:
+        #     continue
 
         for file_name in os.listdir(directory):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
-            mIoU = ea.scalars.Items('mIoU/eval_mIoU')
+            mIoU = ea.scalars.Items('valid_IoU/Bolt')#('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
 
         # mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
-        mIoU_x = [i.step * 2 for i in mIoU]
+        mIoU_x = [i.step-97  for i in mIoU]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
@@ -340,6 +342,7 @@ def _pipeline_valid_sample_visualization():
         plt.plot(mIoU_x, mIoU_y, color=(0.9, 0.9, 0.9))
         plt.plot(x_smooth, y_smooth, label=key)
 
+        print(max(mIoU_y))
         y_max = max(max(mIoU_y), y_max)
         y_mean += max(mIoU_y)
 
