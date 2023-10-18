@@ -314,8 +314,10 @@ def _pipeline_valid_sample_for_cross_validation():
     plt.show()
 
 
-def _pipeline_valid_sample_visualization():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_11_23_55_cross_valid_no_warm_up'
+def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\train_Output\2023_10_15_10_43_pointnet',
+                                         show='mIoU/eval_mIoU'):
+    print(show)
+    # train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_15_10_43_pointnet'
     plt.title("DGCNN")
 
     y_max = 0
@@ -328,10 +330,10 @@ def _pipeline_valid_sample_visualization():
         for file_name in os.listdir(directory):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
-            mIoU = ea.scalars.Items('valid_IoU/Bolt')#('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
+            mIoU = ea.scalars.Items(show)  # ('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
 
         # mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
-        mIoU_x = [i.step-97  for i in mIoU]
+        mIoU_x = [i.step - 97 for i in mIoU]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
@@ -376,5 +378,12 @@ def _pipeline_valid_sample_visualization():
     plt.show()
 
 
+def _mIoU_oa():
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_05_03_13_2048'
+    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
+    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
+    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
+
+
 if __name__ == '__main__':
-    _pipeline_valid_sample_visualization()
+    _mIoU_oa()
