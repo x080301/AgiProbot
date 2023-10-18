@@ -1,0 +1,5 @@
+from train_and_test.ddp_trainer_pipeline import train_ddp_func
+
+config_dir = 'config/dgcnn_46.yaml'
+print(config_dir)
+train_ddp_func(train_txt, config_dir, valid_motors)
