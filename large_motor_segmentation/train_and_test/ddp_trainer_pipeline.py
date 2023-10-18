@@ -518,6 +518,7 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
                 else:
                     raise NotImplemented
 
+
                 seg_pred = seg_pred.contiguous().view(-1, args.num_segmentation_type)
                 pred_choice = seg_pred.data.max(1)[1]  # array(batch_size*num_points)
                 correct = torch.sum(pred_choice == batch_label)
