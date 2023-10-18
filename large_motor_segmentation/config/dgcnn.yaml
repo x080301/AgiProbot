@@ -17,7 +17,7 @@ train:
   random_seed: 0 # 0->random choose a seed
   titel: 'segmentation_pretrain_syn'
 
-  train_batch_size: 8
+  train_batch_size: 4
   training: 1
 
   finetune: 0

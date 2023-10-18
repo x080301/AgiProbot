@@ -15,10 +15,6 @@ DATA:
 
 train:
   random_seed: 0 # 0->random choose a seed
-  ddp:
-    nodes: 1
-    gpus: 2 # num gpus per node
-    world_size: 2 # nodes×gpus
   titel: 'segmentation_pretrain_syn'
 
   train_batch_size: 4

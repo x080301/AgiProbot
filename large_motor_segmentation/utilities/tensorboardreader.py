@@ -315,7 +315,7 @@ def _pipeline_valid_sample_for_cross_validation():
 
 
 def _pipeline_valid_sample_visualization():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_16_13_28_DGCNN'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\Outputs'
     plt.title("DGCNN")
 
     y_max = 0
