@@ -385,5 +385,25 @@ def _mIoU_oa():
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
 
 
+def _double_train_log_epoch():
+    from torch.utils.tensorboard import SummaryWriter
+
+    train_log_dir = r'E:\datasets\agiprobot\train_Output\Outputs2\2023_10_19_12_55_08-17\tensorboard_log'
+    new_train_log_dir = train_log_dir + r'\new'
+
+    for file_name in os.listdir(train_log_dir):
+        ea = event_accumulator.EventAccumulator(train_log_dir + '/' + file_name)
+        ea.Reload()
+
+    os.makedirs(new_train_log_dir)
+    log_writer = SummaryWriter(new_train_log_dir)
+
+    for i in range(len(ea.scalars.Items('lr'))):
+
+        for key in ea.scalars.Keys():
+            epoch = (ea.scalars.Items(key)[i].step - 97) * 2 + 97
+            log_writer.add_scalar(key, ea.scalars.Items(key)[i].value, epoch)
+
+
 if __name__ == '__main__':
-    _mIoU_oa()
+    _double_train_log_epoch()
