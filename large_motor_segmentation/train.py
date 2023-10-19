@@ -17,6 +17,7 @@ if __name__ == "__main__":
     from train_and_test.ddp_trainer_pipeline import train_ddp_func
 
     valid_motors = '02&04'
-    config_dir = 'config/segmentation_fine_tune_4_6_200epoch.yaml'
+
+    config_dir = 'config/dgcnn_46.yaml'
     print(config_dir)
-    train_ddp_func(train_txt, config_dir, valid_motors, local_training=True)
+    train_ddp_func(train_txt, config_dir, valid_motors)

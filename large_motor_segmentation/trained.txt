@@ -1,1 +1,1 @@
-9_cross_valid_dgcnn.txt08&17,9_cross_valid_no_pretrain.txt08&17
+9_cross_valid_no_pretrain.txt08&17,9_cross_valid_no_pretrain.txt02&04
