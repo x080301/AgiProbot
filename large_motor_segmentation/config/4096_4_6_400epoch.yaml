@@ -10,9 +10,9 @@ DATA:
 
   num_segmentation_type: 6
   num_existing_type: 6
-  npoints: 2048
+  npoints: 4096
   sample_rate: 1
-  accumulation_steps: 1
+  accumulation_steps: 2
 
 train:
   random_seed: 0 # 0->random choose a seed
@@ -32,13 +32,13 @@ train:
   lr: 0.0001
   end_lr: 0.000001
   momentum: 0.9
-  epochs: 200
+  epochs: 400
 
   scheduler: 'cos_warmupLR' # cos, step, cos_warmupLR
   cos_warmupLR:
     warmup_epochs: 5  # number of epochs the warmup process takes
   model_para:
-    model: 'dgcnn'
+    model: 'pct'
     dropout: 0.5
     emb_dims: 1024
     k: 20 # k in knn

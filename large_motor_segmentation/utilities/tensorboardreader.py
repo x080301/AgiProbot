@@ -332,8 +332,8 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
             ea.Reload()
             mIoU = ea.scalars.Items(show)  # ('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
 
-        # mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
-        mIoU_x = [i.step*2for i in mIoU]
+        mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
+        #mIoU_x = [i.step for i in mIoU if i.step<=197]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
@@ -354,8 +354,8 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
     # Set the y-axis limits
     # plt.ylim(0.5, 0.91)
-    xmin = -10  # 90
-    xmax = 210  # 310
+    xmin = 90  # 90
+    xmax = 310  # 310
     plt.xlim(xmin, xmax)
 
     # Draw a horizontal line at the maximum y value
@@ -379,7 +379,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
 
 def _mIoU_oa():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_19_01_20_no_pretrain'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_05_03_13_2048'
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
@@ -388,21 +388,25 @@ def _mIoU_oa():
 def _double_train_log_epoch():
     from torch.utils.tensorboard import SummaryWriter
 
-    train_log_dir = r'E:\datasets\agiprobot\train_Output\Outputs2\2023_10_19_12_55_08-17\tensorboard_log'
-    new_train_log_dir = train_log_dir + r'\new'
+    dirs = r''
 
-    for file_name in os.listdir(train_log_dir):
-        ea = event_accumulator.EventAccumulator(train_log_dir + '/' + file_name)
-        ea.Reload()
+    for dir_name in os.listdir(dirs):
+        train_log_dir = dirs + '\\' + dir_name + r'\tensorboard_log'
 
-    os.makedirs(new_train_log_dir)
-    log_writer = SummaryWriter(new_train_log_dir)
+        for file_name in os.listdir(train_log_dir):
+            ea = event_accumulator.EventAccumulator(train_log_dir + '/' + file_name)
+            ea.Reload()
 
-    for i in range(len(ea.scalars.Items('lr'))):
+            os.remove(train_log_dir + '/' + file_name)
 
-        for key in ea.scalars.Keys():
-            epoch = (ea.scalars.Items(key)[i].step - 97) * 2 + 97
-            log_writer.add_scalar(key, ea.scalars.Items(key)[i].value, epoch)
+        log_writer = SummaryWriter(train_log_dir)
+
+        for i in range(len(ea.scalars.Items('lr'))):
+
+            for key in ea.scalars.Keys():
+                # epoch = (ea.scalars.Items(key)[i].step - 97) * 2 + 97
+                epoch = ea.scalars.Items(key)[i].step * 2
+                log_writer.add_scalar(key, ea.scalars.Items(key)[i].value, epoch)
 
 
 if __name__ == '__main__':
