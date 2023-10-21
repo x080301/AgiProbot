@@ -50,7 +50,8 @@ if __name__ == "__main__":
                         f.write(',')
                     f.write(trained_file_name)
 
-            try:
-                exec(executable_str)
-            except Exception:
-                pass
+            exec(executable_str)
+            # try:
+            #     exec(executable_str)
+            # except Exception:
+            #     pass
