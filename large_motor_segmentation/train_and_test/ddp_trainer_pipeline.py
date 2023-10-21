@@ -613,11 +613,13 @@ def train_ddp(rank, world_size, args, random_seed, is_local, save_direction, tra
 def train_ddp_func(train_txt,
                    config_dir,
                    valid_motors=None,
-                   local_training=False):
+                   local_training=False,
+                   direction=None):
     args, random_seed, is_local, save_direction, train_dataset, valid_dataset = init_training(train_txt,
                                                                                               config_dir=config_dir,
                                                                                               valid_motors=valid_motors,
-                                                                                              local_training=local_training)
+                                                                                              local_training=local_training,
+                                                                                              direction=direction)
 
     start_time = time.time()
     world_size = torch.cuda.device_count()
