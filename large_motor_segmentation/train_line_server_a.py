@@ -2,9 +2,15 @@ import os
 
 if __name__ == "__main__":
     local_training = False
-    cross_valid_motor_list = ['04&17', '09&06', '03&13']
 
     while True:
+
+        with open("cross_valid_motor_list-a.txt", 'r') as f:
+            x = f.readlines()
+            if len(x) == 0:
+                cross_valid_motor_list = []
+            else:
+                cross_valid_motor_list = x[0].split(',')
 
         with open("/home/ies/fu/train_output/trained.txt", 'r') as f:
             x = f.readlines()

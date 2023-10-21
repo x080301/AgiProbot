@@ -379,7 +379,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
 
 def _mIoU_oa():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_05_03_13_2048'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_16_13_28_DGCNN'
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
