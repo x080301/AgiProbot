@@ -30,7 +30,8 @@ files_to_save = ['config', 'data_preprocess', 'ideas', 'models', 'train_and_test
                  'train.py', 'train_line.py', 'best_m.pth']
 
 
-def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid_motors=None, local_training=False):
+def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid_motors=None, local_training=False,
+                  direction=None):
     # ******************* #
     # load arguments
     # ******************* #
@@ -66,21 +67,28 @@ def init_training(train_txt, config_dir='config/binary_segmentation.yaml', valid
     # ******************* #
     # make directions
     # ******************* #
+
     if is_local:
+        if direction is None:
+            direction = 'outputs/'
+
         if valid_motors is None:
-            direction = 'outputs/' + args.titel + '_' + datetime.datetime.now().strftime(
+            direction += args.titel + '_' + datetime.datetime.now().strftime(
                 '%Y_%m_%d_%H_%M')
         else:
-            direction = 'outputs/' + args.titel + '_' + datetime.datetime.now().strftime(
+            direction += args.titel + '_' + datetime.datetime.now().strftime(
                 '%Y_%m_%d_%H_%M') + '_' + valid_motors.split('&')[0] + '-' + valid_motors.split('&')[1]
     else:
+        if direction is None:
+            direction = '/data/users/fu/'
         if valid_motors is None:
-            direction = '/data/users/fu/' + args.titel + '_outputs/' + \
-                        datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+            direction += args.titel + '_outputs/' + \
+                         datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
         else:
-            direction = '/data/users/fu/' + args.titel + '_outputs/' + \
-                        datetime.datetime.now().strftime('%Y_%m_%d_%H_%M') + '_' + valid_motors.split('&')[0] + '-' + \
-                        valid_motors.split('&')[1]
+            direction += args.titel + '_outputs/' + \
+                         datetime.datetime.now().strftime('%Y_%m_%d_%H_%M') + '_' + valid_motors.split('&')[0] + '-' + \
+                         valid_motors.split('&')[1]
+
     if not os.path.exists(direction + '/checkpoints'):
         os.makedirs(direction + '/checkpoints')
     if not os.path.exists(direction + '/train_log'):
