@@ -2,9 +2,9 @@
 # 2023 10 02
 DATA:
   pretrain_server_data_dir: '/home/ies/fu/large_motor_tscan_npy'
-    pretrain_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
-    fine_tune_server_data_dir: '/home/ies/fu/large_motor_tscan_npy'
-    fine_tune_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
+  pretrain_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
+  fine_tune_server_data_dir: '/home/ies/fu/large_motor_tscan_npy'
+  fine_tune_local_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/np_test'
 
   local_training_data_dir: 'E:/datasets/agiprobot/fromJan/pcd_from_raw_data_18/large_motor_tscan_npy'
 
