@@ -18,6 +18,6 @@ if __name__ == "__main__":
 
     valid_motors = '02&04'
 
-    config_dir = 'config/dgcnn_46-a.yaml'
+    config_dir = 'config/dgcnn_46.yaml'
     print(config_dir)
     train_ddp_func(train_txt, config_dir, valid_motors)

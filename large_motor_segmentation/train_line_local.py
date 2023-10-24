@@ -21,7 +21,7 @@ if __name__ == "__main__":
         executable_str = None
         valid_motors = None
         train_txt = None
-        for txt_file_name in sorted(os.listdir('train_line'), reverse=True):
+        for txt_file_name in sorted(os.listdir('train_line_local'), reverse=True):
             if executable_str is not None:
                 break
 
@@ -30,21 +30,22 @@ if __name__ == "__main__":
                     if txt_file_name + cross_valid_motor not in file_list:
                         file_list.append(txt_file_name + cross_valid_motor)
 
-                        with open('train_line' + '/' + txt_file_name) as f:
+                        train_txt = 'train_line_local' + '/' + txt_file_name
+                        with open(train_txt) as f:
                             executable_str = f.read()
 
                         valid_motors = cross_valid_motor
-                        train_txt = 'train_line' + '/' + txt_file_name
 
                         break
             else:
                 if txt_file_name not in file_list:
                     file_list.append(txt_file_name)
 
-                    with open('train_line' + '/' + txt_file_name) as f:
+                    train_txt = 'train_line_local' + '/' + txt_file_name
+                    with open(train_txt) as f:
                         executable_str = f.read()
 
-                    train_txt = 'train_line' + '/' + txt_file_name
+
 
         if executable_str is None:
             break

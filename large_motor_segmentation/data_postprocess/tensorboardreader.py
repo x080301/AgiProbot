@@ -333,7 +333,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
             mIoU = ea.scalars.Items(show)  # ('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
 
         mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
-        #mIoU_x = [i.step for i in mIoU if i.step<=197]
+        # mIoU_x = [i.step for i in mIoU if i.step<=197]
         mIoU_y = [i.value for i in mIoU]
 
         x_smooth = np.linspace(min(mIoU_x), max(mIoU_x), 30)
@@ -348,7 +348,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
         y_max = max(max(mIoU_y), y_max)
         y_mean += max(mIoU_y)
 
-    y_mean = y_mean / 5
+    y_mean = y_mean / len(os.listdir(train_case_dir))
     # Set y-axis to logarithmic scale
     plt.yscale('log')
 
@@ -379,7 +379,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
 
 def _mIoU_oa():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_16_13_28_DGCNN'
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_20_20_44_4096_400ep'
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
