@@ -54,7 +54,7 @@ class PcdReader:
 
                 point_label = list(rgb_dic.keys())[int(label)]
                 if point_label != 'Noise':
-                    points.append(np.array([x, y, z]))
+                    points.append(np.array([-float(x), -float(y), float(z)]))
                     point_color = rgb_dic[point_label]
                     colors.append(np.array([a / 255.0 for a in point_color]))
 
@@ -233,8 +233,8 @@ def _pipeline_color_pcd_from_label_tool():
 def _pipeline_color_pcd_from_label_tool_directory():
     pcdreader = PcdReader()
 
-    read_dir = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\labeled pcd'
-    save_dir = r'E:\datasets\agiprobot\fromJan\pcd_from_raw_data_18\colored'
+    read_dir = r'E:\datasets\agiprobot\pipeline_demo\1'
+    save_dir = r'E:\datasets\agiprobot\pipeline_demo'
     for file_name in tqdm(os.listdir(read_dir)):
         pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
         pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))

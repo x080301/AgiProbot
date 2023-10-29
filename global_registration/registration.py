@@ -263,6 +263,7 @@ def zivid_3d_registration(target_point_cloud, source_point_cloud, algorithm='poi
     return registered_point_cloud
 
 
+
 if __name__ == "__main__":
     pass
     # _pipeline_registration_and_save()

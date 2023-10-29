@@ -322,7 +322,12 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
     y_max = 0
     y_mean = 0
-    for train_case_direction in os.listdir(train_case_dir):
+
+    direcotry_list = os.listdir(train_case_dir)
+    if 'checkpoints' in direcotry_list:
+        direcotry_list = ['']
+
+    for train_case_direction in direcotry_list:
         directory = train_case_dir + '/' + train_case_direction + '/tensorboard_log'
         # if '03-13' in directory:
         #     continue
@@ -330,6 +335,8 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
         for file_name in os.listdir(directory):
             ea = event_accumulator.EventAccumulator(directory + '/' + file_name)
             ea.Reload()
+
+            print(ea.scalars.Keys())
             mIoU = ea.scalars.Items(show)  # ('valid_IoU/Bolt')#('class_acc/eval_class_acc')#('mIoU/eval_mIoU')
 
         mIoU_x = [(i.step - 97) * 2 + 97 for i in mIoU]
@@ -348,7 +355,7 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
         y_max = max(max(mIoU_y), y_max)
         y_mean += max(mIoU_y)
 
-    y_mean = y_mean / len(os.listdir(train_case_dir))
+    y_mean = y_mean / len(direcotry_list)
     # Set y-axis to logarithmic scale
     plt.yscale('log')
 
@@ -379,10 +386,14 @@ def _pipeline_valid_sample_visualization(train_case_dir=r'E:\datasets\agiprobot\
 
 
 def _mIoU_oa():
-    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_10_20_20_44_4096_400ep'
-    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
+    train_case_dir = r'E:\datasets\agiprobot\train_Output\2023_07_20_05_52_100_epoch_pretain_4_5'
+
+
+    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='point_acc/eval_point_acc')
     _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
-    _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
+    # _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='class_acc/eval_class_acc')
+    # _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='mIoU/eval_mIoU')
+    # _pipeline_valid_sample_visualization(train_case_dir=train_case_dir, show='valid_IoU/Bolt')
 
 
 def _double_train_log_epoch():
