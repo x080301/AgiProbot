@@ -3,21 +3,36 @@
 Agiprobot is a project sponsored by the Carl Zeiss Foundation and implemented by KIT.
 	
 The project's primary objective is to develop an agile production system capable of dynamically adapting to uncertain product specifications through the application of artificial intelligence. To address this challenge, an interdisciplinary research group has been formed, comprising members from various institutes in mechanical engineering, electrical engineering, information technology, and computer science. This collaborative effort aims to harness complementary expertise effectively.
-	
-I joined this project as a research assistant and later and later as a student working on my graduation project. My role primarily focused on the autonomous disassembly of motors. I was tasked with designing an algorithm that, based on point cloud data acquired from other subsystems, could provide relevant parameters concerning the motor, especially the 6D pose of bolts. Additionally, I conducted theoretical research in related areas.![image](https://github.com/x080301/AgiProbot/assets/41547659/a55a3973-e168-4e54-bd0d-b314a3d9b8ad)
+
+I joined this project as a research assistant and later as a student working on my master thesis. My role primarily focused on the autonomous disassembly of motors. I was tasked with designing an algorithm that, based on point cloud data acquired from other subsystems, could provide relevant parameters concerning the motor, especially the 6D pose of bolts. Additionally, I conducted theoretical research in related areas.
+
+More details see READMEs in each folder.
+
+This project is still in progress, with ongoing work related to code organization and document writing.
+
+# Publication
+Co-first Author, CIPR LCE 2024, under reviewn.
+
+	H.Fu, C.Wu, J.Kaiser, E.Barczakc, J.Pfrommerd, G.Lanzab, M.Heizmannc, J.Beyerera, "6D Pose Estimation on Point Cloud Data through Prior Knowledge Integration: A Case Study in Autonomous Disassembly"
+
+Co-Author, CVPR 2024, submitted shortly (deadline: November 16th)
+
+	C.Wu, K.Wang, Z.Zhong, H.Fu, J.Pfrommer, J.Beyerer, "Rethinking the Attention Module Design for Point Cloud Analysis"
 
 
-more details see READMEs in each folder.
 
 # Structure
 
 ```
 .
-├─ agi_para_extracter                -- extracting screw position and further parameters of small motor
-├─ binary_segmentation               -- pretraining and fine tuning for binary segmentation of zivid-scaned model, PCT
-├─ large_motor_segmentation          -- pretraining and fine tuning for semantic segmentation of full model, PCT
-|    ├─ blender                           --generating synthetic large motor data set with blender 
-|    └─ ...
+├─ SFB_zivid/Haos_refactors		-- controlling robot arm and Zivid camera with ROS, scanning single-view point cloud and generating full model point cloud 
+├─ agi_para_extracter			-- interface for other team members: extracting bolt position and further parameters of small motor
+├─ alignment				-- aligning 6D pose of full motor
+├─ binary_segmentation			-- pretraining and fine tuning for binary segmentation of zivid-scaned model, PCT
+├─ blender				-- generating synthetic data set with blender 
+├─ global_registration			-- registering point cloud of full motor to the motor in single-view point cloud
+├─ large_motor_segmentation		-- pretraining and fine tuning for semantic segmentation of full model, PointNet, PointNet++, DGCNN, PCT
+├─ pipeline				-- full pipeline demo for the LCE paper
 ├─ .gitattributes
 ├─ .gitignore
 └─ README.md
