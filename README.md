@@ -9,7 +9,7 @@ More details see READMEs in each folder.
 
 This project is still in progress, with ongoing work related to code organization and document writing.
 
-# Publication
+# my related Publication
 Co-first Author, CIPR LCE 2024, under reviewn.
 
 	H.Fu, C.Wu, J.Kaiser, E.Barczakc, J.Pfrommerd, G.Lanzab, M.Heizmannc, J.Beyerera, "6D Pose Estimation on Point Cloud Data through Prior Knowledge Integration: A Case Study in Autonomous Disassembly"
