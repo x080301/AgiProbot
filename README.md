@@ -1,4 +1,4 @@
-# Github for Project AgiProbot
+# Project AgiProbot
 
 Agiprobot is a project sponsored by the Carl Zeiss Foundation and implemented by KIT. 	
 The project's primary objective is to develop an agile production system capable of dynamically adapting to uncertain product specifications through the application of artificial intelligence. To address this challenge, an interdisciplinary research group has been formed, comprising members from various institutes in mechanical engineering, electrical engineering, information technology, and computer science. This collaborative effort aims to harness complementary expertise effectively.
@@ -9,8 +9,8 @@ More details see READMEs in each folder.
 
 This project is still in progress, with ongoing work related to code organization and document writing.
 
-# my related Publication
-Co-first Author, CIPR LCE 2024, under reviewn.
+# My Related Publications
+Co-first Author, CIPR LCE 2024, under review.
 
 	H.Fu, C.Wu, J.Kaiser, E.Barczakc, J.Pfrommerd, G.Lanzab, M.Heizmannc, J.Beyerera, "6D Pose Estimation on Point Cloud Data through Prior Knowledge Integration: A Case Study in Autonomous Disassembly"
 
