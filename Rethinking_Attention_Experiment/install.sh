@@ -27,7 +27,8 @@ conda install -y pytorch=1.10.1 torchvision cudatoolkit=11.3 -c pytorch -c nvidi
 
 # install relevant packages
 # torch-scatter is a must, and others are optional
-pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
+pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0%2Bcu113/torch_scatter-2.0.9-cp37-cp37m-linux_x86_64.whl
+# pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
 # pip install torch-scatter torch-sparse torch-cluster torch-geometric -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
 pip install -r requirements.txt
 

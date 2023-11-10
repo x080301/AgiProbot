@@ -1,3 +1,7 @@
-from examples.segmentation.main import main_function
+import torch
+print(torch.__version__)
+print(torch.version.cuda)
 
-main_function()
+#from examples.segmentation.main import main_function
+
+#main_function()
