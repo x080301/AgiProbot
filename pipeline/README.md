@@ -5,3 +5,5 @@ We employ three distinct coordinate systems in our study. The first is the robot
 The objective of this multi-stage pipeline is to estimate the 6D pose of motor bolts in the robot's coordinate system, orientation $_{}^{\mathcal{A}}R_{bolt}^{} \in SO (3)$ and position $_{}^{\mathcal{A}}\textbf{t}_{bolt}^{} \in \mathbb{R}^3$, with the additional help of certain extra input data and prior knowledge of the starter motor. 
 %utilizing two scanned point clouds and prior knowledge of the starter motor.
 As illustrated in Fig.\ref{fig:pipeline}, our full pipeline consists of five stages: (i) binary segmentation on real-world scene point cloud; (ii) part segmentation on the extra input of full motor point cloud; (iii) registration between two point clouds; (iv) bolt point clustering for bolt position; and (v) normal alignment for bolt orientation.
+
+![](https://latex.codecogs.com/svg.image?&space;_{}^{}\textrm{}_{}^{\mathcal{A}}R_{bolt}^{}\in&space;SO(3))
