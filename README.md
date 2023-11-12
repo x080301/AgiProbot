@@ -34,6 +34,7 @@ Co-Author, CVPR 2024, submitted shortly (deadline: November 16th)
 ├─ global_registration			-- registering point cloud of full motor to the motor in single-view point cloud
 ├─ large_motor_segmentation		-- pretraining and fine tuning for part segmentation of full model. DL model: PointNet, PointNet++, DGCNN, PCT
 ├─ pipeline				-- full pipeline demo for the LCE paper
+├─ Rethinking_Attention_Experiment	-- Experiments for "Rethinking the Attention Module Design for Point Cloud Analysis"
 ├─ .gitattributes
 ├─ .gitignore
 └─ README.md
