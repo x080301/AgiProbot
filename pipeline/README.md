@@ -10,10 +10,10 @@ Finally, the third coordinate system is the coordinate system of the extra input
 The objective of this multi-stage pipeline is to estimate the 6D pose of motor bolts in the robot's coordinate system, 
 orientation and position, 
 with the additional help of certain extra input data and prior knowledge of the starter motor. 
-![pipeline](readme_documents/pipeline.png)
+![pipeline](pipeline/readme_documents/pipeline.png)
 As illustrated in figure, our full pipeline consists of five stages: (i) binary segmentation on real-world scene point cloud; (ii) part segmentation on the extra input of full motor point cloud; (iii) registration between two point clouds; (iv) bolt point clustering for bolt position; and (v) normal alignment for bolt orientation.
 The following is examples of input:
-
-
+![input](pipeline/readme_documents/inpput_and_output.png)
 and final result:
+![result](pipeline/readme_documents/demo_t.png)
 
