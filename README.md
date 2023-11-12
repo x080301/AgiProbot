@@ -26,15 +26,15 @@ Co-Author, CVPR 2024, submitted shortly (deadline: November 16th)
 
 ```
 .
-├─ SFB_zivid/Haos_refactors		-- controlling robot arm and Zivid camera with ROS, scanning single-view point cloud and generating full model point cloud 
-├─ agi_para_extracter			-- interface for other team members: extracting bolt position and further parameters of small motor
-├─ alignment				-- aligning 6D pose of full motor
-├─ binary_segmentation			-- pretraining and fine tuning for binary segmentation of single view model. DL model: PCT
-├─ blender				-- generating synthetic data set with blender 
-├─ global_registration			-- registering point cloud of full motor to the motor in single-view point cloud
-├─ large_motor_segmentation		-- pretraining and fine tuning for part segmentation of full model. DL model: PointNet, PointNet++, DGCNN, PCT
-├─ pipeline				-- full pipeline demo for the LCE paper
-├─ Rethinking_Attention_Experiment	-- Experiments for "Rethinking the Attention Module Design for Point Cloud Analysis"
+├─ SFB_zivid/Haos_refactors		-- completed		--controlling robot arm and Zivid camera with ROS, scanning single-view point cloud and generating full model point cloud 
+├─ agi_para_extracter			-- Document Sorting	-- interface for other team members: extracting bolt position and further parameters of small motor
+├─ alignment				-- Document Sorting	-- aligning 6D pose of full motor
+├─ binary_segmentation			-- Document Sorting	-- pretraining and fine tuning for binary segmentation of single view model. DL model: PCT
+├─ blender				-- Document Sorting	-- generating synthetic data set with blender 
+├─ global_registration			-- Document Sorting	-- registering point cloud of full motor to the motor in single-view point cloud
+├─ large_motor_segmentation		-- Document Sorting	-- pretraining and fine tuning for part segmentation of full model. DL model: PointNet, PointNet++, DGCNN, PCT
+├─ pipeline				-- Document Sorting	--full pipeline demo for the LCE paper
+├─ Rethinking_Attention_Experiment	-- Project in Progress	--Experiments for "Rethinking the Attention Module Design for Point Cloud Analysis"
 ├─ .gitattributes
 ├─ .gitignore
 └─ README.md
