@@ -27,7 +27,7 @@ Co-Author, CVPR 2024, submitted shortly (deadline: November 16th)
 ```
 .
 ├─ SFB_zivid/Haos_refactors		-- completed		--controlling robot arm and Zivid camera with ROS, scanning single-view point cloud and generating full model point cloud 
-├─ agi_para_extracter			-- Document Sorting	-- interface for other team members: extracting bolt position and further parameters of small motor
+├─ agi_para_extracter			-- completed		-- interface for other team members: extracting bolt position and further parameters of small motor
 ├─ alignment				-- Document Sorting	-- aligning 6D pose of full motor
 ├─ binary_segmentation			-- Document Sorting	-- pretraining and fine tuning for binary segmentation of single view model. DL model: PCT
 ├─ blender				-- Document Sorting	-- generating synthetic data set with blender 
