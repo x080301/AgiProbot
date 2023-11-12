@@ -33,7 +33,7 @@ Co-Author, CVPR 2024, submitted shortly (deadline: November 16th)
 ├─ blender				-- Document Sorting	-- generating synthetic data set with blender 
 ├─ global_registration			-- Document Sorting	-- registering point cloud of full motor to the motor in single-view point cloud
 ├─ large_motor_segmentation		-- Document Sorting	-- pretraining and fine tuning for part segmentation of full model. DL model: PointNet, PointNet++, DGCNN, PCT
-├─ pipeline				-- Document Sorting	--full pipeline demo for the LCE paper
+├─ pipeline				-- completed		--full pipeline demo for the LCE paper
 ├─ Rethinking_Attention_Experiment	-- Project in Progress	--Experiments for "Rethinking the Attention Module Design for Point Cloud Analysis"
 ├─ .gitattributes
 ├─ .gitignore
