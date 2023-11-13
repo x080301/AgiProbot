@@ -1,4 +1,6 @@
 # Alignment
-![img.png](img.png)
+![img.png](readme_documents/normal%20alignment.svg)
 
-to be written
+According to the coordinate system definition, the normal vectors of points on the main housing cylinder are parallel to the xoy plane. Based on the segmented full motor point cloud, we obtain the normal vectors for each point on the Main Housing part \cite{hoppe1992surface}. These normal vectors are represented as points in space, as shown in the Fig. \ref{fig: xoy-plane Determination}. It can be observed that these points form a spherical surface, which is most dense near the equator of the sphere. This equatorial plane corresponds to the motor's xoy plane and is determined by RANSAC \cite{fischler1981random}.
+
+With this plane as a reference, other orientations can be determined as Fig. \ref{fig: x,y,z-axis Determination}. The z-axis should be perpendicular to the xoy plane, directing from the Main Housing to the Connector. The positive direction of the y-axis is determined by projecting the vector from the center of the Main Housing to the center of the Solenoid onto the xoy plane. The x-axis is determined using the z-axis and y-axis with the right-hand rule. The motor's orientation $_{}^{\mathcal{C}}R_{motor}^{}$ aligns with the positive z-axis direction.
