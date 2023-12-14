@@ -163,6 +163,41 @@ def cylinder_and_its_normal():
     o3d.visualization.draw_geometries([inlier_cloud, outlier_cloud])
 
 
+def _visual_cylinder_and_its_normal():
+    pcd = o3d.io.read_point_cloud(r'E:\datasets\agiprobot\calibration\pcds\[  0. 100.   0.].pcd',
+                                  remove_nan_points=True,
+                                  remove_infinite_points=True,
+                                  print_progress=True)
+
+    # mesh_cylinder = o3d.geometry.TriangleMesh.create_cylinder(radius=100, height=400)
+    # pcd = mesh_cylinder.sample_points_uniformly(number_of_points=500000)
+
+    pcd.paint_uniform_color([0, 1, 0])
+    # o3d.visualization.draw_geometries([pcd])
+
+    normals = get_normal_array(pcd)
+    normals_pcd = o3d.geometry.PointCloud()
+    normals_pcd.points = o3d.utility.Vector3dVector(normals)
+    # RANSAC
+    plane_model, inliers = normals_pcd.segment_plane(distance_threshold=0.05,
+                                                     ransac_n=10,
+                                                     num_iterations=1000)
+
+    inlier_cloud = normals_pcd.select_by_index(inliers)
+    inlier_cloud.paint_uniform_color([1, 0, 0])
+    outlier_cloud = normals_pcd.select_by_index(inliers, invert=True)
+    outlier_cloud.paint_uniform_color([0, 1, 0])
+    # o3d.visualization.draw_geometries([inlier_cloud, outlier_cloud])
+
+    # o3d.io.write_point_cloud(filename=r'C:\Users\Lenovo\Desktop\sphere.pcd', pointcloud=(inlier_cloud + outlier_cloud))
+
+    inlier_cloud = pcd.select_by_index(inliers)
+    inlier_cloud.paint_uniform_color([1, 0, 0])  # ([0, 1, 0])#([1, 0, 0])
+    outlier_cloud = pcd.select_by_index(inliers, invert=True)
+    outlier_cloud.paint_uniform_color([0, 1, 0])
+    o3d.io.write_point_cloud(filename=r'C:\Users\Lenovo\Desktop\pcd.pcd', pointcloud=(inlier_cloud + outlier_cloud))
+
+
 def get_mainhousing_cylinder_axis(normals, pcd=None, visualization=False):
     normals_pcd = o3d.geometry.PointCloud()
     normals_pcd.points = o3d.utility.Vector3dVector(normals)
@@ -325,4 +360,5 @@ def _pipeline_demo_registration_for_zivid_3d_pcd():
 
 
 if __name__ == "__main__":
-    _pipeline_demo_registration_for_zivid_3d_pcd()
+    # _pipeline_demo_registration_for_zivid_3d_pcd()
+    _visual_cylinder_and_its_normal()

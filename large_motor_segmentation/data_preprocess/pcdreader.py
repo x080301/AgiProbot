@@ -66,6 +66,55 @@ class PcdReader:
 
         return self.points, self.colors
 
+    def read_pcd_ASCII_bin(self, pcd_file_dir):
+        '''
+        read the output pcd file of the segmentation tool
+
+        :param pcd_file_dir: direction of the .pcd file
+        :return:
+            points: N×3 numpy array, x,y,z position of the points
+            colors: N×3 numpy array, normalized r,g,b of the points. The colour is chosen according to rgb_dic.
+        '''
+
+        points = []
+        colors = []
+        with open(pcd_file_dir, 'r') as f:
+
+            head_flag = True
+            while True:
+                # for i in range(12):
+                oneline = f.readline()
+
+                if head_flag:
+                    if 'DATA ascii' in oneline:
+                        head_flag = False
+                        continue
+                    else:
+                        continue
+
+                if not oneline:
+                    break
+
+                x, y, z, _, label, _ = list(oneline.strip('\n').split(' '))  # '0 0 0 1646617 8 -1\n'
+
+                point_label = list(rgb_dic.keys())[int(label)]
+                if point_label != 'Noise':
+                    points.append(np.array([-float(x), -float(y), float(z)]))
+
+                    if point_label == 'Void':
+                        point_label = 'Connector'
+
+                    point_color = rgb_dic[point_label]
+                    colors.append(np.array([a / 255.0 for a in point_color]))
+
+        self.points = np.array(points)
+        self.colors = np.array(colors)
+
+        # print(self.points.shape)
+        # print(self.colors.shape)
+
+        return self.points, self.colors
+
     def read_directory(self, dir, save_dir):
         for i, root, _, file_name in enumerate(os.walk(dir)):
             # for dir_name in os.listdir(dir):
@@ -233,10 +282,20 @@ def _pipeline_color_pcd_from_label_tool():
 def _pipeline_color_pcd_from_label_tool_directory():
     pcdreader = PcdReader()
 
-    read_dir = r'E:\datasets\agiprobot\pipeline_demo\1'
-    save_dir = r'E:\datasets\agiprobot\pipeline_demo'
+    read_dir = r'E:\datasets\agiprobot\binary_label\zivid\1'
+    save_dir = r'E:\datasets\agiprobot\binary_label\big_motor_zivid_binlabel'
     for file_name in tqdm(os.listdir(read_dir)):
         pcdreader.read_pcd_ASCII(os.path.join(read_dir, file_name))
+        pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
+
+
+def _pipeline_color_pcd_from_label_tool_directory_bin():
+    pcdreader = PcdReader()
+
+    read_dir = r'E:\datasets\agiprobot\binary_label\zivid\1'
+    save_dir = r'E:\datasets\agiprobot\binary_label\big_motor_zivid_binlabel'
+    for file_name in tqdm(os.listdir(read_dir)):
+        pcdreader.read_pcd_ASCII_bin(os.path.join(read_dir, file_name))
         pcdreader.save_and_visual_pcd(os.path.join(save_dir, file_name))
 
 
@@ -250,4 +309,4 @@ if __name__ == "__main__":
     # _pipeline_generate_background_only_pcd()
     # _pipeline_get_screw_only_pcd()
     # _pipeline_color_pcd_from_label_tool()
-    _pipeline_color_pcd_from_label_tool_directory()
+    _pipeline_color_pcd_from_label_tool_directory_bin()

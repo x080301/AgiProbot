@@ -482,11 +482,12 @@ class PCTPipeline(nn.Module):
 
         # _                                             (B,128,N) + (B,128,T) -> (B,128,N+T)
 
-        x1 = self.sa1(point_wise_features)  # _                           (B,128,N+T) -> (B,128,N+T)
+        x1 = self.sa1(point_wise_features)  # _         (B,128,N+T) -> (B,128,N+T)
         x2 = self.sa2(x1)  # _                          (B,128,N+T) -> (B,128,N+T)
         x3 = self.sa3(x2)  # _                          (B,128,N+T) -> (B,128,N+T)
         x4 = self.sa4(x3)  # _                          (B,128,N+T) -> (B,128,N+T)
-        point_wise_features = torch.cat((x1, x2, x3, x4), dim=-2)  # _    (B,128,N+T)*4 -> (B,512,N+T)
+        point_wise_features = torch.cat((x1, x2, x3, x4), dim=-2)
+        # _                                             (B,128,N+T)*4 -> (B,512,N+T)
 
         # _                                             (B,512,N+T) -> (B,512,N) + (B,512,T)
 
@@ -495,3 +496,4 @@ class PCTPipeline(nn.Module):
 
         # return logits
         return point_segmentation_pred, transform_matrix
+

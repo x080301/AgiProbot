@@ -7,6 +7,7 @@ _my_test.py
 run.log
 *.pyc
 
+APESv2_protected/
 agi_project_10_category-main/
 AgiProbot_Motor_Segmentation_WACV2023-main
 APES_Dev-master/
