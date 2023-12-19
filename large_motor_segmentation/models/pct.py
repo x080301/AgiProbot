@@ -496,4 +496,3 @@ class PCTPipeline(nn.Module):
 
         # return logits
         return point_segmentation_pred, transform_matrix
-
