@@ -66,10 +66,10 @@ train:  # only valid when running the training script
     vote:
       enable: false
       num_vote: 10
-      vote_start_epoch: 50
+      vote_start_epoch: 150
     data_augmentation:
       enable: true
-      num_aug: 1  # how many augmentations applied in one point cloud at the same time
+      num_aug: 1  # 1,2,3 how many augmentations applied in one point cloud at the same time
       jitter:  # add Gaussian noise to point cloud xyz positions
         enable: true
         std: 0.01
@@ -92,16 +92,16 @@ train:  # only valid when running the training script
         x_range: [0.66, 1.5]
         y_range: [0.66, 1.5]
         z_range: [0.66, 1.5]
-        isotropic: false
+        isotropic: false # True with normal in dataset
   ddp:
-    which_gpu: [0]
+    which_gpu: [0,1]
     syn_bn: true  # synchronize batch normalization among gpus
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 12345  # please choose an available port
     nnodes: 1  # how many PCs you want to use
-    nproc_this_node: 1  # how many gpu you want to use in current PC, should match 'which_gpu'
+    nproc_this_node: 2  # how many gpu you want to use in current PC, should match 'which_gpu'
     rank_starts_from: 0  # don't change this if you use only one PC
-    world_size: 1  # this is equal to 'nproc_this_node' if you only use one PC
+    world_size: 2  # this is equal to 'nproc_this_node' if you only use one PC
     random_seed: 0 # 0: randomly choose a seed with current time, otherwise use the given seed.
   amp: false  # whether to use automatic mixed precision
   grad_clip:

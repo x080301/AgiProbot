@@ -91,7 +91,7 @@ test:  # only valid when running the test script
 neighbor2point_block:
   enable: true
   STN: true
-  embedding:
+  embedding: # DGCNN
     K: [32, 32]
     group_type: [center_diff, center_diff]  # neighbor, diff, center_neighbor or center_diff
     normal_channel: false
@@ -128,7 +128,7 @@ neighbor2point_block:
     v_in: [128, 128]
     v_out: [128, 128]
     num_heads: [4, 4]
-  attention:
+  attention: # attention in feature learning
     K: [32, 32, 32, 32, 32]  # 3 values in the list means neighbor2point_block includes 3 neighbor2point layers. The 'K' for each layer is 40, 40 and 40 respectively
     attention_mode: [scalar_dot, scalar_dot, scalar_dot, scalar_dot, scalar_dot] # scalar_dot, vector_sub
     group_type: [diff, diff, diff, diff, diff]  # diff, neighbor, center_neighbor or center_diff
