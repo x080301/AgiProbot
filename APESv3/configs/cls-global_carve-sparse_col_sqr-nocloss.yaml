@@ -222,10 +222,10 @@ test:  # only valid when running the test script
     batch_size_per_gpu: 8
     num_workers: 2  # ${test.ddp.nproc_this_node}  # the number of subprocess to load data
   ddp:
-    which_gpu: [2]
+    which_gpu: [0,1]
     master_port: 12376  # please choose an available port
-    nproc_this_node: 1  # how many gpu you want to use in current PC, should match 'which_gpu'
-    world_size: 1  # this is equal to 'nproc_this_node' if you only use one PC
+    nproc_this_node: 2  # how many gpu you want to use in current PC, should match 'which_gpu'
+    world_size: 2  # this is equal to 'nproc_this_node' if you only use one PC
   visualize_preds:
     enable: true
     format: png  # png or ply
