@@ -15,6 +15,7 @@ from pytorch3d.ops import sample_farthest_points as fps
 import pickle
 import warnings
 from torch.utils.data import Dataset
+
 warnings.filterwarnings('ignore')
 
 
@@ -38,7 +39,8 @@ def download_shapenet_Yi650M(url, saved_path):
 
 
 class ShapeNet_Yi650M(torch.utils.data.Dataset):
-    def __init__(self, root, json_path, mapping, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
+    def __init__(self, root, json_path, mapping, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                 rotate, which_axis,
                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
                  x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable=False, vote_num=10):
         self.root = root
@@ -61,17 +63,21 @@ class ShapeNet_Yi650M(torch.utils.data.Dataset):
             if rotate:
                 self.augmentation_list.append([data_augmentation.rotate, [which_axis, angle_range]])
             if translate:
-                self.augmentation_list.append([data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
+                self.augmentation_list.append(
+                    [data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
             if anisotropic_scale:
-                self.augmentation_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
+                self.augmentation_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
             if not jitter and not rotate and not translate and not anisotropic_scale:
                 raise ValueError('At least one kind of data augmentation should be applied!')
             if len(self.augmentation_list) < num_aug:
-                raise ValueError(f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
+                raise ValueError(
+                    f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
         if self.vote:
             self.vote_list = []
-            for _ in range(self.vote_num-1):
-                self.vote_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
+            for _ in range(self.vote_num - 1):
+                self.vote_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
         self.samples = []
         for each_path in json_path:
             with open(each_path, 'r') as f:
@@ -103,7 +109,7 @@ class ShapeNet_Yi650M(torch.utils.data.Dataset):
             else:
                 indices = np.random.choice(len(pcd), self.selected_points, replace=True)
                 pcd = pcd[indices]
-        
+
         # get point cloud augmentation or voting list
         if self.partition == "test" and self.vote:
             pcd_tmp_list = []
@@ -149,7 +155,8 @@ class ShapeNet_Yi650M(torch.utils.data.Dataset):
 
 def get_shapenet_dataset_Yi650M(saved_path, mapping, selected_points, fps_enable, augmentation, num_aug, jitter,
                                 std, clip, rotate, which_axis, angle_range, translate, x_translate_range,
-                                y_translate_range, z_translate_range, anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic, 
+                                y_translate_range, z_translate_range, anisotropic_scale, x_scale_range, y_scale_range,
+                                z_scale_range, isotropic,
                                 vote_enable=False, vote_num=10):
     dataset_path = Path(saved_path, 'shapenetcore_partanno_segmentation_benchmark_v0')
     # get datasets json files
@@ -158,23 +165,23 @@ def get_shapenet_dataset_Yi650M(saved_path, mapping, selected_points, fps_enable
     test_json = os.path.join(dataset_path, 'train_test_split', 'shuffled_test_file_list.json')
 
     # get datasets
-    train_set       = ShapeNet_Yi650M(dataset_path, [train_json], mapping, selected_points, fps_enable, 
-                                      augmentation, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
-                                      translate, x_translate_range, y_translate_range, z_translate_range, 
-                                      anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
-    validation_set  = ShapeNet_Yi650M(dataset_path, [validation_json], mapping, selected_points, fps_enable,
-                                      False, num_aug, jitter, std, clip, rotate, which_axis, angle_range, 
-                                      translate, x_translate_range, y_translate_range, z_translate_range, 
-                                      anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
-    trainval_set    = ShapeNet_Yi650M(dataset_path, [train_json, validation_json], mapping, selected_points, fps_enable,
-                                      augmentation, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
-                                      translate, x_translate_range, y_translate_range, z_translate_range, 
-                                      anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
-    test_set        = ShapeNet_Yi650M(dataset_path, [test_json], mapping, selected_points, fps_enable, 
-                                      False, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
-                                      translate, x_translate_range, y_translate_range, z_translate_range, 
-                                      anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic,
-                                      vote_enable, vote_num)
+    train_set = ShapeNet_Yi650M(dataset_path, [train_json], mapping, selected_points, fps_enable,
+                                augmentation, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
+                                translate, x_translate_range, y_translate_range, z_translate_range,
+                                anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
+    validation_set = ShapeNet_Yi650M(dataset_path, [validation_json], mapping, selected_points, fps_enable,
+                                     False, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
+                                     translate, x_translate_range, y_translate_range, z_translate_range,
+                                     anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
+    trainval_set = ShapeNet_Yi650M(dataset_path, [train_json, validation_json], mapping, selected_points, fps_enable,
+                                   augmentation, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
+                                   translate, x_translate_range, y_translate_range, z_translate_range,
+                                   anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic)
+    test_set = ShapeNet_Yi650M(dataset_path, [test_json], mapping, selected_points, fps_enable,
+                               False, num_aug, jitter, std, clip, rotate, which_axis, angle_range,
+                               translate, x_translate_range, y_translate_range, z_translate_range,
+                               anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic,
+                               vote_enable, vote_num)
 
     return train_set, validation_set, trainval_set, test_set
 
@@ -193,7 +200,8 @@ def download_shapenet_AnTao350M(url, saved_path):
 
 
 class ShapeNet_AnTao350M(torch.utils.data.Dataset):
-    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
+    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                 rotate, which_axis,
                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
                  x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable=False, vote_num=10):
         self.selected_points = selected_points
@@ -210,17 +218,21 @@ class ShapeNet_AnTao350M(torch.utils.data.Dataset):
             if rotate:
                 self.augmentation_list.append([data_augmentation.rotate, [which_axis, angle_range]])
             if translate:
-                self.augmentation_list.append([data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
+                self.augmentation_list.append(
+                    [data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
             if anisotropic_scale:
-                self.augmentation_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
+                self.augmentation_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
             if not jitter and not rotate and not translate and not anisotropic_scale:
                 raise ValueError('At least one kind of data augmentation should be applied!')
             if len(self.augmentation_list) < num_aug:
-                raise ValueError(f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
+                raise ValueError(
+                    f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
         if self.vote:
             self.vote_list = []
-            for _ in range(self.vote_num-1):
-                self.vote_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])        
+            for _ in range(self.vote_num - 1):
+                self.vote_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
         self.all_pcd = []
         self.all_cls_label = []
         self.all_seg_label = []
@@ -262,7 +274,7 @@ class ShapeNet_AnTao350M(torch.utils.data.Dataset):
             # shuffle points within one point cloud
             indices = np.random.choice(2048, self.selected_points, False)
             pcd = pcd[indices]
-        
+
         if self.partition == "test" and self.vote:
             pcd_tmp_list = []
             pcd_list = []
@@ -297,21 +309,32 @@ class ShapeNet_AnTao350M(torch.utils.data.Dataset):
         return pcd, seg_label, category_onehot
 
 
-def get_shapenet_dataset_AnTao350M(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
-                                   x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable=False, vote_num=10):
+def get_shapenet_dataset_AnTao350M(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                                   rotate, which_axis,
+                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                   anisotropic_scale,
+                                   x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable=False,
+                                   vote_num=10):
     # get dataset
-    train_set       = ShapeNet_AnTao350M(saved_path, 'train', selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    train_set = ShapeNet_AnTao350M(saved_path, 'train', selected_points, fps_enable, augmentation, num_aug, jitter, std,
+                                   clip, rotate, which_axis,
+                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                   anisotropic_scale,
                                    x_scale_range, y_scale_range, z_scale_range, isotropic)
-    validation_set  = ShapeNet_AnTao350M(saved_path, 'val', selected_points, fps_enable, False, num_aug, jitter, std, clip, rotate, which_axis,
-                                        angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    validation_set = ShapeNet_AnTao350M(saved_path, 'val', selected_points, fps_enable, False, num_aug, jitter, std,
+                                        clip, rotate, which_axis,
+                                        angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                        anisotropic_scale,
                                         x_scale_range, y_scale_range, z_scale_range, isotropic)
-    trainval_set    = ShapeNet_AnTao350M(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    trainval_set = ShapeNet_AnTao350M(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug,
+                                      jitter, std, clip, rotate, which_axis,
+                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                      anisotropic_scale,
                                       x_scale_range, y_scale_range, z_scale_range, isotropic)
-    test_set        = ShapeNet_AnTao350M(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std, clip, rotate, which_axis,
-                                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    test_set = ShapeNet_AnTao350M(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std, clip,
+                                  rotate, which_axis,
+                                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                  anisotropic_scale,
                                   x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable, vote_num)
     return train_set, validation_set, trainval_set, test_set
 
@@ -330,7 +353,8 @@ def download_modelnet_AnTao420M(url, saved_path):
 
 
 class ModelNet_AnTao420M(torch.utils.data.Dataset):
-    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
+    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                 rotate, which_axis,
                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
                  x_scale_range, y_scale_range, z_scale_range, isotropic):
         self.selected_points = selected_points
@@ -344,13 +368,16 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
             if rotate:
                 self.augmentation_list.append([data_augmentation.rotate, [which_axis, angle_range]])
             if translate:
-                self.augmentation_list.append([data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
+                self.augmentation_list.append(
+                    [data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
             if anisotropic_scale:
-                self.augmentation_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
+                self.augmentation_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
             if not jitter and not rotate and not translate and not anisotropic_scale:
                 raise ValueError('At least one kind of data augmentation should be applied!')
             if len(self.augmentation_list) < num_aug:
-                raise ValueError(f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
+                raise ValueError(
+                    f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
         self.all_pcd = []
         self.all_cls_label = []
         if partition == 'trainval':
@@ -360,7 +387,8 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
             file = glob.glob(os.path.join(saved_path, 'modelnet40_ply_hdf5_2048', '*test*.h5'))
             file.sort()
         else:
-            raise ValueError('modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
+            raise ValueError(
+                'modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
         for h5_name in file:
             f = h5py.File(h5_name, 'r+')
             pcd = f['data'][:].astype('float32')
@@ -400,15 +428,21 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
         return pcd, category_onehot
 
 
-def get_modelnet_dataset_AnTao420M(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+def get_modelnet_dataset_AnTao420M(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                                   rotate, which_axis,
+                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                   anisotropic_scale,
                                    x_scale_range, y_scale_range, z_scale_range, isotropic):
     # get dataset
-    trainval_set = ModelNet_AnTao420M(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    trainval_set = ModelNet_AnTao420M(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug,
+                                      jitter, std, clip, rotate, which_axis,
+                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                      anisotropic_scale,
                                       x_scale_range, y_scale_range, z_scale_range, isotropic)
-    test_set = ModelNet_AnTao420M(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std, clip, rotate, which_axis,
-                                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    test_set = ModelNet_AnTao420M(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std, clip,
+                                  rotate, which_axis,
+                                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                  anisotropic_scale,
                                   x_scale_range, y_scale_range, z_scale_range, isotropic)
     return trainval_set, test_set
 
@@ -429,9 +463,10 @@ def download_modelnet_Alignment1024(url, saved_path):
 
 
 class ModelNet_Alignment1024(torch.utils.data.Dataset):
-    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                 angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
-                 x_scale_range, y_scale_range, z_scale_range, isotropic):
+    def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
+                 rotate, which_axis, angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                 anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic):
+
         super(ModelNet_Alignment1024, self).__init__()
         self.selected_points = selected_points
         self.fps_enable = fps_enable
@@ -444,19 +479,23 @@ class ModelNet_Alignment1024(torch.utils.data.Dataset):
             if rotate:
                 self.augmentation_list.append([data_augmentation.rotate, [which_axis, angle_range]])
             if translate:
-                self.augmentation_list.append([data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
+                self.augmentation_list.append(
+                    [data_augmentation.translate, [x_translate_range, y_translate_range, z_translate_range]])
             if anisotropic_scale:
-                self.augmentation_list.append([data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
+                self.augmentation_list.append(
+                    [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
             if not jitter and not rotate and not translate and not anisotropic_scale:
                 raise ValueError('At least one kind of data augmentation should be applied!')
             if len(self.augmentation_list) < num_aug:
-                raise ValueError(f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
+                raise ValueError(
+                    f'num_aug should not be less than the number of enabled augmentations. num_aug: {num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
         if partition == 'trainval':
             data_path = os.path.join(saved_path, 'modelnet40_normal_resampled', 'modelnet40_train_1024pts_fps.dat')
         elif partition == 'test':
             data_path = os.path.join(saved_path, 'modelnet40_normal_resampled', 'modelnet40_test_1024pts_fps.dat')
         else:
-            raise ValueError('modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
+            raise ValueError(
+                'modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
         with open(data_path, 'rb') as f:
             self.all_pcd, self.all_cls_label = pickle.load(f)
         self.all_pcd = np.stack(self.all_pcd, axis=0)[:, :, :3]
@@ -477,8 +516,8 @@ class ModelNet_Alignment1024(torch.utils.data.Dataset):
             pcd, _ = fps(pcd, K=self.selected_points, random_start_point=True)
             pcd = pcd[0].cpu().numpy()  # squeeze the batch size dimension
         else:
-            print(f'selected points: {self.selected_points}')
-            indices = np.random.choice(1024, self.selected_points, False)
+            # indices = np.random.choice(1024, self.selected_points, False)
+            indices = np.random.choice(len(pcd), self.selected_points, False)
             pcd = pcd[indices]
         if self.augmentation:
             choice = np.random.choice(len(self.augmentation_list), self.num_aug, replace=False)
@@ -492,17 +531,24 @@ class ModelNet_Alignment1024(torch.utils.data.Dataset):
         return pcd, category_onehot
 
 
-def get_modelnet_dataset_Alignment1024(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                       angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+def get_modelnet_dataset_Alignment1024(saved_path, selected_points, fps_enable, augmentation, num_aug, jitter, std,
+                                       clip, rotate, which_axis,
+                                       angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                       anisotropic_scale,
                                        x_scale_range, y_scale_range, z_scale_range, isotropic):
     # get dataset
-    trainval_set = ModelNet_Alignment1024(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug, jitter, std, clip, rotate, which_axis,
-                                          angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    trainval_set = ModelNet_Alignment1024(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug,
+                                          jitter, std, clip, rotate, which_axis,
+                                          angle_range, translate, x_translate_range, y_translate_range,
+                                          z_translate_range, anisotropic_scale,
                                           x_scale_range, y_scale_range, z_scale_range, isotropic)
-    test_set = ModelNet_Alignment1024(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std, clip, rotate, which_axis,
-                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+    test_set = ModelNet_Alignment1024(saved_path, 'test', selected_points, fps_enable, False, num_aug, jitter, std,
+                                      clip, rotate, which_axis,
+                                      angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
+                                      anisotropic_scale,
                                       x_scale_range, y_scale_range, z_scale_range, isotropic)
     return trainval_set, test_set
+
 
 # ================================================================================
 # Normal shapenet dataloader
@@ -512,6 +558,7 @@ def pc_normalize(pc):
     m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
     pc = pc / m
     return pc
+
 
 def download_shapenet_Normal(url, saved_path):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -527,7 +574,8 @@ def download_shapenet_Normal(url, saved_path):
         print('Unpacking dataset, please wait...')
         shutil.unpack_archive(file, saved_path)
         os.remove(file)
-    
+
+
 class ShapeNet_Normal(torch.utils.data.Dataset):
     def __init__(self, root, json_path, mapping, config_dataloader,
                  vote_enable=False, vote_num=10,
@@ -539,24 +587,32 @@ class ShapeNet_Normal(torch.utils.data.Dataset):
         self.vote_num = vote_num
         self.normal_channel = normal_channel
         self.mapping = mapping
-        
+
         config_aug = config_dataloader.data_augmentation
         self.augmentation = config_aug.enable
         self.num_aug = config_aug.num_aug
         if self.augmentation:
             self.augmentation_list = []
             if config_aug.rotate_perturbation.enable:
-                self.augmentation_list.append([data_augmentation.rotate_perturbation_with_normal, [config_aug.rotate_perturbation.std, config_aug.rotate_perturbation.clip]])
+                self.augmentation_list.append([data_augmentation.rotate_perturbation_with_normal,
+                                               [config_aug.rotate_perturbation.std,
+                                                config_aug.rotate_perturbation.clip]])
             if config_aug.rotate.enable:
                 self.augmentation_list.append([data_augmentation.rotate_with_normal, [config_aug.rotate.angle_range]])
             if config_aug.translate.enable:
-                self.augmentation_list.append([data_augmentation.translate, [config_aug.translate.x_range, config_aug.translate.y_range, config_aug.translate.z_range, self.normal_channel]])
+                self.augmentation_list.append([data_augmentation.translate,
+                                               [config_aug.translate.x_range, config_aug.translate.y_range,
+                                                config_aug.translate.z_range, self.normal_channel]])
             if config_aug.anisotropic_scale.enable:
-                self.augmentation_list.append([data_augmentation.anisotropic_scale, [config_aug.anisotropic_scale.x_range, config_aug.anisotropic_scale.y_range, config_aug.anisotropic_scale.z_range, True, self.normal_channel]])
+                self.augmentation_list.append([data_augmentation.anisotropic_scale,
+                                               [config_aug.anisotropic_scale.x_range,
+                                                config_aug.anisotropic_scale.y_range,
+                                                config_aug.anisotropic_scale.z_range, True, self.normal_channel]])
             if not config_aug.rotate_perturbation.enable and not config_aug.rotate.enable and not config_aug.translate.enable and not config_aug.anisotropic_scale.enable:
                 raise ValueError('At least one kind of data augmentation should be applied!')
             if len(self.augmentation_list) < self.num_aug:
-                raise ValueError(f'num_aug should not be less than the number of enabled augmentations. num_aug: {config_aug.num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
+                raise ValueError(
+                    f'num_aug should not be less than the number of enabled augmentations. num_aug: {config_aug.num_aug}, number of enabled augmentations: {len(self.augmentation_list)}')
 
         if len(json_path) == 1:
             file_name, _ = os.path.splitext(os.path.basename(json_path[0]))
@@ -565,8 +621,10 @@ class ShapeNet_Normal(torch.utils.data.Dataset):
             self.partition = "trainval"
         if self.vote:
             self.vote_list = []
-            for _ in range(self.vote_num-1):
-                self.vote_list.append([data_augmentation.anisotropic_scale, [config_aug.anisotropic_scale.x_range, config_aug.anisotropic_scale.y_range, config_aug.anisotropic_scale.z_range, True, self.normal_channel]])
+            for _ in range(self.vote_num - 1):
+                self.vote_list.append([data_augmentation.anisotropic_scale,
+                                       [config_aug.anisotropic_scale.x_range, config_aug.anisotropic_scale.y_range,
+                                        config_aug.anisotropic_scale.z_range, True, self.normal_channel]])
         self.samples = []
         for each_path in json_path:
             with open(each_path, 'r') as f:
@@ -586,7 +644,7 @@ class ShapeNet_Normal(torch.utils.data.Dataset):
             pcd = data[:, :6]
         else:
             pcd = data[:, :3]
-        
+
         # get a fixed number of points from every point cloud
         if self.fps_enable:
             if self.selected_points <= len(pcd):
@@ -606,7 +664,7 @@ class ShapeNet_Normal(torch.utils.data.Dataset):
             else:
                 indices = np.random.choice(len(pcd), self.selected_points, replace=True)
                 pcd = pcd[indices]
-        
+
         # get point cloud augmentation or voting list
         if self.partition == "test" and self.vote:
             pcd_tmp_list = []
@@ -645,12 +703,13 @@ class ShapeNet_Normal(torch.utils.data.Dataset):
         # pcd.shape == (3, N)    seg_label.shape == (50, N)    category_onehot.shape == (16, 1)
         return pcd, seg_label, category_onehot
 
+
 def get_shapenet_dataset_Normal(config_datasets, config_dataloader, config_vote):
     saved_path = config_datasets.saved_path
     mapping = config_datasets.mapping
     vote_enable = config_vote.enable
     vote_num = config_vote.num_vote
-    
+
     dataset_path = Path(saved_path, 'shapenetcore_partanno_segmentation_benchmark_v0_normal')
     # get datasets json files
     train_json = os.path.join(dataset_path, 'train_test_split', 'shuffled_train_file_list.json')
@@ -658,9 +717,9 @@ def get_shapenet_dataset_Normal(config_datasets, config_dataloader, config_vote)
     test_json = os.path.join(dataset_path, 'train_test_split', 'shuffled_test_file_list.json')
 
     # get datasets
-    train_set       = ShapeNet_Normal(dataset_path, [train_json], mapping, config_dataloader)
-    validation_set  = ShapeNet_Normal(dataset_path, [validation_json], mapping, config_dataloader)
-    trainval_set    = ShapeNet_Normal(dataset_path, [train_json, validation_json], mapping, config_dataloader)
-    test_set        = ShapeNet_Normal(dataset_path, [test_json], mapping, config_dataloader,
-                                      vote_enable, vote_num)
+    train_set = ShapeNet_Normal(dataset_path, [train_json], mapping, config_dataloader)
+    validation_set = ShapeNet_Normal(dataset_path, [validation_json], mapping, config_dataloader)
+    trainval_set = ShapeNet_Normal(dataset_path, [train_json, validation_json], mapping, config_dataloader)
+    test_set = ShapeNet_Normal(dataset_path, [test_json], mapping, config_dataloader,
+                               vote_enable, vote_num)
     return train_set, validation_set, trainval_set, test_set
