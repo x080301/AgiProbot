@@ -477,6 +477,7 @@ class ModelNet_Alignment1024(torch.utils.data.Dataset):
             pcd, _ = fps(pcd, K=self.selected_points, random_start_point=True)
             pcd = pcd[0].cpu().numpy()  # squeeze the batch size dimension
         else:
+            print(f'selected points: {self.selected_points}')
             indices = np.random.choice(1024, self.selected_points, False)
             pcd = pcd[indices]
         if self.augmentation:
