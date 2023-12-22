@@ -29,12 +29,12 @@ def _pipline_merge_2_pdfs(is_file_found=True):
 
 
     dir = r'C:\Users\Lenovo\Desktop'
-    merged_name = 'HaoFu_ApplicationDocuments_ML_Schienenverkehr.pdf'
+    merged_name = 'HaoFu_ApplicationDocuments_V-803_23.pdf'
     if is_file_found:
 
         merger = PyPDF2.PdfMerger()
-        files = ['cover.pdf', 'KIT.pdf', 'CV.pdf', 'master.pdf',
-                 'HaoFu_Publication_LCE_BoltPosePK_en.pdf'
+        files = ['cover.pdf', 'KIT_TU_Berlin_4_0.pdf', 'CV.pdf', 'master.pdf',
+                 'HaoFu_Publication_LCE_BoltPosePK_en.pdf','HaoFu_MA_Proposal.pdf'
                  ]
         for filename in files:
             merger.append(PyPDF2.PdfReader(os.path.join(dir, filename)))

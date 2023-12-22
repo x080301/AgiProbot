@@ -18,7 +18,6 @@ from utils.save_backup import save_backup
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
-
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -51,7 +50,7 @@ def main(config):
         OmegaConf.save(config, f'{local_path}/usr_config_test.yaml')
         print(f'Overwrite the previous run config with new run config.')
     config = set_config_run(config, "test")
-    
+
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
         dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
@@ -62,14 +61,14 @@ def main(config):
     # multiprocessing for ddp
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(']', '')
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
+            ']', '')
         mp.spawn(test, args=(config,), nprocs=config.test.ddp.nproc_this_node, join=True)
     else:
         raise ValueError('Please use GPU for testing!')
 
 
 def test(local_rank, config):
-
     rank = config.test.ddp.rank_starts_from + local_rank
     # set files path
     if config.test.suffix.enable:
@@ -79,7 +78,7 @@ def test(local_rank, config):
         artifacts_path = f'./artifacts/{config.wandb.name}'
         backup_path = f'/data/users/wan/artifacts/{config.wandb.name}'
     zip_file_path = f'{artifacts_path}.zip'
-    
+
     # process initialization
     os.environ['MASTER_ADDR'] = str(config.test.ddp.master_addr)
     os.environ['MASTER_PORT'] = str(config.test.ddp.master_port)
@@ -90,21 +89,52 @@ def test(local_rank, config):
     # gpu setting
     device = f'cuda:{local_rank}'
     torch.cuda.set_device(device)  # which gpu is used by current process
-    print(f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.test.ddp.which_gpu[local_rank]}')
+    print(
+        f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.test.ddp.which_gpu[local_rank]}')
 
     # get datasets
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
-         _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug, config.train.dataloader.data_augmentation.jitter.enable,
-                                                                 config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                 config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                 config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                 config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+        _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
+                                                                config.train.dataloader.selected_points,
+                                                                config.train.dataloader.fps,
+                                                                config.train.dataloader.data_augmentation.enable,
+                                                                config.train.dataloader.data_augmentation.num_aug,
+                                                                config.train.dataloader.data_augmentation.jitter.enable,
+                                                                config.train.dataloader.data_augmentation.jitter.std,
+                                                                config.train.dataloader.data_augmentation.jitter.clip,
+                                                                config.train.dataloader.data_augmentation.rotate.enable,
+                                                                config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                config.train.dataloader.data_augmentation.translate.enable,
+                                                                config.train.dataloader.data_augmentation.translate.x_range,
+                                                                config.train.dataloader.data_augmentation.translate.y_range,
+                                                                config.train.dataloader.data_augmentation.translate.z_range,
+                                                                config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
-        _, test_set = dataloader.get_modelnet_dataset_Alignment1024(config.datasets.saved_path, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug,
-                                                                    config.train.dataloader.data_augmentation.jitter.enable, config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                    config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                    config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+        _, test_set = dataloader.get_modelnet_dataset_Alignment1024(config.datasets.saved_path,
+                                                                    config.train.dataloader.selected_points,
+                                                                    config.train.dataloader.fps,
+                                                                    config.train.dataloader.data_augmentation.enable,
+                                                                    config.train.dataloader.data_augmentation.num_aug,
+                                                                    config.train.dataloader.data_augmentation.jitter.enable,
+                                                                    config.train.dataloader.data_augmentation.jitter.std,
+                                                                    config.train.dataloader.data_augmentation.jitter.clip,
+                                                                    config.train.dataloader.data_augmentation.rotate.enable,
+                                                                    config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                    config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                    config.train.dataloader.data_augmentation.translate.enable,
+                                                                    config.train.dataloader.data_augmentation.translate.x_range,
+                                                                    config.train.dataloader.data_augmentation.translate.y_range,
+                                                                    config.train.dataloader.data_augmentation.translate.z_range,
+                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                    config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
     else:
         raise ValueError('Not implemented!')
 
@@ -112,7 +142,10 @@ def test(local_rank, config):
     test_sampler = torch.utils.data.distributed.DistributedSampler(test_set)
 
     # get dataloader
-    test_loader = torch.utils.data.DataLoader(test_set, config.test.dataloader.batch_size_per_gpu, num_workers=config.test.dataloader.num_workers, drop_last=True, prefetch_factor=config.test.dataloader.prefetch, pin_memory=config.test.dataloader.pin_memory, sampler=test_sampler)
+    test_loader = torch.utils.data.DataLoader(test_set, config.test.dataloader.batch_size_per_gpu,
+                                              num_workers=config.test.dataloader.num_workers, drop_last=True,
+                                              prefetch_factor=config.test.dataloader.prefetch,
+                                              pin_memory=config.test.dataloader.pin_memory, sampler=test_sampler)
 
     # get model
     my_model = cls_model.ModelNetModel(config)
@@ -133,25 +166,28 @@ def test(local_rank, config):
     pred_list = []
     cls_label_list = []
     sample_list = []
-    
+
     vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
     for idx_mode in vis_test_gather_dict["trained"].keys():
         vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
     if config.test.visualize_downsampled_points.enable:
         for idx_mode in vis_test_gather_dict["ds_points"].keys():
-            vis_test_gather_dict["ds_points"][idx_mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+            vis_test_gather_dict["ds_points"][idx_mode] = [[] for _ in
+                                                           range(len(config.neighbor2point_block.downsample.M))]
     if config.test.visualize_attention_heatmap.enable:
         for idx_mode in vis_test_gather_dict["heatmap"].keys():
-            vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+            vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
+                                                         range(len(config.neighbor2point_block.downsample.M))]
 
     with torch.no_grad():
         if rank == 0:
-            print(f'Print Results: {config.test.print_results} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable} - Visualize Heatmap: {config.test.visualize_attention_heatmap.enable}')
+            print(
+                f'Print Results: {config.test.print_results} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable} - Visualize Heatmap: {config.test.visualize_attention_heatmap.enable}')
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
         for i, (samples, cls_labels) in enumerate(test_loader):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
-            
+
             if config.train.aux_loss.enable:
                 preds = preds[-1]
                 loss = loss_fn(preds, cls_labels)
@@ -160,15 +196,16 @@ def test(local_rank, config):
 
             # collect the result among all gpus
             pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.test.ddp.nproc_this_node)]
-            cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in range(config.test.ddp.nproc_this_node)]
+            cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in
+                                     range(config.test.ddp.nproc_this_node)]
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
-            
+
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
             torch.distributed.all_gather(sample_gather_list, samples)
             torch.distributed.all_reduce(loss)
-            
+
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
                 pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
@@ -184,9 +221,10 @@ def test(local_rank, config):
         preds = np.concatenate(pred_list, axis=0)
         cls_labels = np.concatenate(cls_label_list, axis=0)
         samples = np.concatenate(sample_list, axis=0)
-        
+
         vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict, vis_test_gather_dict)
+        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict,
+                                          vis_test_gather_dict)
 
         # calculate metrics
         acc = metrics.calculate_accuracy(preds, cls_labels)
@@ -203,7 +241,7 @@ def test(local_rank, config):
             for category in list(category_acc.keys()):
                 f.write(f'{category}: {category_acc[category]}\n')
             f.close()
-        
+
         # generating visualized downsampled points files
         if config.test.visualize_downsampled_points.enable:
             ds_path = f'{artifacts_path}/vis_ds_points'
@@ -215,12 +253,16 @@ def test(local_rank, config):
                 else:
                     index = vis_concat_dict["ds_points"][idx_mode]
                 if config.test.few_points.enable:
-                    visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode, artifacts_path)
+                    visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
+                                                                     artifacts_path)
                 else:
                     if config.neighbor2point_block.downsample.bin.enable[0]:
-                        visualize_modelnet_downsampled_points_bin(config, samples, index, vis_concat_dict["trained"]["bin_prob"], cls_labels, idx_mode, artifacts_path)
+                        visualize_modelnet_downsampled_points_bin(config, samples, index,
+                                                                  vis_concat_dict["trained"]["bin_prob"], cls_labels,
+                                                                  idx_mode, artifacts_path)
                     else:
-                        visualize_modelnet_downsampled_points(config, samples, index, cls_labels, idx_mode, artifacts_path)
+                        visualize_modelnet_downsampled_points(config, samples, index, cls_labels, idx_mode,
+                                                              artifacts_path)
         # generating visualized heatmap files
         if config.test.visualize_attention_heatmap.enable:
             hm_path = f'{artifacts_path}/vis_heatmap'
@@ -234,13 +276,15 @@ def test(local_rank, config):
                 visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, idx_mode, artifacts_path)
             if config.neighbor2point_block.downsample.boltzmann.enable[0]:
                 aps_boltz = vis_concat_dict["trained"]["aps_boltz"]
-                visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann', artifacts_path)
+                visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann',
+                                                artifacts_path)
         if config.test.visualize_combine.enable:
             assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
             visualize_modelnet_combine(config, artifacts_path)
-        
+
         # storage and backup
         # save_backup(artifacts_path, zip_file_path, backup_path)
+
 
 if __name__ == '__main__':
     main()

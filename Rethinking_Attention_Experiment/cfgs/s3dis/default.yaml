@@ -2,7 +2,7 @@
 dataset:
   common:
     NAME: S3DIS
-    data_root: /data/users/fu/S3DIS/s3disfull #/dev/shm/MEMORY_DATA/s3disfull #/userhome/zyx/dataset/pointcloud/s3dis__for_pointnext/s3disfull #/dev/shm/MEMORY_DATA/s3disfull
+    data_root: /dev/shm/MEMORY_DATA/s3disfull #/userhome/zyx/dataset/pointcloud/s3dis__for_pointnext/s3disfull #/dev/shm/MEMORY_DATA/s3disfull
     test_area: 5 #5
     voxel_size: 0.04
   train:

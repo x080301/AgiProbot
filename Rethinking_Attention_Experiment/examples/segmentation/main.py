@@ -5,6 +5,7 @@ If more than 1 GPU is provided, will launch multi processing distributed trainin
 if you only wana use 1 GPU, set `CUDA_VISIBLE_DEVICES` accordingly
 Author: Guocheng Qian @ 2022, guocheng.qian@kaust.edu.sa
 """
+import __init__
 import argparse, yaml, os, logging, numpy as np, csv, wandb, glob
 from tqdm import tqdm
 import torch, torch.nn as nn
@@ -16,8 +17,7 @@ from openpoints.utils import set_random_seed, save_checkpoint, load_checkpoint, 
 from openpoints.utils import AverageMeter, ConfusionMatrix, get_mious
 from openpoints.dataset import build_dataloader_from_cfg, get_features_by_keys, get_class_weights
 from openpoints.dataset.data_util import voxelize
-from openpoints.dataset.semantic_kitti.semantickitti import load_label_kitti, load_pc_kitti, remap_lut_read, \
-    remap_lut_write, get_semantickitti_file_list
+from openpoints.dataset.semantic_kitti.semantickitti import load_label_kitti, load_pc_kitti, remap_lut_read, remap_lut_write, get_semantickitti_file_list
 from openpoints.transforms import build_transforms_from_cfg
 from openpoints.optim import build_optimizer_from_cfg
 from openpoints.scheduler import build_scheduler_from_cfg
@@ -72,7 +72,7 @@ def load_data(data_path, cfg):
         data = torch.load(data_path)  # xyzrgbl, N*7
         coord, feat = data[0], data[1]
         if cfg.dataset.test.split != 'test':
-            label = data[2]
+           label = data[2]
         else:
             label = None
         feat = np.clip((feat + 1) / 2., 0, 1).astype(np.float32)
@@ -83,7 +83,7 @@ def load_data(data_path, cfg):
     coord -= coord.min(0)
 
     idx_points = []
-    voxel_idx, reverse_idx_part, reverse_idx_sort = None, None, None
+    voxel_idx, reverse_idx_part,reverse_idx_sort = None, None, None
     voxel_size = cfg.dataset.common.get('voxel_size', None)
 
     if voxel_size is not None:
@@ -93,10 +93,10 @@ def load_data(data_path, cfg):
         if cfg.get('test_mode', 'multi_voxel') == 'nearest_neighbor':
             idx_select = np.cumsum(np.insert(count, 0, 0)[0:-1]) + np.random.randint(0, count.max(), count.size) % count
             idx_part = idx_sort[idx_select]
-            npoints_subcloud = voxel_idx.max() + 1
+            npoints_subcloud = voxel_idx.max()+1
             idx_shuffle = np.random.permutation(npoints_subcloud)
-            idx_part = idx_part[idx_shuffle]  # idx_part: randomly sampled points of a voxel
-            reverse_idx_part = np.argsort(idx_shuffle, axis=0)  # revevers idx_part to sorted
+            idx_part = idx_part[idx_shuffle] # idx_part: randomly sampled points of a voxel
+            reverse_idx_part = np.argsort(idx_shuffle, axis=0) # revevers idx_part to sorted
             idx_points.append(idx_part)
             reverse_idx_sort = np.argsort(idx_sort, axis=0)
         else:
@@ -325,8 +325,7 @@ def main(gpu, cfg):
                 writer = csv.writer(f)
                 writer.writerow(data)
     else:
-        logging.warning(
-            'Testing using multiple GPUs is not allowed for now. Running testing after this training is required.')
+        logging.warning('Testing using multiple GPUs is not allowed for now. Running testing after this training is required.')
     if writer is not None:
         writer.close()
     dist.destroy_process_group()
@@ -497,8 +496,8 @@ def validate_sphere(model, val_loader, cfg, num_votes=1, data_transform=None):
         # save per room
         rooms = val_loader.dataset.clouds_rooms[0]
 
-        for idx in tqdm(range(len(rooms) - 1), desc='save visualization', ascii=True):
-            start_idx, end_idx = rooms[idx], rooms[idx + 1]
+        for idx in tqdm(range(len(rooms)-1), desc='save visualization', ascii=True):
+            start_idx, end_idx = rooms[idx], rooms[idx+1]
             # write_obj(coord[start_idx:end_idx], colors[start_idx:end_idx],
             #             os.path.join(cfg.vis_dir, f'input-{file_name}-{idx}.obj'))
             # # output ground truth labels
@@ -506,7 +505,7 @@ def validate_sphere(model, val_loader, cfg, num_votes=1, data_transform=None):
             #             os.path.join(cfg.vis_dir, f'gt-{file_name}-{idx}.obj'))
             # # output pred labels
             write_obj(coord[start_idx:end_idx], pred[start_idx:end_idx],
-                      os.path.join(cfg.vis_dir, f'pix4point-{file_name}-{idx}.obj'))
+                        os.path.join(cfg.vis_dir, f'pix4point-{file_name}-{idx}.obj'))
     return miou, macc, oa, ious, accs
 
 
@@ -550,7 +549,7 @@ def test(model, data_list, cfg, num_votes=1):
         logging.info(f'Test [{cloud_idx}]/[{len_data}] cloud')
         cm = ConfusionMatrix(num_classes=cfg.num_classes, ignore_index=cfg.ignore_index)
         all_logits = []
-        coord, feat, label, idx_points, voxel_idx, reverse_idx_part, reverse_idx = load_data(data_path, cfg)
+        coord, feat, label, idx_points, voxel_idx, reverse_idx_part, reverse_idx  = load_data(data_path, cfg)
         if label is not None:
             label = torch.from_numpy(label.astype(np.int).squeeze()).cuda(non_blocking=True)
 
@@ -559,12 +558,12 @@ def test(model, data_list, cfg, num_votes=1):
         pbar = tqdm(range(len(idx_points)), ascii=True)
         for idx_subcloud in pbar:
             pbar.set_description(f"Test on {cloud_idx}-th cloud [{idx_subcloud}]/[{len_part}]]")
-            if not (nearest_neighbor and idx_subcloud > 0):
+            if not (nearest_neighbor and idx_subcloud>0):
                 idx_part = idx_points[idx_subcloud]
                 coord_part = coord[idx_part]
                 coord_part -= coord_part.min(0)
 
-                feat_part = feat[idx_part] if feat is not None else None
+                feat_part =  feat[idx_part] if feat is not None else None
                 data = {'pos': coord_part}
                 if feat_part is not None:
                     data['x'] = feat_part
@@ -572,12 +571,9 @@ def test(model, data_list, cfg, num_votes=1):
                     data = pipe_transform(data)
                 if 'heights' in cfg.feature_keys and 'heights' not in data.keys():
                     if 'semantickitti' in cfg.dataset.common.NAME.lower():
-                        data['heights'] = torch.from_numpy((coord_part[:, gravity_dim:gravity_dim + 1] - coord_part[:,
-                                                                                                         gravity_dim:gravity_dim + 1].min()).astype(
-                            np.float32)).unsqueeze(0)
+                        data['heights'] = torch.from_numpy((coord_part[:, gravity_dim:gravity_dim + 1] - coord_part[:, gravity_dim:gravity_dim + 1].min()).astype(np.float32)).unsqueeze(0)
                     else:
-                        data['heights'] = torch.from_numpy(
-                            coord_part[:, gravity_dim:gravity_dim + 1].astype(np.float32)).unsqueeze(0)
+                        data['heights'] = torch.from_numpy(coord_part[:, gravity_dim:gravity_dim + 1].astype(np.float32)).unsqueeze(0)
                 if not cfg.dataset.common.get('variable', False):
                     if 'x' in data.keys():
                         data['x'] = data['x'].unsqueeze(0)
@@ -626,16 +622,16 @@ def test(model, data_list, cfg, num_votes=1):
                 file_name = f'{dataset_name}-{cloud_idx}'
 
             write_obj(coord, feat,
-                      #   os.path.join(cfg.vis_dir, f'input-{file_name}.obj'))
+                    #   os.path.join(cfg.vis_dir, f'input-{file_name}.obj'))
                       os.path.join(cfg.vis_dir, f'input-{file_name}.txt'))
             # output ground truth labels
             if gt is not None:
                 write_obj(coord, gt,
-                          # os.path.join(cfg.vis_dir, f'gt-{file_name}.obj'))
-                          os.path.join(cfg.vis_dir, f'gt-{file_name}.txt'))
+                        # os.path.join(cfg.vis_dir, f'gt-{file_name}.obj'))
+                        os.path.join(cfg.vis_dir, f'gt-{file_name}.txt'))
             # output pred labels
             write_obj(coord, pred,
-                      #   os.path.join(cfg.vis_dir, f'pred-{file_name}.obj'))
+                    #   os.path.join(cfg.vis_dir, f'pred-{file_name}.obj'))
                       os.path.join(cfg.vis_dir, f'pred-{file_name}.txt'))
 
         if cfg.get('save_pred', False):
@@ -653,12 +649,11 @@ def test(model, data_list, cfg, num_votes=1):
                 pred.tofile(store_path)
             elif 'scannet' in cfg.dataset.common.NAME.lower():
                 pred = pred.cpu().numpy().squeeze()
-                label_int_mapping = {0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12,
-                                     12: 14, 13: 16, 14: 24, 15: 28, 16: 33, 17: 34, 18: 36, 19: 39}
-                pred = np.vectorize(label_int_mapping.get)(pred)
-                save_file_name = data_path.split('/')[-1].split('_')
-                save_file_name = save_file_name[0] + '_' + save_file_name[1] + '.txt'
-                save_file_name = os.path.join(cfg.save_path, save_file_name)
+                label_int_mapping={0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 12: 14, 13: 16, 14: 24, 15: 28, 16: 33, 17: 34, 18: 36, 19: 39}
+                pred=np.vectorize(label_int_mapping.get)(pred)
+                save_file_name=data_path.split('/')[-1].split('_')
+                save_file_name=save_file_name[0]+'_'+save_file_name[1]+'.txt'
+                save_file_name=os.path.join(cfg.save_path,save_file_name)
                 np.savetxt(save_file_name, pred, fmt="%d")
 
         if label is not None:
@@ -671,79 +666,17 @@ def test(model, data_list, cfg, num_votes=1):
             all_cm.value += cm.value
 
     if 'scannet' in cfg.dataset.common.NAME.lower():
-        logging.info(
-            f" Please select and zip all the files (DON'T INCLUDE THE FOLDER) in {cfg.save_path} and submit it to"
-            f" Scannet Benchmark https://kaldir.vc.in.tum.de/scannet_benchmark/. ")
+        logging.info(f" Please select and zip all the files (DON'T INCLUDE THE FOLDER) in {cfg.save_path} and submit it to"
+                     f" Scannet Benchmark https://kaldir.vc.in.tum.de/scannet_benchmark/. ")
 
     if label is not None:
         tp, union, count = all_cm.tp, all_cm.union, all_cm.count
         if cfg.distributed:
             dist.all_reduce(tp), dist.all_reduce(union), dist.all_reduce(count)
         miou, macc, oa, ious, accs = get_mious(tp, union, count)
-        return miou, macc, oa, ious, accs, all_cm  # cm
+        return miou, macc, oa, ious, accs, all_cm#cm
     else:
         return None, None, None, None, None, None
-
-
-def main_function():
-    parser = argparse.ArgumentParser('Scene segmentation training/testing')
-    parser.add_argument('--cfg', type=str, default='cfgs/s3dis/pointmetabase-l.yaml',
-                        help='config file')  # ('--cfg', type=str, required=True, help='config file')
-    parser.add_argument('--profile', action='store_true', default=False, help='set to True to profile speed')
-    args, opts = parser.parse_known_args()
-    cfg = EasyConfig()
-    cfg.load(args.cfg, recursive=True)
-    cfg.update(opts)  # overwrite the default arguments in yml
-
-    cfg.wandb.use_wandb = True
-
-    if cfg.seed is None:
-        cfg.seed = np.random.randint(1, 10000)
-
-    # init distributed env first, since logger depends on the dist info.
-    cfg.rank, cfg.world_size, cfg.distributed, cfg.mp = dist_utils.get_dist_info(cfg)
-    cfg.sync_bn = cfg.world_size > 1
-
-    # init log dir
-    cfg.task_name = args.cfg.split('.')[-2].split('/')[-2]  # task/dataset name, \eg s3dis, modelnet40_cls
-    cfg.cfg_basename = args.cfg.split('.')[-2].split('/')[-1]  # cfg_basename, \eg pointnext-xl
-    tags = [
-        cfg.task_name,  # task name (the folder of name under ./cfgs
-        cfg.mode,
-        cfg.cfg_basename,  # cfg file name
-        f'ngpus{cfg.world_size}',
-        f'seed{cfg.seed}',
-    ]
-    for i, opt in enumerate(opts):
-        if 'rank' not in opt and 'dir' not in opt and 'root' not in opt and 'pretrain' not in opt and 'path' not in opt and 'wandb' not in opt and '/' not in opt:
-            tags.append(opt)
-    cfg.root_dir = os.path.join(cfg.root_dir, cfg.task_name)
-
-    cfg.is_training = cfg.mode not in ['test', 'testing', 'val', 'eval', 'evaluation']
-    if cfg.mode in ['resume', 'val', 'test']:
-        resume_exp_directory(cfg, pretrained_path=cfg.pretrained_path)
-        cfg.wandb.tags = [cfg.mode]
-    else:
-        generate_exp_directory(cfg, tags, additional_id=os.environ.get('MASTER_PORT', None))
-        cfg.wandb.tags = tags
-    os.environ["JOB_LOG_DIR"] = cfg.log_dir
-    cfg_path = os.path.join(cfg.run_dir, "cfg.yaml")
-    with open(cfg_path, 'w') as f:
-        yaml.dump(cfg, f, indent=2)
-        os.system('cp %s %s' % (args.cfg, cfg.run_dir))
-    cfg.cfg_path = cfg_path
-
-    # wandb config
-    cfg.wandb.name = cfg.run_name
-
-    # multi processing.
-    if cfg.mp:
-        port = find_free_port()
-        cfg.dist_url = f"tcp://localhost:{port}"
-        print('using mp spawn for distributed training')
-        mp.spawn(main, nprocs=cfg.world_size, args=(cfg,))
-    else:
-        main(0, cfg)
 
 
 if __name__ == "__main__":
