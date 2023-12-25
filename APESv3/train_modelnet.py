@@ -72,9 +72,10 @@ def train(local_rank, config, random_seed,
         run = wandb.init(project=config.wandb.project, entity=config.wandb.entity, config=config_dict,
                          name=config.wandb.name)
         # cache source code for saving
-        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', resolve=False)
         os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/models')
         os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/utils')
+
+        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', resolve=False)
         os.system(f'cp ./models/cls_model.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_model.py')
         os.system(f'cp ./models/cls_block.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_block.py')
         os.system(f'cp ./models/attention.py /data/users/fu/APES/{time_label}_{run.id}/models/attention.py')
