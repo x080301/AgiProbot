@@ -16,6 +16,7 @@ import numpy as np
 from utils.loss import consistency_loss, aux_loss
 from utils.check_config import set_config_run
 import time
+import datetime
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
@@ -45,16 +46,19 @@ def main(config):
     else:
         random_seed = config.train.ddp.random_seed
 
+    time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
         os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
             ']', '')
-        mp.spawn(train, args=(config, random_seed), nprocs=config.train.ddp.nproc_this_node, join=True)
+        mp.spawn(train, args=(config, random_seed, time_label), nprocs=config.train.ddp.nproc_this_node, join=True)
     else:
         exit('It is almost impossible to train this model using CPU. Please use GPU! Exit.')
 
 
-def train(local_rank, config, random_seed):  # the first arg must be local rank for the sake of using mp.spawn(...)
+def train(local_rank, config, random_seed,
+          time_label):  # the first arg must be local rank for the sake of using mp.spawn(...)
 
     rank = config.train.ddp.rank_starts_from + local_rank
 
@@ -68,28 +72,29 @@ def train(local_rank, config, random_seed):  # the first arg must be local rank 
         run = wandb.init(project=config.wandb.project, entity=config.wandb.entity, config=config_dict,
                          name=config.wandb.name)
         # cache source code for saving
-        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{run.id}/usr_config.yaml', resolve=False)
-        os.makedirs(f'/data/users/fu/APES/{run.id}/models')
-        os.makedirs(f'/data/users/fu/APES/{run.id}/utils')
-        os.system(f'cp ./models/cls_model.py /data/users/fu/APES/{run.id}/models/cls_model.py')
-        os.system(f'cp ./models/cls_block.py /data/users/fu/APES/{run.id}/models/cls_block.py')
-        os.system(f'cp ./models/attention.py /data/users/fu/APES/{run.id}/models/attention.py')
-        os.system(f'cp ./models/downsample.py /data/users/fu/APES/{run.id}/models/downsample.py')
-        os.system(f'cp ./models/embedding.py /data/users/fu/APES/{run.id}/models/embedding.py')
-        os.system(f'cp ./utils/dataloader.py /data/users/fu/APES/{run.id}/utils/dataloader.py')
-        os.system(f'cp ./utils/metrics.py /data/users/fu/APES/{run.id}/utils/metrics.py')
-        os.system(f'cp ./utils/ops.py /data/users/fu/APES/{run.id}/utils/ops.py')
-        os.system(f'cp ./utils/data_augmentation.py /data/users/fu/APES/{run.id}/utils/data_augmentation.py')
-        os.system(f'cp ./utils/debug.py /data/users/fu/APES/{run.id}/utils/debug.py')
-        os.system(f'cp ./utils/check_config.py /data/users/fu/APES/{run.id}/utils/check_config.py')
-        os.system(f'cp ./utils/save_backup.py /data/users/fu/APES/{run.id}/utils/save_backup.py')
-        os.system(f'cp ./utils/visualization.py /data/users/fu/APES/{run.id}/utils/visualization.py')
+        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', resolve=False)
+        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/models')
+        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/utils')
+        os.system(f'cp ./models/cls_model.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_model.py')
+        os.system(f'cp ./models/cls_block.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_block.py')
+        os.system(f'cp ./models/attention.py /data/users/fu/APES/{time_label}_{run.id}/models/attention.py')
+        os.system(f'cp ./models/downsample.py /data/users/fu/APES/{time_label}_{run.id}/models/downsample.py')
+        os.system(f'cp ./models/embedding.py /data/users/fu/APES/{time_label}_{run.id}/models/embedding.py')
+        os.system(f'cp ./utils/dataloader.py /data/users/fu/APES/{time_label}_{run.id}/utils/dataloader.py')
+        os.system(f'cp ./utils/metrics.py /data/users/fu/APES/{time_label}_{run.id}/utils/metrics.py')
+        os.system(f'cp ./utils/ops.py /data/users/fu/APES/{time_label}_{run.id}/utils/ops.py')
         os.system(
-            f'cp ./utils/visualization_data_processing.py /data/users/fu/APES/{run.id}/utils/visualization_data_processing.py')
-        os.system(f'cp ./utils/lr_scheduler.py /data/users/fu/APES/{run.id}/utils/lr_scheduler.py')
-        os.system(f'cp ./train_modelnet.py /data/users/fu/APES/{run.id}/train_modelnet.py')
-        os.system(f'cp ./test_modelnet.py /data/users/fu/APES/{run.id}/test_modelnet.py')
-        with open(f'/data/users/fu/APES/{run.id}/random_seed_{random_seed}.txt', 'w') as f:
+            f'cp ./utils/data_augmentation.py /data/users/fu/APES/{time_label}_{run.id}/utils/data_augmentation.py')
+        os.system(f'cp ./utils/debug.py /data/users/fu/APES/{time_label}_{run.id}/utils/debug.py')
+        os.system(f'cp ./utils/check_config.py /data/users/fu/APES/{time_label}_{run.id}/utils/check_config.py')
+        os.system(f'cp ./utils/save_backup.py /data/users/fu/APES/{time_label}_{run.id}/utils/save_backup.py')
+        os.system(f'cp ./utils/visualization.py /data/users/fu/APES/{time_label}_{run.id}/utils/visualization.py')
+        os.system(
+            f'cp ./utils/visualization_data_processing.py /data/users/fu/APES/{time_label}_{run.id}/utils/visualization_data_processing.py')
+        os.system(f'cp ./utils/lr_scheduler.py /data/users/fu/APES/{time_label}_{run.id}/utils/lr_scheduler.py')
+        os.system(f'cp ./train_modelnet.py /data/users/fu/APES/{time_label}_{run.id}/train_modelnet.py')
+        os.system(f'cp ./test_modelnet.py /data/users/fu/APES/{time_label}_{run.id}/test_modelnet.py')
+        with open(f'/data/users/fu/APES/{time_label}_{run.id}/random_seed_{random_seed}.txt', 'w') as f:
             f.write('')
 
     # process initialization
@@ -461,7 +466,7 @@ def train(local_rank, config, random_seed):  # the first arg must be local rank 
                     # save model
                     if val_acc >= max(val_acc_list):
                         state_dict = my_model.state_dict()
-                        torch.save(state_dict, f'/data/users/fu/APES/{run.id}/checkpoint.pt')
+                        torch.save(state_dict, f'/data/users/fu/APES/{time_label}_{run.id}/checkpoint.pt')
                     val_acc_list.append(val_acc)
                     metric_dict = {'modelnet_val': {'loss': val_loss, 'acc': val_acc}}
                     metric_dict['modelnet_val']['best_acc'] = max(val_acc_list)
@@ -473,12 +478,12 @@ def train(local_rank, config, random_seed):  # the first arg must be local rank 
     # save artifacts to wandb server
     if config.wandb.enable and rank == 0:
         artifacts = wandb.Artifact(config.wandb.name, type='runs')
-        artifacts.add_file(f'/data/users/fu/APES/{run.id}/usr_config.yaml', name='usr_config.yaml')
-        artifacts.add_dir(f"/data/users/fu/APES/{run.id}/models", name='models')
-        artifacts.add_dir(f"/data/users/fu/APES/{run.id}/utils", name='utils')
-        artifacts.add_file(f'/data/users/fu/APES/{run.id}/train_modelnet.py', name='train_modelnet.py')
-        artifacts.add_file(f'/data/users/fu/APES/{run.id}/test_modelnet.py', name='test_modelnet.py')
-        artifacts.add_file(f'/data/users/fu/APES/{run.id}/checkpoint.pt', name='checkpoint.pt')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', name='usr_config.yaml')
+        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}/models", name='models')
+        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}/utils", name='utils')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/train_modelnet.py', name='train_modelnet.py')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/test_modelnet.py', name='test_modelnet.py')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
 
