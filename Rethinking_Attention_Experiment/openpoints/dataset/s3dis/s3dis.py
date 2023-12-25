@@ -81,7 +81,6 @@ class S3DIS(Dataset):
         data_list = sorted(os.listdir(raw_root))
         # data_list = [item[:-4] for item in data_list if 'Area_' in item]
 
-        print(f'-------data_list:{data_list}----------------')
         if split == 'train':
             self.data_list = [
                 item for item in data_list if not 'Area_{}'.format(test_area) in item]
@@ -120,7 +119,6 @@ class S3DIS(Dataset):
         self.data_idx = np.arange(len(self.data_list))
         assert len(self.data_idx) > 0
         logging.info(f"\nTotally {len(self.data_idx)} samples in {split} set")
-        print('----------break_point_2--------------------')
 
     def __getitem__(self, idx):
         data_idx = self.data_idx[idx % len(self.data_idx)]
