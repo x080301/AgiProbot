@@ -76,14 +76,15 @@ class S3DIS(Dataset):
         self.shuffle = shuffle 
 
         raw_root = os.path.join(data_root, 'raw')
-        print('----------break_point_1--------------------')
         self.raw_root = raw_root
         data_list = sorted(os.listdir(raw_root))
         data_list = [item[:-4] for item in data_list if 'Area_' in item]
         if split == 'train':
+            print(f'train-----------------{test_area}')
             self.data_list = [
                 item for item in data_list if not 'Area_{}'.format(test_area) in item]
         else:
+            print(f'npt train{split}-----------------{test_area}')
             self.data_list = [
                 item for item in data_list if 'Area_{}'.format(test_area) in item]
 
@@ -91,7 +92,6 @@ class S3DIS(Dataset):
         processed_root = os.path.join(data_root, 'processed')
         filename = os.path.join(
             processed_root, f's3dis_{split}_area{test_area}_{voxel_size:.3f}_{str(voxel_max)}.pkl')
-        print('----------break_point_0.5--------------------')
         if presample and not os.path.exists(filename):
             np.random.seed(0)
             self.data = []
