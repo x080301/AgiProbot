@@ -79,12 +79,12 @@ class S3DIS(Dataset):
         self.raw_root = raw_root
         data_list = sorted(os.listdir(raw_root))
         data_list = [item[:-4] for item in data_list if 'Area_' in item]
+
+        print(f'-------data_list:{data_list}----------------')
         if split == 'train':
-            print(f'train-----------------{test_area}')
             self.data_list = [
                 item for item in data_list if not 'Area_{}'.format(test_area) in item]
         else:
-            print(f'npt train{split}-----------------{test_area}')
             self.data_list = [
                 item for item in data_list if 'Area_{}'.format(test_area) in item]
 
