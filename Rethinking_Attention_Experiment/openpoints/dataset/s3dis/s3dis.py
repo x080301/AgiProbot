@@ -27,21 +27,21 @@ class S3DIS(Dataset):
     num_classes = 13
     num_per_class = np.array([3370714, 2856755, 4919229, 318158, 375640, 478001, 974733,
                               650464, 791496, 88727, 1284130, 229758, 2272837], dtype=np.int32)
-    class2color = {'ceiling':     [0, 255, 0],
-                   'floor':       [0, 0, 255],
-                   'wall':        [0, 255, 255],
-                   'beam':        [255, 255, 0],
-                   'column':      [255, 0, 255],
-                   'window':      [100, 100, 255],
-                   'door':        [200, 200, 100],
-                   'table':       [170, 120, 200],
-                   'chair':       [255, 0, 0],
-                   'sofa':        [200, 100, 100],
-                   'bookcase':    [10, 200, 100],
-                   'board':       [200, 200, 200],
-                   'clutter':     [50, 50, 50]}
+    class2color = {'ceiling': [0, 255, 0],
+                   'floor': [0, 0, 255],
+                   'wall': [0, 255, 255],
+                   'beam': [255, 255, 0],
+                   'column': [255, 0, 255],
+                   'window': [100, 100, 255],
+                   'door': [200, 200, 100],
+                   'table': [170, 120, 200],
+                   'chair': [255, 0, 0],
+                   'sofa': [200, 100, 100],
+                   'bookcase': [10, 200, 100],
+                   'board': [200, 200, 200],
+                   'clutter': [50, 50, 50]}
     cmap = [*class2color.values()]
-    gravity_dim = 1 
+    gravity_dim = 1
     """S3DIS dataset, loading the subsampled entire room as input without block/sphere subsampling.
     number of points per room in average, median, and std: (794855.5, 1005913.0147058824, 939501.4733064277)
     Args:
@@ -55,6 +55,7 @@ class S3DIS(Dataset):
         presample (bool, optional): wheter to downsample each point cloud before training. Set to False to downsample on-the-fly. Defaults to False.
         variable (bool, optional): where to use the original number of points. The number of point per point cloud is variable. Defaults to False.
     """
+
     def __init__(self,
                  data_root: str = 'data/S3DIS/s3disfull',
                  test_area: int = 5,
@@ -73,12 +74,12 @@ class S3DIS(Dataset):
             split, voxel_size, transform, voxel_max, loop
         self.presample = presample
         self.variable = variable
-        self.shuffle = shuffle 
+        self.shuffle = shuffle
 
         raw_root = os.path.join(data_root, 'raw')
         self.raw_root = raw_root
         data_list = sorted(os.listdir(raw_root))
-        data_list = [item[:-4] for item in data_list if 'Area_' in item]
+        # data_list = [item[:-4] for item in data_list if 'Area_' in item]
 
         print(f'-------data_list:{data_list}----------------')
         if split == 'train':
@@ -100,7 +101,7 @@ class S3DIS(Dataset):
                 cdata = np.load(data_path).astype(np.float32)
                 cdata[:, :3] -= np.min(cdata[:, :3], 0)
                 if voxel_size:
-                    coord, feat, label = cdata[:,0:3], cdata[:, 3:6], cdata[:, 6:7]
+                    coord, feat, label = cdata[:, 0:3], cdata[:, 3:6], cdata[:, 6:7]
                     uniq_idx = voxelize(coord, voxel_size)
                     coord, feat, label = coord[uniq_idx], feat[uniq_idx], label[uniq_idx]
                     cdata = np.hstack((coord, feat, label))
@@ -140,9 +141,9 @@ class S3DIS(Dataset):
         # pre-process.
         if self.transform is not None:
             data = self.transform(data)
-            
+
         if 'heights' not in data.keys():
-            data['heights'] =  torch.from_numpy(coord[:, self.gravity_dim:self.gravity_dim+1].astype(np.float32))
+            data['heights'] = torch.from_numpy(coord[:, self.gravity_dim:self.gravity_dim + 1].astype(np.float32))
         return data
 
     def __len__(self):
