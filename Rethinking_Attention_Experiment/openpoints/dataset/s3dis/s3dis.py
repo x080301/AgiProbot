@@ -79,7 +79,7 @@ class S3DIS(Dataset):
         raw_root = os.path.join(data_root, 'raw')
         self.raw_root = raw_root
         data_list = sorted(os.listdir(raw_root))
-        # data_list = [item[:-4] for item in data_list if 'Area_' in item]
+        data_list = [item[:-4] for item in data_list if 'Area_' in item]
 
         if split == 'train':
             self.data_list = [

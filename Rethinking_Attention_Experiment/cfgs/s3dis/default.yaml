@@ -2,7 +2,7 @@
 dataset:
   common:
     NAME: S3DIS
-    data_root: /home/team1/cwu/FuHaoWorkspace/s3dis/Stanford3dDataset_v1.2 #/dev/shm/MEMORY_DATA/s3disfull #/userhome/zyx/dataset/pointcloud/s3dis__for_pointnext/s3disfull #/dev/shm/MEMORY_DATA/s3disfull
+    data_root: /home/team1/cwu/FuHaoWorkspace/dataset/S3DIS/s3disfull #/dev/shm/MEMORY_DATA/s3disfull #/userhome/zyx/dataset/pointcloud/s3dis__for_pointnext/s3disfull #/dev/shm/MEMORY_DATA/s3disfull
     test_area: 5 #5
     voxel_size: 0.04
   train:
