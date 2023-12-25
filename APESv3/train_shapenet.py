@@ -75,30 +75,30 @@ def train(local_rank, config, random_seed,
                          name=config.wandb.name)
         # cache source code for saving
 
-        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}_models/seg_model')
-        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}_utils')
+        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/models/seg_model')
+        os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/utils')
 
-        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}_usr_config.yaml', resolve=False)
-        os.system(f'cp ./models/seg_model.py /data/users/fu/APES/{time_label}_{run.id}_models/seg_model.py')
-        os.system(f'cp ./models/seg_block.py /data/users/fu/APES/{time_label}_{run.id}_models/seg_block.py')
-        os.system(f'cp ./models/attention.py /data/users/fu/APES/{time_label}_{run.id}_models/attention.py')
-        os.system(f'cp ./models/downsample.py /data/users/fu/APES/{time_label}_{run.id}_models/downsample.py')
-        os.system(f'cp ./models/upsample.py /data/users/fu/APES/{time_label}_{run.id}_models/upsample.py')
-        os.system(f'cp ./models/embedding.py /data/users/fu/APES/{time_label}_{run.id}_models/embedding.py')
-        os.system(f'cp ./utils/dataloader.py /data/users/fu/APES/{time_label}_{run.id}_utils/dataloader.py')
-        os.system(f'cp ./utils/metrics.py /data/users/fu/APES/{time_label}_{run.id}_utils/metrics.py')
-        os.system(f'cp ./utils/ops.py /data/users/fu/APES/{time_label}_{run.id}_utils/ops.py')
+        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', resolve=False)
+        os.system(f'cp ./models/seg_model.py /data/users/fu/APES/{time_label}_{run.id}/models/seg_model.py')
+        os.system(f'cp ./models/seg_block.py /data/users/fu/APES/{time_label}_{run.id}/models/seg_block.py')
+        os.system(f'cp ./models/attention.py /data/users/fu/APES/{time_label}_{run.id}/models/attention.py')
+        os.system(f'cp ./models/downsample.py /data/users/fu/APES/{time_label}_{run.id}/models/downsample.py')
+        os.system(f'cp ./models/upsample.py /data/users/fu/APES/{time_label}_{run.id}/models/upsample.py')
+        os.system(f'cp ./models/embedding.py /data/users/fu/APES/{time_label}_{run.id}/models/embedding.py')
+        os.system(f'cp ./utils/dataloader.py /data/users/fu/APES/{time_label}_{run.id}/utils/dataloader.py')
+        os.system(f'cp ./utils/metrics.py /data/users/fu/APES/{time_label}_{run.id}/utils/metrics.py')
+        os.system(f'cp ./utils/ops.py /data/users/fu/APES/{time_label}_{run.id}/utils/ops.py')
         os.system(
-            f'cp ./utils/data_augmentation.py /data/users/fu/APES/{time_label}_{run.id}_utils/data_augmentation.py')
-        os.system(f'cp ./utils/debug.py /data/users/fu/APES/{time_label}_{run.id}_utils/debug.py')
-        os.system(f'cp ./utils/check_config.py /data/users/fu/APES/{time_label}_{run.id}_utils/check_config.py')
-        os.system(f'cp ./utils/save_backup.py /data/users/fu/APES/{time_label}_{run.id}_utils/save_backup.py')
-        os.system(f'cp ./utils/visualization.py /data/users/fu/APES/{time_label}_{run.id}_utils/visualization.py')
+            f'cp ./utils/data_augmentation.py /data/users/fu/APES/{time_label}_{run.id}/utils/data_augmentation.py')
+        os.system(f'cp ./utils/debug.py /data/users/fu/APES/{time_label}_{run.id}/utils/debug.py')
+        os.system(f'cp ./utils/check_config.py /data/users/fu/APES/{time_label}_{run.id}/utils/check_config.py')
+        os.system(f'cp ./utils/save_backup.py /data/users/fu/APES/{time_label}_{run.id}/utils/save_backup.py')
+        os.system(f'cp ./utils/visualization.py /data/users/fu/APES/{time_label}_{run.id}/utils/visualization.py')
         os.system(
-            f'cp ./utils/visualization_data_processing.py /data/users/fu/APES/{time_label}_{run.id}_utils/visualization_data_processing.py')
-        os.system(f'cp ./utils/lr_scheduler.py /data/users/fu/APES/{time_label}_{run.id}_utils/lr_scheduler.py')
-        os.system(f'cp ./train_shapenet.py /data/users/fu/APES/{time_label}_{run.id}_train_shapenet.py')
-        with open(f'/data/users/fu/APES/{time_label}_{run.id}_random_seed_{random_seed}.txt', 'w') as f:
+            f'cp ./utils/visualization_data_processing.py /data/users/fu/APES/{time_label}_{run.id}/utils/visualization_data_processing.py')
+        os.system(f'cp ./utils/lr_scheduler.py /data/users/fu/APES/{time_label}_{run.id}/utils/lr_scheduler.py')
+        os.system(f'cp ./train_shapenet.py /data/users/fu/APES/{time_label}_{run.id}/train_shapenet.py')
+        with open(f'/data/users/fu/APES/{time_label}_{run.id}/random_seed_{random_seed}.txt', 'w') as f:
             f.write('')
 
     # process initialization
@@ -533,7 +533,7 @@ def train(local_rank, config, random_seed,
                     # save model
                     if val_miou >= max(val_miou_list):
                         state_dict = my_model.state_dict()
-                        torch.save(state_dict, f'/data/users/fu/APES/{time_label}_{run.id}_checkpoint.pt')
+                        torch.save(state_dict, f'/data/users/fu/APES/{time_label}_{run.id}/checkpoint.pt')
                     val_miou_list.append(val_miou)
                     val_category_miou_list.append(val_category_miou)
                     metric_dict = {'shapenet_val': {'loss': val_loss, 'mIoU': val_miou},
@@ -558,12 +558,12 @@ def train(local_rank, config, random_seed,
     # save artifacts to wandb server
     if config.wandb.enable and rank == 0:
         artifacts = wandb.Artifact(config.wandb.name, type='runs')
-        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}_usr_config.yaml', name='usr_config.yaml')
-        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}_models", name='models')
-        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}_utils", name='utils')
-        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}_train_shapenet.py', name='train_shapenet.py')
-        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}_test_shapenet.py', name='test_shapenet.py')
-        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}_checkpoint.pt', name='checkpoint.pt')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', name='usr_config.yaml')
+        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}/models", name='models')
+        artifacts.add_dir(f"/data/users/fu/APES/{time_label}_{run.id}/utils", name='utils')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/train_shapenet.py', name='train_shapenet.py')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/test_shapenet.py', name='test_shapenet.py')
+        artifacts.add_file(f'/data/users/fu/APES/{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
 
