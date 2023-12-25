@@ -75,7 +75,7 @@ def train(local_rank, config, random_seed,
         os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/models')
         os.makedirs(f'/data/users/fu/APES/{time_label}_{run.id}/utils')
 
-        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}/usr_config.yaml', resolve=False)
+        OmegaConf.save(config=config, f=f'/data/users/fu/APES/{time_label}_{run.id}_usr_config.yaml', resolve=False)
         os.system(f'cp ./models/cls_model.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_model.py')
         os.system(f'cp ./models/cls_block.py /data/users/fu/APES/{time_label}_{run.id}/models/cls_block.py')
         os.system(f'cp ./models/attention.py /data/users/fu/APES/{time_label}_{run.id}/models/attention.py')
