@@ -94,7 +94,7 @@ train:  # only valid when running the training script
         z_range: [0.66, 1.5]
         isotropic: false # True with normal in dataset
   ddp:
-    which_gpu: [0,1]
+    which_gpu: [2,3]
     syn_bn: true  # synchronize batch normalization among gpus
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 12345  # please choose an available port
