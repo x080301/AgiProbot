@@ -34,7 +34,11 @@ sched_on_epoch: True
 
 # We support wandb for online results collection, please check their documentation for details: https://docs.wandb.ai/
 wandb:
-  use_wandb: False #False 
+  use_wandb: true #False
+  api_key: d548a03793d0947aea18838d6b45447d207ec072  # your wandb api key
+  entity: fuhaodsst  # the place to save your runs. can be your wandb username or team name
+  project: APESv3  # the name of your project
+  name: try1  # the name your run
 
 use_amp: False
 # ---------------------------------------------------------------------------- #

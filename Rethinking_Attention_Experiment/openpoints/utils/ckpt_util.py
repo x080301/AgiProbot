@@ -79,6 +79,7 @@ def save_checkpoint(cfg, model, epoch, optimizer=None, scheduler=None,
 
     if cfg.save_freq > 0 and epoch % cfg.save_freq == 0:
         milestone_ckpt_name = f'{save_name}_E{epoch}.pth'
+        print(f'-----------ckpt_dir:{cfg.ckpt_dir}---------------')
         milestone_pretrained_path = os.path.join(cfg.ckpt_dir, milestone_ckpt_name)
         shutil.copyfile(current_pretrained_path, milestone_pretrained_path)
         logging.info("Saved in {}".format(milestone_pretrained_path))
