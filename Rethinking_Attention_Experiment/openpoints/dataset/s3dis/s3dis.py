@@ -88,7 +88,6 @@ class S3DIS(Dataset):
             self.data_list = [
                 item for item in data_list if 'Area_{}'.format(test_area) in item]
 
-        print(self.data_list)
         processed_root = os.path.join(data_root, 'processed')
         filename = os.path.join(
             processed_root, f's3dis_{split}_area{test_area}_{voxel_size:.3f}_{str(voxel_max)}.pkl')
