@@ -72,7 +72,6 @@ class Wandb:
                 "commit": commit_sha,
                 "gitdiff": gitdiff
             }
-            print(f'wandb_args:{wandb_args}')
             wandb.init(**wandb_args, sync_tensorboard=True)
             wandb.save(os.path.join(os.getcwd(), cfg.cfg_path))
 

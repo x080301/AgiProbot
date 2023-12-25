@@ -76,6 +76,7 @@ class S3DIS(Dataset):
         self.shuffle = shuffle 
 
         raw_root = os.path.join(data_root, 'raw')
+        print('----------break_point_1--------------------')
         self.raw_root = raw_root
         data_list = sorted(os.listdir(raw_root))
         data_list = [item[:-4] for item in data_list if 'Area_' in item]
@@ -89,6 +90,7 @@ class S3DIS(Dataset):
         processed_root = os.path.join(data_root, 'processed')
         filename = os.path.join(
             processed_root, f's3dis_{split}_area{test_area}_{voxel_size:.3f}_{str(voxel_max)}.pkl')
+        print('----------break_point_0.5--------------------')
         if presample and not os.path.exists(filename):
             np.random.seed(0)
             self.data = []
@@ -116,6 +118,7 @@ class S3DIS(Dataset):
         self.data_idx = np.arange(len(self.data_list))
         assert len(self.data_idx) > 0
         logging.info(f"\nTotally {len(self.data_idx)} samples in {split} set")
+        print('----------break_point_2--------------------')
 
     def __getitem__(self, idx):
         data_idx = self.data_idx[idx % len(self.data_idx)]
