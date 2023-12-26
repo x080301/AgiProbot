@@ -33,7 +33,7 @@ def main(config):
     if config.wandb.enable:
         wandb.login(key=config.wandb.api_key)
         api = wandb.Api()
-        artifact = api.artifact(f'{config.wandb.entity}/{config.wandb.project}/{config.wandb.name}:latest')
+        artifact = api.artifact(f'{config.wandb.entity}/{config.wandb.project}/{config.wandb.name}')  # :latest')
         if config.test.suffix.enable:
             local_path = f'./artifacts/{config.wandb.name}_{config.test.suffix.remark}'
         else:
