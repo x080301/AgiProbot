@@ -22,7 +22,7 @@ wandb:
   api_key: d548a03793d0947aea18838d6b45447d207ec072  # your wandb api key
   entity: fuhaodsst  # the place to save your runs. can be your wandb username or team name
   project: APESv3  # the name of your project
-  name: try1  # the name your run
+  name: modelnet_AnTao420M_classification  # the name your run
 
 train:  # only valid when running the training script
   epochs: 200
@@ -133,13 +133,13 @@ test:  # only valid when running the test script
       enable: false
       num_vote: 10
   ddp:
-    which_gpu: [0]
+    which_gpu: [4,5]
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 12345  # please choose an available port
     nnodes: 1  # how many PCs you want to use
-    nproc_this_node: 1  # how many gpu you want to use in current PC, should match 'which_gpu'
+    nproc_this_node: 2  # how many gpu you want to use in current PC, should match 'which_gpu'
     rank_starts_from: 0  # don't change this if you use only one PC
-    world_size: 1  # this is equal to 'nproc_this_node' if you only use one PC
+    world_size: 2  # this is equal to 'nproc_this_node' if you only use one PC
   print_results: true
   visualize_preds:
     enable: false
