@@ -9,7 +9,7 @@ if __name__ == '__main__':
         training_txt = 'training_in_line_sever.txt'
     else:
         training_txt = 'training_in_line_workstation.txt'
-        
+
     while True:
         with open(training_txt, 'r') as file:
             lines = file.readlines()
