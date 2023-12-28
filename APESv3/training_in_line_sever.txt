@@ -3,11 +3,6 @@ cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/
 git fetch --all
 git reset --hard origin/main
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/APESv3
+conda activate apesv3
+python train_modelnet.py datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml
 #---------------
-nvidia-smi
-cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot
-git fetch --all
-git reset --hard origin/main
-cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/Rethinking_Attention_Experiment
-
-CUDA_VISIBLE_DEVICES=0,1 bash script/main_segmentation.sh cfgs/s3dis/pointmetabase-l.yaml wandb.use_wandb=True
