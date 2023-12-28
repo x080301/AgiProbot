@@ -23,7 +23,7 @@ import socket
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
     hostname = socket.gethostname()
-    print(f'hostname:"{hostname}"')
+    print(f'hostname:"{type(hostname)}"')
     exit(0)
 
     # check working directory
