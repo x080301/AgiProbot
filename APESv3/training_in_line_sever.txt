@@ -4,5 +4,5 @@ git fetch --all
 git reset --hard origin/main
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/APESv3
 conda activate apesv3
-python train_modelnet.py datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml
+python train_modelnet.py datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='test'
 #---------------
