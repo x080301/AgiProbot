@@ -17,10 +17,15 @@ from utils.loss import consistency_loss, aux_loss
 from utils.check_config import set_config_run
 import time
 import datetime
+import socket
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
+    hostname = socket.gethostname()
+    print(hostname)
+    exit(0)
+
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
