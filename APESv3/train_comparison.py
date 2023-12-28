@@ -15,6 +15,9 @@ import torch.distributed as dist
 from torch.cuda import amp
 import numpy as np
 from utils.loss import consistency_loss, aux_loss
+import socket
+import datetime
+
 from utils.check_config import set_config_run
 
 
@@ -60,32 +63,41 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
     rank = config.train.ddp.rank_starts_from + local_rank
 
     if config.wandb.enable and rank == 0:
+        time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+
+        hostname = socket.gethostname()
+        if 'iesservergpu' in hostname:
+            save_dir = '/data/users/fu/APES/'
+        else:
+            save_dir = '/home/team1/cwu/FuHaoWorkspace/APES/'
+        
+        
         # initialize wandb
         wandb.login(key=config.wandb.api_key)
         del config.wandb.api_key, config.test
         config_dict = OmegaConf.to_container(config, resolve=True)
         run = wandb.init(project=config.wandb.project, entity=config.wandb.entity, config=config_dict, name=config.wandb.name)
         # cache source code for saving
-        OmegaConf.save(config=config, f=f'/tmp/{run.id}_usr_config.yaml', resolve=False)
-        os.makedirs(f'/tmp/{run.id}_models')
-        os.makedirs(f'/tmp/{run.id}_utils')
-        os.system(f'cp ./models/comp_model.py /tmp/{run.id}_models/comp_model.py')
-        os.system(f'cp ./models/comp_block.py /tmp/{run.id}_models/comp_block.py')
-        os.system(f'cp ./models/attention.py /tmp/{run.id}_models/attention.py')
-        os.system(f'cp ./models/downsample.py /tmp/{run.id}_models/downsample.py')
-        os.system(f'cp ./models/embedding.py /tmp/{run.id}_models/embedding.py')
-        os.system(f'cp ./utils/dataloader.py /tmp/{run.id}_utils/dataloader.py')
-        os.system(f'cp ./utils/metrics.py /tmp/{run.id}_utils/metrics.py')
-        os.system(f'cp ./utils/ops.py /tmp/{run.id}_utils/ops.py')
-        os.system(f'cp ./utils/data_augmentation.py /tmp/{run.id}_utils/data_augmentation.py')
-        os.system(f'cp ./utils/debug.py /tmp/{run.id}_utils/debug.py')
-        os.system(f'cp ./utils/check_config.py /tmp/{run.id}_utils/check_config.py')
-        os.system(f'cp ./utils/save_backup.py /tmp/{run.id}_utils/save_backup.py')
-        os.system(f'cp ./utils/visualization.py /tmp/{run.id}_utils/visualization.py')
-        os.system(f'cp ./utils/visualization_data_processing.py /tmp/{run.id}_utils/visualization_data_processing.py')
-        os.system(f'cp ./utils/lr_scheduler.py /tmp/{run.id}_utils/lr_scheduler.py')
-        os.system(f'cp ./train_comparison.py /tmp/{run.id}_train_comparison.py')
-        os.system(f'cp ./test_comparison.py /tmp/{run.id}_test_comparison.py')
+        OmegaConf.save(config=config, f=f'{save_dir}{time_label}_{run.id}/usr_config.yaml', resolve=False)
+        os.makedirs(f'{save_dir}{time_label}_{run.id}/models')
+        os.makedirs(f'{save_dir}{time_label}_{run.id}/utils')
+        os.system(f'cp ./models/comp_model.py {save_dir}{time_label}_{run.id}/models/comp_model.py')
+        os.system(f'cp ./models/comp_block.py {save_dir}{time_label}_{run.id}/models/comp_block.py')
+        os.system(f'cp ./models/attention.py {save_dir}{time_label}_{run.id}/models/attention.py')
+        os.system(f'cp ./models/downsample.py {save_dir}{time_label}_{run.id}/models/downsample.py')
+        os.system(f'cp ./models/embedding.py {save_dir}{time_label}_{run.id}/models/embedding.py')
+        os.system(f'cp ./utils/dataloader.py {save_dir}{time_label}_{run.id}/utils/dataloader.py')
+        os.system(f'cp ./utils/metrics.py {save_dir}{time_label}_{run.id}/utils/metrics.py')
+        os.system(f'cp ./utils/ops.py {save_dir}{time_label}_{run.id}/utils/ops.py')
+        os.system(f'cp ./utils/data_augmentation.py {save_dir}{time_label}_{run.id}/utils/data_augmentation.py')
+        os.system(f'cp ./utils/debug.py {save_dir}{time_label}_{run.id}/utils/debug.py')
+        os.system(f'cp ./utils/check_config.py {save_dir}{time_label}_{run.id}/utils/check_config.py')
+        os.system(f'cp ./utils/save_backup.py {save_dir}{time_label}_{run.id}/utils/save_backup.py')
+        os.system(f'cp ./utils/visualization.py {save_dir}{time_label}_{run.id}/utils/visualization.py')
+        os.system(f'cp ./utils/visualization_data_processing.py {save_dir}{time_label}_{run.id}/utils/visualization_data_processing.py')
+        os.system(f'cp ./utils/lr_scheduler.py {save_dir}{time_label}_{run.id}/utils/lr_scheduler.py')
+        os.system(f'cp ./train_comparison.py {save_dir}{time_label}_{run.id}/train_comparison.py')
+        os.system(f'cp ./test_comparison.py {save_dir}{time_label}_{run.id}/test_comparison.py')
 
     # process initialization
     os.environ['MASTER_ADDR'] = str(config.train.ddp.master_addr)
@@ -383,7 +395,7 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                     # save model
                     if val_acc >= max(val_acc_list):
                         state_dict = my_model.state_dict()
-                        torch.save(state_dict, f'/tmp/{run.id}_checkpoint.pt')
+                        torch.save(state_dict, f'{save_dir}{time_label}_{run.id}/checkpoint.pt')
                     val_acc_list.append(val_acc)
                     metric_dict = {'modelnet_val': {'loss': val_loss, 'acc': val_acc}}
                     metric_dict['modelnet_val']['best_acc'] = max(val_acc_list)
@@ -395,12 +407,12 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
     # save artifacts to wandb server
     if config.wandb.enable and rank == 0:
         artifacts = wandb.Artifact(config.wandb.name, type='runs')
-        artifacts.add_file(f'/tmp/{run.id}_usr_config.yaml', name='usr_config.yaml')
-        artifacts.add_dir(f"/tmp/{run.id}_models", name='models')
-        artifacts.add_dir(f"/tmp/{run.id}_utils", name='utils')
-        artifacts.add_file(f'/tmp/{run.id}_train_comparison.py', name='train_comparison.py')
-        artifacts.add_file(f'/tmp/{run.id}_test_comparison.py', name='test_comparison.py')
-        artifacts.add_file(f'/tmp/{run.id}_checkpoint.pt', name='checkpoint.pt')
+        artifacts.add_file(f'{save_dir}{time_label}_{run.id}/usr_config.yaml', name='usr_config.yaml')
+        artifacts.add_dir(f"{save_dir}{time_label}_{run.id}/models", name='models')
+        artifacts.add_dir(f"{save_dir}{time_label}_{run.id}/utils", name='utils')
+        artifacts.add_file(f'{save_dir}{time_label}_{run.id}/train_comparison.py', name='train_comparison.py')
+        artifacts.add_file(f'{save_dir}{time_label}_{run.id}/test_comparison.py', name='test_comparison.py')
+        artifacts.add_file(f'{save_dir}{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
 
