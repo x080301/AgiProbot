@@ -23,7 +23,6 @@ from utils.check_config import set_config_run
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
-
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -35,7 +34,7 @@ def main(config):
         usr_config = OmegaConf.load(config.usr_config)
         config = OmegaConf.merge(config, usr_config)
     config = set_config_run(config, "train")
-    
+
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
         dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
@@ -52,7 +51,8 @@ def main(config):
     # multiprocessing for ddp
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(' ', '').replace('[', '').replace(']', '')
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
+            ']', '')
         mp.spawn(train, args=(config,), nprocs=config.train.ddp.nproc_this_node, join=True)
     else:
         exit('It is almost impossible to train this model using CPU. Please use GPU! Exit.')
@@ -64,19 +64,20 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
 
     if config.wandb.enable and rank == 0:
         time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+        config.wandb.name = f'{time_label}_{config.wandb.name}'
 
         hostname = socket.gethostname()
         if 'iesservergpu' in hostname:
             save_dir = '/data/users/fu/APES/'
         else:
             save_dir = '/home/team1/cwu/FuHaoWorkspace/APES/'
-        
-        
+
         # initialize wandb
         wandb.login(key=config.wandb.api_key)
         del config.wandb.api_key, config.test
         config_dict = OmegaConf.to_container(config, resolve=True)
-        run = wandb.init(project=config.wandb.project, entity=config.wandb.entity, config=config_dict, name=config.wandb.name)
+        run = wandb.init(project=config.wandb.project, entity=config.wandb.entity, config=config_dict,
+                         name=config.wandb.name)
         # cache source code for saving
         OmegaConf.save(config=config, f=f'{save_dir}{time_label}_{run.id}/usr_config.yaml', resolve=False)
         os.makedirs(f'{save_dir}{time_label}_{run.id}/models')
@@ -94,7 +95,8 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
         os.system(f'cp ./utils/check_config.py {save_dir}{time_label}_{run.id}/utils/check_config.py')
         os.system(f'cp ./utils/save_backup.py {save_dir}{time_label}_{run.id}/utils/save_backup.py')
         os.system(f'cp ./utils/visualization.py {save_dir}{time_label}_{run.id}/utils/visualization.py')
-        os.system(f'cp ./utils/visualization_data_processing.py {save_dir}{time_label}_{run.id}/utils/visualization_data_processing.py')
+        os.system(
+            f'cp ./utils/visualization_data_processing.py {save_dir}{time_label}_{run.id}/utils/visualization_data_processing.py')
         os.system(f'cp ./utils/lr_scheduler.py {save_dir}{time_label}_{run.id}/utils/lr_scheduler.py')
         os.system(f'cp ./train_comparison.py {save_dir}{time_label}_{run.id}/train_comparison.py')
         os.system(f'cp ./test_comparison.py {save_dir}{time_label}_{run.id}/test_comparison.py')
@@ -109,24 +111,55 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
     # gpu setting
     device = f'cuda:{local_rank}'
     torch.cuda.set_device(device)  # which gpu is used by current process
-    print(f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.train.ddp.which_gpu[local_rank]}')
+    print(
+        f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.train.ddp.which_gpu[local_rank]}')
 
     # create a scaler for amp
     scaler = amp.GradScaler()
 
     # get dataset
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
-        trainval_set, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug, config.train.dataloader.data_augmentation.jitter.enable,
-                                                                           config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                           config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                           config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+        trainval_set, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
+                                                                           config.train.dataloader.selected_points,
+                                                                           config.train.dataloader.fps,
+                                                                           config.train.dataloader.data_augmentation.enable,
+                                                                           config.train.dataloader.data_augmentation.num_aug,
+                                                                           config.train.dataloader.data_augmentation.jitter.enable,
+                                                                           config.train.dataloader.data_augmentation.jitter.std,
+                                                                           config.train.dataloader.data_augmentation.jitter.clip,
+                                                                           config.train.dataloader.data_augmentation.rotate.enable,
+                                                                           config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                           config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                           config.train.dataloader.data_augmentation.translate.enable,
+                                                                           config.train.dataloader.data_augmentation.translate.x_range,
+                                                                           config.train.dataloader.data_augmentation.translate.y_range,
+                                                                           config.train.dataloader.data_augmentation.translate.z_range,
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
-        trainval_set, test_set = dataloader.get_modelnet_dataset_Alignment1024(config.datasets.saved_path, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug, config.train.dataloader.data_augmentation.jitter.enable,
-                                                                               config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                               config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                               config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+        trainval_set, test_set = dataloader.get_modelnet_dataset_Alignment1024(config.datasets.saved_path,
+                                                                               config.train.dataloader.selected_points,
+                                                                               config.train.dataloader.fps,
+                                                                               config.train.dataloader.data_augmentation.enable,
+                                                                               config.train.dataloader.data_augmentation.num_aug,
+                                                                               config.train.dataloader.data_augmentation.jitter.enable,
+                                                                               config.train.dataloader.data_augmentation.jitter.std,
+                                                                               config.train.dataloader.data_augmentation.jitter.clip,
+                                                                               config.train.dataloader.data_augmentation.rotate.enable,
+                                                                               config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                               config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                               config.train.dataloader.data_augmentation.translate.enable,
+                                                                               config.train.dataloader.data_augmentation.translate.x_range,
+                                                                               config.train.dataloader.data_augmentation.translate.y_range,
+                                                                               config.train.dataloader.data_augmentation.translate.z_range,
+                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                               config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
     else:
         raise ValueError('Not implemented!')
 
@@ -135,8 +168,15 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
     test_sampler = torch.utils.data.distributed.DistributedSampler(test_set)
 
     # get dataloader
-    trainval_loader = torch.utils.data.DataLoader(trainval_set, config.train.dataloader.batch_size_per_gpu, num_workers=config.train.dataloader.num_workers, drop_last=True, prefetch_factor=config.train.dataloader.prefetch, pin_memory=config.train.dataloader.pin_memory, sampler=trainval_sampler)
-    test_loader = torch.utils.data.DataLoader(test_set, config.train.dataloader.batch_size_per_gpu, num_workers=config.train.dataloader.num_workers, drop_last=True, prefetch_factor=config.train.dataloader.prefetch, pin_memory=config.train.dataloader.pin_memory, sampler=test_sampler)
+    trainval_loader = torch.utils.data.DataLoader(trainval_set, config.train.dataloader.batch_size_per_gpu,
+                                                  num_workers=config.train.dataloader.num_workers, drop_last=True,
+                                                  prefetch_factor=config.train.dataloader.prefetch,
+                                                  pin_memory=config.train.dataloader.pin_memory,
+                                                  sampler=trainval_sampler)
+    test_loader = torch.utils.data.DataLoader(test_set, config.train.dataloader.batch_size_per_gpu,
+                                              num_workers=config.train.dataloader.num_workers, drop_last=True,
+                                              prefetch_factor=config.train.dataloader.prefetch,
+                                              pin_memory=config.train.dataloader.pin_memory, sampler=test_sampler)
 
     # if combine train and validation
     if config.train.dataloader.combine_trainval:
@@ -144,13 +184,14 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
         train_loader = trainval_loader
         validation_loader = test_loader
     else:
-        raise ValueError('modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
+        raise ValueError(
+            'modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
 
     # get model
     my_model = comp_model.ComparisonModel(config)
 
     # synchronize bn among gpus
-    if config.train.ddp.syn_bn:  #TODO: test performance
+    if config.train.ddp.syn_bn:  # TODO: test performance
         my_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(my_model)
 
     # get ddp model
@@ -203,22 +244,32 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
 
     # get optimizer
     if config.train.optimizer.which == 'adamw':
-        optimizer = torch.optim.AdamW(my_model.parameters(), lr=config.train.lr, weight_decay=config.train.optimizer.weight_decay)
+        optimizer = torch.optim.AdamW(my_model.parameters(), lr=config.train.lr,
+                                      weight_decay=config.train.optimizer.weight_decay)
     elif config.train.optimizer.which == 'sgd':
-        optimizer = torch.optim.SGD(my_model.parameters(), lr=config.train.lr, weight_decay=config.train.optimizer.weight_decay, momentum=0.9)
+        optimizer = torch.optim.SGD(my_model.parameters(), lr=config.train.lr,
+                                    weight_decay=config.train.optimizer.weight_decay, momentum=0.9)
     else:
         raise ValueError('Not implemented!')
 
     # get lr scheduler
     if config.train.lr_scheduler.enable:
         if config.train.lr_scheduler.which == 'stepLR':
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=config.train.lr_scheduler.stepLR.decay_step, gamma=config.train.lr_scheduler.stepLR.gamma)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                        step_size=config.train.lr_scheduler.stepLR.decay_step,
+                                                        gamma=config.train.lr_scheduler.stepLR.gamma)
         elif config.train.lr_scheduler.which == 'expLR':
             scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=config.train.lr_scheduler.expLR.gamma)
         elif config.train.lr_scheduler.which == 'cosLR':
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.train.lr_scheduler.cosLR.T_max, eta_min=config.train.lr_scheduler.cosLR.eta_min)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                                   T_max=config.train.lr_scheduler.cosLR.T_max,
+                                                                   eta_min=config.train.lr_scheduler.cosLR.eta_min)
         elif config.train.lr_scheduler.which == 'cos_warmupLR':
-            scheduler = lr_scheduler.CosineAnnealingWithWarmupLR(optimizer, T_max=config.train.lr_scheduler.cos_warmupLR.T_max, eta_min=config.train.lr_scheduler.cos_warmupLR.eta_min, warmup_init_lr=config.train.lr_scheduler.cos_warmupLR.warmup_init_lr, warmup_epochs=config.train.lr_scheduler.cos_warmupLR.warmup_epochs)
+            scheduler = lr_scheduler.CosineAnnealingWithWarmupLR(optimizer,
+                                                                 T_max=config.train.lr_scheduler.cos_warmupLR.T_max,
+                                                                 eta_min=config.train.lr_scheduler.cos_warmupLR.eta_min,
+                                                                 warmup_init_lr=config.train.lr_scheduler.cos_warmupLR.warmup_init_lr,
+                                                                 warmup_epochs=config.train.lr_scheduler.cos_warmupLR.warmup_epochs)
         else:
             raise ValueError('Not implemented!')
 
@@ -237,7 +288,8 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
         pred_list = []
         cls_label_list = []
         if rank == 0:
-            kbar = pkbar.Kbar(target=len(train_loader), epoch=epoch, num_epochs=config.train.epochs, always_stateful=True)
+            kbar = pkbar.Kbar(target=len(train_loader), epoch=epoch, num_epochs=config.train.epochs,
+                              always_stateful=True)
         for i, (samples, cls_labels) in enumerate(train_loader):
             optimizer.zero_grad()
             samples, cls_labels = samples.to(device), cls_labels.to(device)
@@ -249,24 +301,32 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                         for pred in preds:
                             train_loss += loss_fn(pred, cls_labels)
                         train_loss = train_loss / len(preds)
-                        preds = preds[-1]                   
+                        preds = preds[-1]
                     else:
-                        train_loss = loss_fn(preds, cls_labels)  + config.train.consistency_loss_factor * consistency_loss(my_model.module.block.res_link_list)
+                        train_loss = loss_fn(preds,
+                                             cls_labels) + config.train.consistency_loss_factor * consistency_loss(
+                            my_model.module.block.res_link_list)
                 scaler.scale(train_loss).backward()
                 # log debug information
                 if config.train.debug.enable:
                     if config.train.debug.check_layer_input_range:
-                        debug.log_debug_message(check_layer_input_range_saved_dir, all_layers, 'check_layer_input_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_input_range_saved_dir, all_layers,
+                                                'check_layer_input_range_msg', epoch, i)
                     if config.train.debug.check_layer_output_range:
-                        debug.log_debug_message(check_layer_output_range_saved_dir, all_layers, 'check_layer_output_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_output_range_saved_dir, all_layers,
+                                                'check_layer_output_range_msg', epoch, i)
                     if config.train.debug.check_layer_parameter_range:
-                        debug.log_debug_message(check_layer_parameter_range_saved_dir, all_layers, 'check_layer_parameter_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_parameter_range_saved_dir, all_layers,
+                                                'check_layer_parameter_range_msg', epoch, i)
                     if config.train.debug.check_gradient_input_range:
-                        debug.log_debug_message(check_gradient_input_range_saved_dir, all_layers, 'check_gradient_input_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_input_range_saved_dir, all_layers,
+                                                'check_gradient_input_range_msg', epoch, i)
                     if config.train.debug.check_gradient_output_range:
-                        debug.log_debug_message(check_gradient_output_range_saved_dir, all_layers, 'check_gradient_output_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_output_range_saved_dir, all_layers,
+                                                'check_gradient_output_range_msg', epoch, i)
                     if config.train.debug.check_gradient_parameter_range:
-                        debug.log_debug_message(check_gradient_parameter_range_saved_dir, all_layers, 'check_gradient_parameter_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_parameter_range_saved_dir, all_layers,
+                                                'check_gradient_parameter_range_msg', epoch, i)
                 if config.train.grad_clip.enable:
                     scaler.unscale_(optimizer)
                     if config.train.grad_clip.mode == 'value':
@@ -281,10 +341,15 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                 preds = my_model(samples)
                 if config.neighbor2point_block.res_link.enable:
                     if config.train.aux_loss.enable:
-                        train_loss = loss_fn(preds[-1], cls_labels) + config.train.aux_loss.factor * aux_loss(preds, cls_labels, loss_fn) + config.train.consistency_loss_factor * consistency_loss(my_model.module.block.res_link_list)              
+                        train_loss = loss_fn(preds[-1], cls_labels) + config.train.aux_loss.factor * aux_loss(preds,
+                                                                                                              cls_labels,
+                                                                                                              loss_fn) + config.train.consistency_loss_factor * consistency_loss(
+                            my_model.module.block.res_link_list)
                         preds = preds[-1]
                     else:
-                        train_loss = loss_fn(preds, cls_labels) + config.train.consistency_loss_factor * consistency_loss(my_model.module.block.res_link_list)        
+                        train_loss = loss_fn(preds,
+                                             cls_labels) + config.train.consistency_loss_factor * consistency_loss(
+                            my_model.module.block.res_link_list)
                 else:
                     assert config.train.aux_loss.enable == False and config.train.consistency_loss_factor == 0, "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
                     train_loss = loss_fn(preds, cls_labels)
@@ -292,17 +357,23 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                 # log debug information
                 if config.train.debug.enable:
                     if config.train.debug.check_layer_input_range:
-                        debug.log_debug_message(check_layer_input_range_saved_dir, all_layers, 'check_layer_input_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_input_range_saved_dir, all_layers,
+                                                'check_layer_input_range_msg', epoch, i)
                     if config.train.debug.check_layer_output_range:
-                        debug.log_debug_message(check_layer_output_range_saved_dir, all_layers, 'check_layer_output_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_output_range_saved_dir, all_layers,
+                                                'check_layer_output_range_msg', epoch, i)
                     if config.train.debug.check_layer_parameter_range:
-                        debug.log_debug_message(check_layer_parameter_range_saved_dir, all_layers, 'check_layer_parameter_range_msg', epoch, i)
+                        debug.log_debug_message(check_layer_parameter_range_saved_dir, all_layers,
+                                                'check_layer_parameter_range_msg', epoch, i)
                     if config.train.debug.check_gradient_input_range:
-                        debug.log_debug_message(check_gradient_input_range_saved_dir, all_layers, 'check_gradient_input_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_input_range_saved_dir, all_layers,
+                                                'check_gradient_input_range_msg', epoch, i)
                     if config.train.debug.check_gradient_output_range:
-                        debug.log_debug_message(check_gradient_output_range_saved_dir, all_layers, 'check_gradient_output_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_output_range_saved_dir, all_layers,
+                                                'check_gradient_output_range_msg', epoch, i)
                     if config.train.debug.check_gradient_parameter_range:
-                        debug.log_debug_message(check_gradient_parameter_range_saved_dir, all_layers, 'check_gradient_parameter_range_msg', epoch, i)
+                        debug.log_debug_message(check_gradient_parameter_range_saved_dir, all_layers,
+                                                'check_gradient_parameter_range_msg', epoch, i)
                 if config.train.grad_clip.enable:
                     if config.train.grad_clip.mode == 'value':
                         torch.nn.utils.clip_grad_value_(my_model.parameters(), config.train.grad_clip.value)
@@ -314,7 +385,8 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
 
             # collect the result from all gpus
             pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.train.ddp.nproc_this_node)]
-            cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in range(config.train.ddp.nproc_this_node)]
+            cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in
+                                     range(config.train.ddp.nproc_this_node)]
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
             torch.distributed.all_reduce(train_loss)
@@ -346,13 +418,13 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
         if rank == 0:
             if config.wandb.enable:
                 metric_dict = {'modelnet_train': {'lr': current_lr, 'loss': train_loss, 'acc': train_acc}}
-                if (epoch+1) % config.train.validation_freq:
+                if (epoch + 1) % config.train.validation_freq:
                     wandb.log(metric_dict, commit=True)
                 else:
                     wandb.log(metric_dict, commit=False)
 
         # start validation
-        if not (epoch+1) % config.train.validation_freq:
+        if not (epoch + 1) % config.train.validation_freq:
             my_model.eval()
             val_loss_list = []
             pred_list = []
@@ -363,13 +435,15 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                     preds = my_model(samples)
                     if config.train.aux_loss.enable:
                         val_loss = loss_fn(preds[-1], cls_labels)
-                        preds = preds[-1]                        
+                        preds = preds[-1]
                     else:
                         val_loss = loss_fn(preds, cls_labels)
 
                     # collect the result among all gpus
-                    pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.train.ddp.nproc_this_node)]
-                    cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in range(config.train.ddp.nproc_this_node)]
+                    pred_gather_list = [torch.empty_like(preds).to(device) for _ in
+                                        range(config.train.ddp.nproc_this_node)]
+                    cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in
+                                             range(config.train.ddp.nproc_this_node)]
                     torch.distributed.all_gather(pred_gather_list, preds)
                     torch.distributed.all_gather(cls_label_gather_list, cls_labels)
                     torch.distributed.all_reduce(val_loss)
@@ -390,7 +464,8 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
 
             # log results
             if rank == 0:
-                kbar.update(i+1, values=[('lr', current_lr), ('train_loss', train_loss), ('train_acc', train_acc), ('val_loss', val_loss), ('val_acc', val_acc)])
+                kbar.update(i + 1, values=[('lr', current_lr), ('train_loss', train_loss), ('train_acc', train_acc),
+                                           ('val_loss', val_loss), ('val_acc', val_acc)])
                 if config.wandb.enable:
                     # save model
                     if val_acc >= max(val_acc_list):
@@ -402,7 +477,7 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
                     wandb.log(metric_dict, commit=True)
         else:
             if rank == 0:
-                kbar.update(i+1, values=[('lr', current_lr), ('train_loss', train_loss), ('train_acc', train_acc)])
+                kbar.update(i + 1, values=[('lr', current_lr), ('train_loss', train_loss), ('train_acc', train_acc)])
 
     # save artifacts to wandb server
     if config.wandb.enable and rank == 0:

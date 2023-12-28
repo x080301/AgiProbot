@@ -69,6 +69,7 @@ def train(local_rank, config, random_seed,
 
     if config.wandb.enable and rank == 0:
         hostname = socket.gethostname()
+        config.wandb.name = f'{time_label}_{config.wandb.name}'
         if 'iesservergpu' in hostname:
             save_dir = '{save_dir}'
         else:
