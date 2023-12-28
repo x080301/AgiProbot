@@ -1,11 +1,13 @@
-#echo 1
-echo 2
-echo hhh
+nvidia-smi
+cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/
+git fetch --all
+git reset --hard origin/main
+cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/APESv3
 #---------------
-python my_test.py
-echo 3
-echo 4
-#---------------
-echo 5
-hhhhhjj
-echo 6
+nvidia-smi
+cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot
+git fetch --all
+git reset --hard origin/main
+cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/Rethinking_Attention_Experiment
+
+CUDA_VISIBLE_DEVICES=0,1 bash script/main_segmentation.sh cfgs/s3dis/pointmetabase-l.yaml wandb.use_wandb=True
