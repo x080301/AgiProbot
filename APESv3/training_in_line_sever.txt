@@ -1,0 +1,11 @@
+#echo 1
+echo 2
+echo hhh
+#---------------
+python my_test.py
+echo 3
+echo 4
+#---------------
+echo 5
+hhhhhjj
+echo 6
