@@ -1,4 +1,3 @@
-import os
 import subprocess
 import socket
 
@@ -54,6 +53,7 @@ if __name__ == '__main__':
 
                 if 'running' in single_line:
                     if result.returncode != 0:
+                        print(result.stderr)
                         new_training_in_line_txt.append('#' + str(result.stderr).replace('\n', ' ') + '\n')
                         belong_to_the_same_demo = True
                 else:
