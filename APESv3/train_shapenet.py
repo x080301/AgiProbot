@@ -71,7 +71,7 @@ def train(local_rank, config, random_seed,
         hostname = socket.gethostname()
         config.wandb.name = f'{time_label}_{config.wandb.name}'
         if 'iesservergpu' in hostname:
-            save_dir = '{save_dir}'
+            save_dir = '/data/users/fu/APES'
         else:
             save_dir = '/home/team1/cwu/FuHaoWorkspace/APES/'
         time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
@@ -575,6 +575,8 @@ def train(local_rank, config, random_seed,
         artifacts.add_file(f'{save_dir}{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
+        artifact_name = artifacts.digest
+        print("Artifact name:", artifact_name)
 
 
 if __name__ == '__main__':

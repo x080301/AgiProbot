@@ -490,6 +490,8 @@ def train(local_rank, config):  # the first arg must be local rank for the sake 
         artifacts.add_file(f'{save_dir}{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
+        artifact_name = artifacts.digest
+        print("Artifact name:", artifact_name)
 
 
 if __name__ == '__main__':
