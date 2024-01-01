@@ -83,7 +83,7 @@ def train(local_rank, config, random_seed,
         os.makedirs(f'{save_dir}{time_label}_{run.id}/models')
         os.makedirs(f'{save_dir}{time_label}_{run.id}/utils')
 
-        OmegaConf.save(config=config, f=f'{save_dir}{time_label}_{run.id}_usr_config.yaml', resolve=False)
+        OmegaConf.save(config=config, f=f'{save_dir}{time_label}_{run.id}/usr_config.yaml', resolve=False)
         os.system(f'cp ./models/cls_model.py {save_dir}{time_label}_{run.id}/models/cls_model.py')
         os.system(f'cp ./models/cls_block.py {save_dir}{time_label}_{run.id}/models/cls_block.py')
         os.system(f'cp ./models/attention.py {save_dir}{time_label}_{run.id}/models/attention.py')
