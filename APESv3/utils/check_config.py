@@ -258,7 +258,7 @@ def check_worldsize(config, mode):
         print(f'which_gpu:{config.train.ddp.which_gpu}')
         print(f'which_gpu_type{type(config.train.ddp.which_gpu)}')
 
-        #assert (isinstance(config.train.ddp.which_gpu, list))
+        assert (isinstance(config.train.ddp.which_gpu, list))
 
         num_gpus = len(config.train.ddp.which_gpu)
         config.train.ddp.nproc_this_node = num_gpus
