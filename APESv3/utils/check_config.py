@@ -255,10 +255,11 @@ def set_port(config, mode):
 
 def check_worldsize(config, mode):
     if mode == 'train':
-        print(f'which_gpu:{config.train.ddp.which_gpu}')
-        print(f'which_gpu_type{type(config.train.ddp.which_gpu)}')
+        # print(f'which_gpu:{config.train.ddp.which_gpu}')
+        # print(f'which_gpu_type{type(config.train.ddp.which_gpu)}')
 
-        assert (isinstance(config.train.ddp.which_gpu, list))
+        import omegaconf
+        assert (isinstance(config.train.ddp.which_gpu, omegaconf.listconfig.ListConfig))
 
         num_gpus = len(config.train.ddp.which_gpu)
         config.train.ddp.nproc_this_node = num_gpus
