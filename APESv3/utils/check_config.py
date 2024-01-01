@@ -253,8 +253,23 @@ def set_port(config, mode):
     return config
 
 
+def check_worldsize(config, mode):
+    if mode == 'train':
+        assert (isinstance(config.train.ddp.which_gpu, list))
+
+        num_gpus = len(config.train.ddp.which_gpu)
+        config.train.ddp.nproc_this_node = num_gpus
+        config.train.ddp.world_size = num_gpus
+
+    else:
+        raise NotImplementedError
+
+    return config
+
+
 def set_config_run(config, mode):
     check_config(config)
     # config = config_gpus(config, mode)
+    config = check_worldsize(config, mode)
     config = set_port(config, mode)
     return config

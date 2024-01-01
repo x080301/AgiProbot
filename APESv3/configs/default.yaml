@@ -22,7 +22,7 @@ wandb:
   api_key: d548a03793d0947aea18838d6b45447d207ec072  # your wandb api key
   entity: fuhaodsst  # the place to save your runs. can be your wandb username or team name
   project: APESv3  # the name of your project
-  name: shapenet_segmentation # the name your run
+  name: modelnet_classification_12_28 # the name your run
 
 train:  # only valid when running the training script
   epochs: 200
