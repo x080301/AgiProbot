@@ -4,7 +4,7 @@ wandb:
   project: ???
   name: ???
 train:
-  epochs: 200
+  epochs: 2
   lr: 0.0001
   lr_scheduler:
     enable: true
