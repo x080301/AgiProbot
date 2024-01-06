@@ -1,11 +1,11 @@
 #cd /mnt/c/Users/Lenovo/Desktop/
 #scp fu@iesservergpu-b.ies.iar.kit.edu:/home/ies/fu/codes/APESv3/training_in_line_sever.txt training_in_line_sever.txt
-nvidia-smi
-cd /home/ies/fu/codes
-git fetch --all
-git reset --hard origin/main
-cd /home/ies/fu/codes/APESv3
-python train_modelnet.py train.ddp.which_gpu=[0] datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet'
+#nvidia-smi
+#cd /home/ies/fu/codes
+#git fetch --all
+#git reset --hard origin/main
+#cd /home/ies/fu/codes/APESv3
+#python train_modelnet.py train.ddp.which_gpu=[0] datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet'
 #---------------
 nvidia-smi
 cd /home/ies/fu/codes
