@@ -36,6 +36,7 @@ def write_to_csv(oa, macc, miou, ious, best_epoch, cfg, write_header=True, area=
                                            wandb.run.get_url() if cfg.wandb.use_wandb else '-']
     with open(cfg.csv_path, 'a', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
+        print(f'save csv to:{cfg.csv_path}')
         if write_header:
             writer.writerow(header)
         writer.writerow(data)
