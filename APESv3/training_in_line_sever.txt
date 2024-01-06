@@ -7,7 +7,6 @@
 #cd /home/ies/fu/codes/APESv3
 #python train_modelnet.py train.ddp.which_gpu=[0] datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet'
 #---------------
-echo 111
 cd /home/ies/fu/codes/APESv3
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/seg-boltzmann.yaml wandb.name='shape_net'
 #---------------
