@@ -4,7 +4,7 @@ wandb:
   project: ???
   name: ???
 train:
-  epochs: 200
+  epochs: ???
   lr: 0.0001
   lr_scheduler:
     enable: true
@@ -79,7 +79,7 @@ train:
           - 1.5
         isotropic: false
   ddp:
-    which_gpu: [ 0,1 ]
+    which_gpu: ???
     syn_bn: true
     master_addr: localhost
     master_port: 17701
@@ -219,7 +219,7 @@ test: # only valid when running the test script
     batch_size_per_gpu: 8
     num_workers: 2  # ${test.ddp.nproc_this_node}  # the number of subprocess to load data
   ddp:
-    which_gpu: [ 0,1 ]
+    which_gpu: ???
     master_port: 12376  # please choose an available port
     nproc_this_node: 2  # how many gpu you want to use in current PC, should match 'which_gpu'
     world_size: 2  # this is equal to 'nproc_this_node' if you only use one PC

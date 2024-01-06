@@ -6,7 +6,7 @@ wandb:
   name: ???  # the name your rundata
 
 train:
-  epochs: 200
+  epochs: ???
   dataloader:
     selected_points: 2048  # points to be selected from every point cloud
     fps: false  #  whether to use fps to select points. if false, use random downsample to select points
@@ -62,7 +62,7 @@ test:  # only valid when running the test script
       enable: true
       num_vote: 10
   ddp:
-    which_gpu: [1]
+    which_gpu: ???
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 10076  # please choose an available port
     nnodes: 1  # how many PCs you want to use
