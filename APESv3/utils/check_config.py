@@ -265,6 +265,14 @@ def check_worldsize(config, mode):
         config.train.ddp.nproc_this_node = num_gpus
         config.train.ddp.world_size = num_gpus
 
+    elif mode == 'test':
+        import omegaconf
+        assert (isinstance(config.test.ddp.which_gpu, omegaconf.listconfig.ListConfig))
+
+        num_gpus = len(config.test.ddp.which_gpu)
+        config.test.ddp.nproc_this_node = num_gpus
+        config.test.ddp.world_size = num_gpus
+
     else:
         raise NotImplementedError
 

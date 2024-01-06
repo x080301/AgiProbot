@@ -133,7 +133,7 @@ test:  # only valid when running the test script
       enable: false
       num_vote: 10
   ddp:
-    which_gpu: [4,5]
+    which_gpu: ???
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 12345  # please choose an available port
     nnodes: 1  # how many PCs you want to use
