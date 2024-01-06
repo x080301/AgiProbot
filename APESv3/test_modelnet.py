@@ -202,6 +202,7 @@ def test(local_rank, config):
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
             print(f'vis_test_gather_dict:{vis_test_gather_dict}')
+            exit(-1)
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
