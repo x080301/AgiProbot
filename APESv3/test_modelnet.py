@@ -202,10 +202,10 @@ def test(local_rank, config):
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
             print(f'vis_test_gather_dict:{vis_test_gather_dict}')
-            exit()
+
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
-            print(f'size of idx{np.asarray(vis_test_gather_dict["trained"]["idx"]).shape}')
-            print(f'size of idx{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"]).shape}')
+            print(f'idx:{vis_test_gather_dict["trained"]["idx"]}')
+            print(f'attention_point_score:{vis_test_gather_dict["trained"]["attention_point_score"]}')
             exit()
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
