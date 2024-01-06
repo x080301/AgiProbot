@@ -204,8 +204,10 @@ def test(local_rank, config):
             print(f'vis_test_gather_dict:{vis_test_gather_dict}')
 
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
-            print(f'idx:{vis_test_gather_dict["trained"]["idx"]}')
-            # print(f'attention_point_score:{len(vis_test_gather_dict["trained"]["attention_point_score"])}')
+            print(f'idx 0:{len(vis_test_gather_dict["trained"]["idx"][0])}')
+            print(f'idx 1:{len(vis_test_gather_dict["trained"]["idx"][1])}')
+            print(f'attention_point_score 0:{len(vis_test_gather_dict["trained"]["attention_point_score"][0])}')
+            print(f'attention_point_score 1:{len(vis_test_gather_dict["trained"]["attention_point_score"][1])}')
             exit()
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
