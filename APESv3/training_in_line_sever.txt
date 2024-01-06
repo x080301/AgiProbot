@@ -9,5 +9,5 @@
 #---------------
 echo 111
 cd /home/ies/fu/codes/APESv3
-python train_shapenet.py train.epochs=2 train.ddp.which_gpu=[0] datasets=shapenet_Yi650M usr_config=configs/seg-boltzmann.yaml wandb.name='shape_net'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/seg-boltzmann.yaml wandb.name='shape_net'
 #---------------
