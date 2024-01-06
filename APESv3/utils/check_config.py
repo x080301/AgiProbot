@@ -272,7 +272,7 @@ def check_worldsize(config, mode):
 
 
 def set_config_run(config, mode):
-    check_config(config)
+    # check_config(config)
     # config = config_gpus(config, mode)
     config = check_worldsize(config, mode)
     config = set_port(config, mode)
