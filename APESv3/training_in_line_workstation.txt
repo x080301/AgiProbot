@@ -1,3 +1,4 @@
+echo 1111
 nvidia-smi
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot
 git fetch --all
