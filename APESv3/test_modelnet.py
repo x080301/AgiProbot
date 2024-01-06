@@ -249,10 +249,12 @@ def test(local_rank, config):
             if os.path.exists(ds_path):
                 shutil.rmtree(ds_path)
             for idx_mode in vis_test_gather_dict["ds_points"].keys():
+
                 if len(vis_test_gather_dict["ds_points"].keys()) == 1 and not config.test.few_points.enable:
                     index = vis_concat_dict["trained"]["idx"]
                 else:
                     index = vis_concat_dict["ds_points"][idx_mode]
+
                 if config.test.few_points.enable:
                     visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
                                                                      artifacts_path)
