@@ -533,9 +533,6 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
         categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
         for layer, atten in enumerate(attention_map):
             attention_tmp[layer].append(atten[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
-            print(type(atten))
-            print(atten.shape)
-        exit()
     samples = np.concatenate(samples_tmp)
     categories = np.concatenate(categories_tmp)
     attention_map = []
