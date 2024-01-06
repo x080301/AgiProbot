@@ -571,7 +571,7 @@ def train(local_rank, config, random_seed,
         artifacts.add_dir(f"{save_dir}{time_label}_{run.id}/models", name='models')
         artifacts.add_dir(f"{save_dir}{time_label}_{run.id}/utils", name='utils')
         artifacts.add_file(f'{save_dir}{time_label}_{run.id}/train_shapenet.py', name='train_shapenet.py')
-        artifacts.add_file(f'{save_dir}{time_label}_{run.id}/test_shapenet.py', name='test_shapenet.py')
+        # artifacts.add_file(f'{save_dir}{time_label}_{run.id}/test_shapenet.py', name='test_shapenet.py')
         artifacts.add_file(f'{save_dir}{time_label}_{run.id}/checkpoint.pt', name='checkpoint.pt')
         run.log_artifact(artifacts)
         wandb.finish(quiet=True)
