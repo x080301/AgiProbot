@@ -163,6 +163,8 @@ test: # only valid when running the test script
   few_points:
     enable: false
     num_points: 8
+  sampling_score_histogram:
+    enable: true
 
 # the layer order inside the block is:
 # embedding -> neighbor2point -> downsample -> neighbor2point -> downsample -> neighbor2point

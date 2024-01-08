@@ -242,5 +242,3 @@ test: # only valid when running the test script
   visualize_combine:
     enable: false
     vis_which: [ sparse_col_sqr ]
-  sampling_score_histogram:
-    enable: true
