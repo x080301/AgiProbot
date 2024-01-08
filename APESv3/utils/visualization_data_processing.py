@@ -258,8 +258,8 @@ def vis_data_concat(len_ds, vis_concat_dict, vis_test_gather_dict):
     return vis_concat_dict
 
 
-def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: list(torch.Tensor, torch.Tensor, ...),
-                        attention_score: list(torch.Tensor, torch.Tensor, ...),
+def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: list(torch.Tensor),
+                        attention_score: list(torch.Tensor),
                         save_dir='sampling_scores.pt') -> torch.Tensor:
     """
     save the sampling_score in a file as torch.Tensor[N,xyz+num_layers]
