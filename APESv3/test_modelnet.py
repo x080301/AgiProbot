@@ -201,14 +201,14 @@ def test(local_rank, config):
                                      range(config.test.ddp.nproc_this_node)]
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
-            print(f'vis_test_gather_dict:{vis_test_gather_dict}')
+            # print(f'vis_test_gather_dict:{vis_test_gather_dict}')
 
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
-            print(f'idx 0:{np.asarray(vis_test_gather_dict["trained"]["idx"][0]).shape}')
-            print(f'idx 1:{np.asarray(vis_test_gather_dict["trained"]["idx"][1]).shape}')
-            print(f'attention_point_score 0:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][0]).shape}')
-            print(f'attention_point_score 1:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][1]).shape}')
-            exit()
+            # print(f'idx 0:{np.asarray(vis_test_gather_dict["trained"]["idx"][0]).shape}')
+            # print(f'idx 1:{np.asarray(vis_test_gather_dict["trained"]["idx"][1]).shape}')
+            # print(f'attention_point_score 0:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][0]).shape}')
+            # print(f'attention_point_score 1:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][1]).shape}')
+            # exit()
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
             torch.distributed.all_gather(sample_gather_list, samples)
@@ -292,8 +292,20 @@ def test(local_rank, config):
             assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
             visualize_modelnet_combine(config, artifacts_path)
 
-        # storage and backup
-        # save_backup(artifacts_path, zip_file_path, backup_path)
+        if config.test.sampling_score_histogram.enable:
+            if i == 0:
+                torch_tensor_to_save_batch = None
+
+            if i == len(test_loader) - 1:
+                save_dir = 'sampling_scores.pt'
+            else:
+                save_dir = None
+
+            idx = [torch.squeeze(torch.asarray(item)) for item in vis_test_gather_dict["trained"]["idx"]]
+            attention_map = [torch.squeeze(torch.asarray(item)) for item in
+                             vis_concat_dict["trained"]["attention_point_score"]]
+
+            save_sampling_score(torch_tensor_to_save_batch, samples, idx, attention_map, save_dir)
 
 
 if __name__ == '__main__':

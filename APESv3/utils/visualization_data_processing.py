@@ -256,3 +256,40 @@ def vis_data_concat(len_ds, vis_concat_dict, vis_test_gather_dict):
                 vis_concat_dict[vis_type][idx_mode].append(
                     np.concatenate(vis_test_gather_dict[vis_type][idx_mode][j], axis=0))
     return vis_concat_dict
+
+
+def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: list(torch.Tensor, torch.Tensor, ...),
+                        attention_score: list(torch.Tensor, torch.Tensor, ...),
+                        save_dir='sampling_scores.pt') -> torch.Tensor:
+    """
+    save the sampling_score in a file as torch.Tensor[N,xyz+num_layers]
+    :param points: Input tensor of the model, [N,3]
+    :param idx: indexes of sampled points, a tuple of torch.Tensor
+    :param attention_score: attention_score of input points of each layer, a tuple of torch.Tensor
+    :param save_dir: direction to save the file
+    :return: torch_tensor_to_save
+    """
+
+    # torch_tensor_to_save = torch.empty(points.shape[0], points.shape[1], 0)
+    reshaped_attention_score = None
+    for i in range(len(idx), 0, -1):
+        if reshaped_attention_score is None:
+            reshaped_attention_score = attention_score[i]
+        else:
+            reshaped_attention_score_new = torch.zeros(attention_score[i].shape[0], reshaped_attention_score.shape[1])
+            reshaped_attention_score_new[idx[i], :] = reshaped_attention_score
+
+            reshaped_attention_score = torch.concat([attention_score[i], reshaped_attention_score_new], dim=1)
+
+    torch_tensor_to_save = torch.concat([points, reshaped_attention_score], dim=1)
+
+    if torch_tensor_to_save_batch is None:
+        torch_tensor_to_save_batch = torch.unsqueeze(torch_tensor_to_save, dim=0)
+    else:
+        torch_tensor_to_save_batch = torch.concat(
+            [torch_tensor_to_save_batch, torch.unsqueeze(torch_tensor_to_save, dim=0)], dim=0)
+
+    if save_dir is not None:
+        torch.save(torch_tensor_to_save_batch, save_dir)
+
+    return torch_tensor_to_save_batch

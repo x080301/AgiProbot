@@ -224,21 +224,23 @@ test: # only valid when running the test script
     nproc_this_node: 2  # how many gpu you want to use in current PC, should match 'which_gpu'
     world_size: 2  # this is equal to 'nproc_this_node' if you only use one PC
   visualize_preds:
-    enable: true
+    enable: false
     format: png  # png or ply
     vis_which: [ 0, 4, 7, 8, 15, 17, 19, 26 ]  # which category to be visualized
     num_vis: 100  # how many point clouds to visualize for one category
   visualize_downsampled_points:
-    enable: true
+    enable: false
     format: png  # png or ply
     vis_which: [ 0, 4, 7, 8, 15, 17, 19, 26 ]  # which category to be visualized
     num_vis: 100  # how many point clouds to visualize for one category
   visualize_attention_heatmap:
-    enable: true
+    enable: false
     format: png  # png or ply
     vis_which: [ 0, 4, 7, 8, 15, 17, 19, 26 ]  # which category to be visualized
     num_vis: 100  # how many point clouds to visualize for one category
     mode: one  # one, mode, compare
   visualize_combine:
-    enable: true
+    enable: false
     vis_which: [ sparse_col_sqr ]
+  sampling_score_histogram:
+    enable: true
