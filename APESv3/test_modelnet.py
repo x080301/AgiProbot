@@ -305,7 +305,8 @@ def test(local_rank, config):
             attention_map = [torch.squeeze(torch.asarray(item)) for item in
                              vis_concat_dict["trained"]["attention_point_score"]]
 
-            save_sampling_score(torch_tensor_to_save_batch, samples, idx, attention_map, save_dir)
+            torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx, attention_map,
+                                                             save_dir)
 
 
 if __name__ == '__main__':
