@@ -293,6 +293,7 @@ def test(local_rank, config):
             visualize_modelnet_combine(config, artifacts_path)
 
         if config.test.sampling_score_histogram.enable:
+            print(f'i={i}-----------------')
             if i == 0:
                 torch_tensor_to_save_batch = None
 
