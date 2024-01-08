@@ -225,6 +225,26 @@ def test(local_rank, config):
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
 
+                if config.test.sampling_score_histogram.enable:
+                    print(f'i={i}-----------------')
+                    if i == 0:
+                        torch_tensor_to_save_batch = None
+
+                    if i == len(test_loader) - 1:
+                        save_dir = 'sampling_scores.pt'
+                    else:
+                        save_dir = None
+
+                    idx = [torch.squeeze(torch.asarray(item)) for item in vis_test_gather_dict["trained"]["idx"]]
+                    attention_map = [torch.squeeze(torch.asarray(item)) for item in
+                                     vis_test_gather_dict["trained"]["attention_point_score"]]
+
+                    print(f'idx:{idx}')
+
+                    torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
+                                                                     attention_map,
+                                                                     save_dir)
+
     if rank == 0:
         preds = np.concatenate(pred_list, axis=0)
         cls_labels = np.concatenate(cls_label_list, axis=0)
@@ -292,22 +312,7 @@ def test(local_rank, config):
             assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
             visualize_modelnet_combine(config, artifacts_path)
 
-        if config.test.sampling_score_histogram.enable:
-            print(f'i={i}-----------------')
-            if i == 0:
-                torch_tensor_to_save_batch = None
 
-            if i == len(test_loader) - 1:
-                save_dir = 'sampling_scores.pt'
-            else:
-                save_dir = None
-
-            idx = [torch.squeeze(torch.asarray(item)) for item in vis_test_gather_dict["trained"]["idx"]]
-            attention_map = [torch.squeeze(torch.asarray(item)) for item in
-                             vis_concat_dict["trained"]["attention_point_score"]]
-
-            torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx, attention_map,
-                                                             save_dir)
 
 
 if __name__ == '__main__':
