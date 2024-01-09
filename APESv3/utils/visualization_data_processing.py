@@ -273,11 +273,11 @@ def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: l
     # torch_tensor_to_save = torch.empty(points.shape[0], points.shape[1], 0)
     reshaped_attention_score = None
     for i in range(len(idx) - 1, -1, -1):
-        print(f'idx:{idx[i].shape}')
-        print(f'attention_score:{attention_score[i].shape}')
+        
         if reshaped_attention_score is None:
             reshaped_attention_score = torch.unsqueeze(attention_score[i], dim=1)
         else:
+            print(f'reshape:{reshaped_attention_score.shape}')
             reshaped_attention_score_new = torch.zeros(attention_score[i].shape[0], attention_score[i].shape[1],
                                                        reshaped_attention_score.shape[1])
 
