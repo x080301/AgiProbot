@@ -262,32 +262,33 @@ def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: l
                         attention_score: list[torch.Tensor],
                         save_dir='sampling_scores.pt') -> torch.Tensor:
     """
-    save the sampling_score in a file as torch.Tensor[N,xyz+num_layers]
-    :param points: Input tensor of the model, [N,3]
-    :param idx: indexes of sampled points, a tuple of torch.Tensor
-    :param attention_score: attention_score of input points of each layer, a tuple of torch.Tensor
+    save the sampling_score in a file as torch.Tensor[B,N,xyz+num_layers]
+    :param points: Input tensor of the model, [B,N,3]
+    :param idx: indexes of sampled points, a list of torch.Tensor
+    :param attention_score: attention_score of input points of each layer, a list of torch.Tensor
     :param save_dir: direction to save the file
     :return: torch_tensor_to_save
     """
 
     # torch_tensor_to_save = torch.empty(points.shape[0], points.shape[1], 0)
     reshaped_attention_score = None
-    for i in range(len(idx)-1, -1, -1):
+    for i in range(len(idx) - 1, -1, -1):
         if reshaped_attention_score is None:
             reshaped_attention_score = attention_score[i]
         else:
-            reshaped_attention_score_new = torch.zeros(attention_score[i].shape[0], reshaped_attention_score.shape[1])
+            reshaped_attention_score_new = torch.zeros(attention_score[i].shape[0], attention_score[i].shape[0],
+                                                       reshaped_attention_score.shape[1])
             reshaped_attention_score_new[idx[i], :] = reshaped_attention_score
 
-            reshaped_attention_score = torch.concat([attention_score[i], reshaped_attention_score_new], dim=1)
+            reshaped_attention_score = torch.concat([attention_score[i], reshaped_attention_score_new], dim=2)
 
-    torch_tensor_to_save = torch.concat([points, reshaped_attention_score], dim=1)
+    torch_tensor_to_save = torch.concat([points, reshaped_attention_score], dim=2)
 
     if torch_tensor_to_save_batch is None:
-        torch_tensor_to_save_batch = torch.unsqueeze(torch_tensor_to_save, dim=0)
+        torch_tensor_to_save_batch = torch_tensor_to_save
     else:
         torch_tensor_to_save_batch = torch.concat(
-            [torch_tensor_to_save_batch, torch.unsqueeze(torch_tensor_to_save, dim=0)], dim=0)
+            [torch_tensor_to_save_batch, torch_tensor_to_save], dim=0)
 
     if save_dir is not None:
         torch.save(torch_tensor_to_save_batch, save_dir)
