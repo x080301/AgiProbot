@@ -226,7 +226,6 @@ def test(local_rank, config):
                 pbar.update(i)
 
                 if config.test.sampling_score_histogram.enable:
-                    print(f'i={i}-----------------')
                     if i == 0:
                         torch_tensor_to_save_batch = None
 
@@ -238,8 +237,6 @@ def test(local_rank, config):
                     idx = [torch.squeeze(torch.asarray(item)) for item in vis_test_gather_dict["trained"]["idx"]]
                     attention_map = [torch.squeeze(torch.asarray(item)) for item in
                                      vis_test_gather_dict["trained"]["attention_point_score"]]
-
-                    print(f'idx:{idx}')
 
                     torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
                                                                      attention_map,
