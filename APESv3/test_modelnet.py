@@ -234,8 +234,8 @@ def test(local_rank, config):
                     else:
                         save_dir = None
 
-                    idx = [torch.squeeze(torch.asarray(item)) for item in vis_test_gather_dict["trained"]["idx"]]
-                    attention_map = [torch.squeeze(torch.asarray(item)) for item in
+                    idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in vis_test_gather_dict["trained"]["idx"]]
+                    attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
                                      vis_test_gather_dict["trained"]["attention_point_score"]]
 
                     torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
