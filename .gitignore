@@ -6,6 +6,7 @@ _todo.py
 _my_test.py
 run.log
 *.pyc
+*.pt
 
 APESv2_protected/
 agi_project_10_category-main/
