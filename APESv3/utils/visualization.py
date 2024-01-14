@@ -1107,8 +1107,11 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     print(f'Done! All files are saved in {base_path}')
 
 
-def visualization_sampling_score(saved_sampling_score_dir='./modelnet_sampling_scores.pt', layer_to_visualize=0):
+def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0,
+                                 z_normalization_miu=True, show_plt=False,
+                                 save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore/'):
     tensor = torch.load(saved_sampling_score_dir)
+    num_batch = tensor.shape[0]
     print(tensor.shape)
 
     tensor = tensor[:, layer_to_visualize + 3, :]
@@ -1116,27 +1119,44 @@ def visualization_sampling_score(saved_sampling_score_dir='./modelnet_sampling_s
     # Example tensor of shape [2464, 5, 2048]
 
     # Flatten the tensor to 1D for histogram
+
     if layer_to_visualize != 0:
         tensor = torch.reshape(tensor, (-1,))
         tensor = tensor[tensor > -1.5]
-        tensor = torch.reshape(tensor, (tensor.shape[0], 1024))
+        tensor = torch.reshape(tensor, (num_batch, 1024))
 
     # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
-    tensor = (tensor - torch.mean(tensor, dim=1,
-                                  keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    if z_normalization_miu:
+        tensor = (tensor - torch.mean(tensor, dim=1,
+                                      keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    else:
+        tensor = (tensor - torch.mean(tensor, dim=1,
+                                      keepdim=True))
 
-    flattened_tensor = tensor.flatten().cpu().numpy()
+    flattened_tensor = tensor.flatten().cpu()
     # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
 
-    min_value = float(np.min(flattened_tensor))
-    max_value = float(np.max(flattened_tensor))
+    min_value = float(torch.min(flattened_tensor))
+
+    topk_values, _ = torch.topk(flattened_tensor, int(flattened_tensor.shape[0] * 0.003), largest=True)
+    max_value_997 = topk_values[-1].item()
+
+    # max_value = float(np.max(flattened_tensor))
 
     # hist=torch.histc(flattened_tensor,bins=1000,min=min_value,max=max_value)
     # print(hist.)
 
     # Plotting the histogram
-    plt.hist(flattened_tensor, bins=1000, range=(min_value, max_value))  # (-2, 4))
+    plt.figure()
+    plt.hist(flattened_tensor, bins=1000, range=(min_value, max_value_997))  # (-2, 4))
     plt.title("Histogram of Tensor Elements")
     plt.xlabel("Value")
     plt.ylabel("Frequency")
-    plt.show()
+
+    if show_plt:
+        plt.show()
+    else:
+        plt.savefig(
+            f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_{layer_to_visualize}_{z_normalization_miu}.png')
+
+    plt.close()
