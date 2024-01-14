@@ -302,5 +302,6 @@ def save_sampling_score(torch_tensor_to_save_batch, points: torch.Tensor, idx: l
 
     if save_dir is not None:
         torch.save(torch_tensor_to_save_batch, save_dir)
+        print(f'save .pt at {save_dir}')
 
     return torch_tensor_to_save_batch
