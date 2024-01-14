@@ -230,7 +230,7 @@ def test(local_rank, config):
                         torch_tensor_to_save_batch = None
 
                     if i == len(test_loader) - 1:
-                        save_dir = 'sampling_scores.pt'
+                        save_dir = 'modelnet_sampling_scores.pt'
                     else:
                         save_dir = None
 

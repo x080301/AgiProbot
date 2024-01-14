@@ -111,23 +111,27 @@ def visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label
         if config.test.visualize_preds.format == 'ply':
             for which_layer, (xyzRGB, xyzRGB_gt) in enumerate(zip(xyzRGB_list, xyzRGB_gt_list)):
                 if which_layer > 0:
-                    pred_saved_path = f'{cat_path}/{category}{i-i_saved}_pred_{math.floor(iou * 1e5)}_dsLayer{which_layer}.ply'
-                    gt_saved_path = f'{cat_path}/{category}{i-i_saved}_gt_dsLayer{which_layer}.ply'
+                    pred_saved_path = f'{cat_path}/{category}{i - i_saved}_pred_{math.floor(iou * 1e5)}_dsLayer{which_layer}.ply'
+                    gt_saved_path = f'{cat_path}/{category}{i - i_saved}_gt_dsLayer{which_layer}.ply'
                 else:
-                    pred_saved_path = f'{cat_path}/{category}{i-i_saved}_pred_{math.floor(iou * 1e5)}.ply'
-                    gt_saved_path = f'{cat_path}/{category}{i-i_saved}_gt.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                    pred_saved_path = f'{cat_path}/{category}{i - i_saved}_pred_{math.floor(iou * 1e5)}.ply'
+                    gt_saved_path = f'{cat_path}/{category}{i - i_saved}_gt.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(pred_saved_path)
-                vertex = PlyElement.describe(np.array(xyzRGB_gt, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                vertex = PlyElement.describe(np.array(xyzRGB_gt,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(gt_saved_path)
         elif config.test.visualize_preds.format == 'png':
             for which_layer, (xyzRGB, xyzRGB_gt) in enumerate(zip(xyzRGB_list, xyzRGB_gt_list)):
                 if which_layer > 0:
-                    pred_saved_path = f'{cat_path}/{category}{i-i_saved}_pred_{math.floor(iou * 1e5)}_dsLayer{which_layer}.png'
-                    gt_saved_path = f'{cat_path}/{category}{i-i_saved}_gt_dsLayer{which_layer}.png'
+                    pred_saved_path = f'{cat_path}/{category}{i - i_saved}_pred_{math.floor(iou * 1e5)}_dsLayer{which_layer}.png'
+                    gt_saved_path = f'{cat_path}/{category}{i - i_saved}_gt_dsLayer{which_layer}.png'
                 else:
-                    pred_saved_path = f'{cat_path}/{category}{i-i_saved}_pred_{math.floor(iou * 1e5)}.png'
-                    gt_saved_path = f'{cat_path}/{category}{i-i_saved}_gt.png'
+                    pred_saved_path = f'{cat_path}/{category}{i - i_saved}_pred_{math.floor(iou * 1e5)}.png'
+                    gt_saved_path = f'{cat_path}/{category}{i - i_saved}_gt.png'
                 vertex = np.array(xyzRGB)
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -178,12 +182,13 @@ def visualize_shapenet_downsampled_points(config, samples, index, cls_label, sha
         idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
     if config.point2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
         ious_tmp.append(np.asarray(shape_ious)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, idx in enumerate(index):
             idx_tmp[layer].append(idx[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
@@ -220,8 +225,8 @@ def visualize_shapenet_downsampled_points(config, samples, index, cls_label, sha
         for layer, idx in enumerate(index):  # idx.shape == (B, H, K)
             if layer != 0:
                 idx = idx[i, 0]  # only visualize the first head
-                for j in range(1, layer+1):
-                    idx = index[layer-j][i, 0][idx]   # index mapping
+                for j in range(1, layer + 1):
+                    idx = index[layer - j][i, 0][idx]  # index mapping
             else:
                 idx = index[layer][i, 0]
             xyzRGB_tmp = deepcopy(xyzRGB)
@@ -234,11 +239,13 @@ def visualize_shapenet_downsampled_points(config, samples, index, cls_label, sha
                 if each not in ds_tmp:
                     rst_tmp.append(each)
             if config.test.visualize_downsampled_points.format == 'ply':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}_{math.floor(iou * 1e5)}.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}_{math.floor(iou * 1e5)}.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(saved_path)
             elif config.test.visualize_downsampled_points.format == 'png':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}_{math.floor(iou * 1e5)}.png'
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}_{math.floor(iou * 1e5)}.png'
                 rst_vertex = np.array(rst_tmp)
                 ds_vertex = np.array(ds_tmp)
                 fig = plt.figure()
@@ -246,14 +253,16 @@ def visualize_shapenet_downsampled_points(config, samples, index, cls_label, sha
                 ax.set_xlim3d(-view_range, view_range)
                 ax.set_ylim3d(-view_range, view_range)
                 ax.set_zlim3d(-view_range, view_range)
-                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
+                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o',
+                           s=1)
                 ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
                 plt.savefig(saved_path, bbox_inches='tight')
                 plt.close(fig)
             else:
-                raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
+                raise ValueError(
+                    f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
 
@@ -275,12 +284,13 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
         idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
     if config.point2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, idx in enumerate(index):
             idx_tmp[layer].append(idx[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
     samples = np.concatenate(samples_tmp)
@@ -292,7 +302,7 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
     pbar = pkbar.Pbar(name='Generating visualized downsampled points files, please wait...', target=len(samples))
     i_saved = 0
     for i, (sample, category) in enumerate(zip(samples, categories)):
-        
+
         # make every category name start from 0
         for num_category in i_categories:
             if i_saved + num_category > i:
@@ -311,8 +321,8 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
         for layer, idx in enumerate(index):  # idx.shape == (B, H, K)
             if layer != 0:
                 idx = idx[i, 0]  # only visualize the first head
-                for j in range(1, layer+1):
-                    idx = index[layer-j][i, 0][idx]   # index mapping
+                for j in range(1, layer + 1):
+                    idx = index[layer - j][i, 0][idx]  # index mapping
             else:
                 idx = index[layer][i, 0]
             xyzRGB_tmp = deepcopy(xyzRGB)
@@ -325,11 +335,13 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
                 if each not in ds_tmp:
                     rst_tmp.append(each)
             if config.test.visualize_downsampled_points.format == 'ply':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(saved_path)
             elif config.test.visualize_downsampled_points.format == 'png':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.png'
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.png'
                 rst_vertex = np.array(rst_tmp)
                 ds_vertex = np.array(ds_tmp)
                 fig = plt.figure()
@@ -337,14 +349,16 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
                 ax.set_xlim3d(-0.6, 0.6)
                 ax.set_ylim3d(-0.6, 0.6)
                 ax.set_zlim3d(-0.6, 0.6)
-                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
-                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:]/255, marker='o', s=1)
+                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o',
+                           s=1)
+                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
                 plt.savefig(saved_path, bbox_inches='tight')
                 plt.close(fig)
             else:
-                raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
+                raise ValueError(
+                    f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
 
@@ -373,7 +387,8 @@ def visualize_modelnet_heatmap(config, samples, attention_map, cls_labels, artif
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
         for layer, atten in enumerate(attention_map):
             attention_tmp[layer].append(atten[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
     samples = np.concatenate(samples_tmp)
@@ -383,7 +398,7 @@ def visualize_modelnet_heatmap(config, samples, attention_map, cls_labels, artif
         attention_map.append(np.concatenate(each))
     # start visualization
     pbar = pkbar.Pbar(name='Generating visualized heatmap files, please wait...', target=len(samples))
-    
+
     i_saved = 0
     for i, (sample, category, atten) in enumerate(zip(samples, categories, attention_map[0])):
         # make every category name start from 0
@@ -404,18 +419,19 @@ def visualize_modelnet_heatmap(config, samples, attention_map, cls_labels, artif
         if not os.path.exists(cat_path):
             os.makedirs(cat_path)
         if config.test.visualize_attention_heatmap.format == 'ply':
-            saved_path = f'{cat_path}/{category}{i-i_saved}.ply'
-            vertex = PlyElement.describe(np.array(xyzRGB, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+            saved_path = f'{cat_path}/{category}{i - i_saved}.ply'
+            vertex = PlyElement.describe(np.array(xyzRGB, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                                 ('green', 'u1'), ('blue', 'u1')]), 'vertex')
             PlyData([vertex]).write(saved_path)
         elif config.test.visualize_attention_heatmap.format == 'png':
-            saved_path = f'{cat_path}/{category}{i-i_saved}.png'
+            saved_path = f'{cat_path}/{category}{i - i_saved}.png'
             vertex = np.array(xyzRGB)
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             ax.set_xlim3d(-0.6, 0.6)
             ax.set_ylim3d(-0.6, 0.6)
             ax.set_zlim3d(-0.6, 0.6)
-            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:]/255, marker='o', s=1)
+            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
             plt.axis('off')
             plt.grid('off')
             plt.savefig(saved_path, bbox_inches='tight')
@@ -443,12 +459,13 @@ def visualize_modelnet_downsampled_points_rs_fps(config, samples, index, cls_lab
         idx_tmp = [[] for _ in range(3)]
     if config.point2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, idx in enumerate(index):
             idx_tmp[layer].append(idx[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
     samples = np.concatenate(samples_tmp)
@@ -486,11 +503,13 @@ def visualize_modelnet_downsampled_points_rs_fps(config, samples, index, cls_lab
                 if each not in ds_tmp:
                     rst_tmp.append(each)
             if config.test.visualize_downsampled_points.format == 'ply':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(saved_path)
             elif config.test.visualize_downsampled_points.format == 'png':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.png'
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.png'
                 rst_vertex = np.array(rst_tmp)
                 ds_vertex = np.array(ds_tmp)
                 fig = plt.figure()
@@ -498,14 +517,16 @@ def visualize_modelnet_downsampled_points_rs_fps(config, samples, index, cls_lab
                 ax.set_xlim3d(-0.6, 0.6)
                 ax.set_ylim3d(-0.6, 0.6)
                 ax.set_zlim3d(-0.6, 0.6)
-                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
-                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:]/255, marker='o', s=1)
+                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o',
+                           s=1)
+                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
                 plt.savefig(saved_path, bbox_inches='tight')
                 plt.close(fig)
             else:
-                raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
+                raise ValueError(
+                    f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
 
@@ -530,7 +551,8 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
         for layer, atten in enumerate(attention_map):
             attention_tmp[layer].append(atten[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
     samples = np.concatenate(samples_tmp)
@@ -540,7 +562,7 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
         attention_map.append(np.concatenate(each))
     # start visualization
     pbar = pkbar.Pbar(name='Generating visualized heatmap files, please wait...', target=len(samples))
-    
+
     i_saved = 0
     for i, (sample, category, atten) in enumerate(zip(samples, categories, attention_map[0])):
         # make every category name start from 0
@@ -565,18 +587,19 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
         if not os.path.exists(cat_path):
             os.makedirs(cat_path)
         if config.test.visualize_attention_heatmap.format == 'ply':
-            saved_path = f'{cat_path}/{category}{i-i_saved}.ply'
-            vertex = PlyElement.describe(np.array(xyzRGB, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+            saved_path = f'{cat_path}/{category}{i - i_saved}.ply'
+            vertex = PlyElement.describe(np.array(xyzRGB, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                                 ('green', 'u1'), ('blue', 'u1')]), 'vertex')
             PlyData([vertex]).write(saved_path)
         elif config.test.visualize_attention_heatmap.format == 'png':
-            saved_path = f'{cat_path}/{category}{i-i_saved}.png'
+            saved_path = f'{cat_path}/{category}{i - i_saved}.png'
             vertex = np.array(xyzRGB)
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             ax.set_xlim3d(-0.6, 0.6)
             ax.set_ylim3d(-0.6, 0.6)
             ax.set_zlim3d(-0.6, 0.6)
-            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:]/255, marker='o', s=1)
+            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
             plt.axis('off')
             plt.grid('off')
             plt.savefig(saved_path, bbox_inches='tight')
@@ -585,6 +608,7 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
             raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
+
 
 def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels, artifacts_path):
     # this function only generates heatmap for the first downsample layer
@@ -609,10 +633,12 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
         for mode, map in heatmap_dict.items():
             for layer, atten in enumerate(map):
-                attention_tmp_dict[mode][layer].append(atten[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
+                attention_tmp_dict[mode][layer].append(
+                    atten[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis])
     samples = np.concatenate(samples_tmp)
     categories = np.concatenate(categories_tmp)
     attention_map_dict = OrderedDict()
@@ -625,7 +651,7 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
 
     if not config.test.visualize_attention_heatmap.format == 'png':
         raise ValueError(f'format should be png, but got {config.test.visualize_downsampled_points.format}')
-    
+
     i_saved = 0
     for i, (sample, category) in enumerate(zip(samples, categories)):
         # make every category name start from 0
@@ -633,17 +659,17 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
             if i_saved + num_category > i:
                 break
             i_saved += num_category
-        
+
         cat_path = f'{base_path}/{category}'
         if not os.path.exists(cat_path):
             os.makedirs(cat_path)
-        saved_path = f'{cat_path}/{category}{i-i_saved}.png'        
+        saved_path = f'{cat_path}/{category}{i - i_saved}.png'
         fig = plt.figure()
         for i_plt, (mode, map_mode) in enumerate(attention_map_dict.items()):
             atten = map_mode[0][i]
             xyzRGB = []
             atten = atten[0]
-            atten = (atten - np.mean(atten)) / np.std(atten) + 0.5 # normalization
+            atten = (atten - np.mean(atten)) / np.std(atten) + 0.5  # normalization
             for xyz, rgb in zip(sample, atten):
                 xyzRGB_tmp = []
                 xyzRGB_tmp.extend(list(xyz))
@@ -655,7 +681,7 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
             ax.set_xlim3d(-0.6, 0.6)
             ax.set_ylim3d(-0.6, 0.6)
             ax.set_zlim3d(-0.6, 0.6)
-            sc = ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:]/255, marker='o', s=1)
+            sc = ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
             ax.set_title(f'{mode}')
             plt.axis('off')
             plt.grid('off')
@@ -669,7 +695,7 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
         plt.close(fig)
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
-    
+
 
 def visualize_modelnet_combine(config, artifacts_path):
     base_path = artifacts_path
@@ -680,35 +706,38 @@ def visualize_modelnet_combine(config, artifacts_path):
         'ds_points': ds_points_path
     }
     save_base_path = os.path.join(base_path, 'vis_compare')
-    
+
     attention_modes = os.listdir(ds_points_path)
     attention_modes.sort()
     categories = os.listdir(os.path.join(ds_points_path, attention_modes[0]))
     categories.sort()
-    
+
     categories_dict = {}
     num_images = 0
     for category in categories:
         cat_hm_images = os.listdir(os.path.join(heatmap_path, attention_modes[0], category))
         num_images += len(cat_hm_images)
         categories_dict[category] = cat_hm_images
-    
-    pbar = pkbar.Pbar(name='Generating visualized combined heatmap and downsampled points files, please wait...', target=num_images)
-    
+
+    pbar = pkbar.Pbar(name='Generating visualized combined heatmap and downsampled points files, please wait...',
+                      target=num_images)
+
     i_pbar = 0
     for i, (cat, hm_imgs) in enumerate(categories_dict.items()):
         save_cat_path = os.path.join(save_base_path, cat)
         if not os.path.exists(save_cat_path):
             os.makedirs(save_cat_path)
-        
+
         for hm_img in hm_imgs:
             img_paths = []
             for attention_mode in attention_modes:
                 img_paths.append(os.path.join(heatmap_path, attention_mode, cat, hm_img))
             for attention_mode in attention_modes:
-                img_paths.append(os.path.join(ds_points_path, attention_mode, cat, hm_img.replace('.png', '_layer0.png')))
-            
-            fig, axes = plt.subplots(nrows=len(to_combine_paths), ncols=len(attention_modes), figsize=(len(attention_modes)*4, len(to_combine_paths)*4))
+                img_paths.append(
+                    os.path.join(ds_points_path, attention_mode, cat, hm_img.replace('.png', '_layer0.png')))
+
+            fig, axes = plt.subplots(nrows=len(to_combine_paths), ncols=len(attention_modes),
+                                     figsize=(len(attention_modes) * 4, len(to_combine_paths) * 4))
             save_path = os.path.join(save_cat_path, hm_img)
             for i_ax, ax in enumerate(axes.flat):
                 image = plt.imread(img_paths[i_ax])
@@ -719,11 +748,12 @@ def visualize_modelnet_combine(config, artifacts_path):
             plt.tight_layout()
             plt.savefig(save_path, bbox_inches='tight')
             plt.close()
-            
+
             pbar.update(i_pbar)
             i_pbar += 1
     print(f'Done! All files are saved in {save_base_path}')
-        
+
+
 def visualize_modelnet_combine_prof(dir_name, asm="dot"):
     base_path = f'./artifacts/{dir_name}'
     heatmap_path = os.path.join(base_path, asm)
@@ -731,19 +761,20 @@ def visualize_modelnet_combine_prof(dir_name, asm="dot"):
     #     'heatmap': heatmap_path,
     # }
     save_path = os.path.join(heatmap_path, f'vis_heatmap_compare_{asm}.png')
-    
+
     idx_modes = os.listdir(heatmap_path)
     idx_modes.sort()
     selected_images = os.listdir(os.path.join(heatmap_path, idx_modes[0]))
     selected_images.sort()
 
-    fig, axes = plt.subplots(nrows=len(selected_images), ncols=len(idx_modes), figsize=(len(idx_modes)*4, len(selected_images)*4))
-    
+    fig, axes = plt.subplots(nrows=len(selected_images), ncols=len(idx_modes),
+                             figsize=(len(idx_modes) * 4, len(selected_images) * 4))
+
     img_paths = []
     for selected_image in selected_images:
         for idx_mode in idx_modes:
             img_paths.append(os.path.join(heatmap_path, idx_mode, selected_image))
-                    
+
     for i_ax, ax in enumerate(axes.flat):
         image = plt.imread(img_paths[i_ax])
         ax.imshow(image)
@@ -753,8 +784,9 @@ def visualize_modelnet_combine_prof(dir_name, asm="dot"):
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
-        
-    print(f'Done!')   
+
+    print(f'Done!')
+
 
 def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, mode, artifacts_path):
     M = config.test.few_points.num_points
@@ -792,12 +824,13 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
         idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
     if config.point2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, idx in enumerate(index):
             idx_tmp[layer].append(idx[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
     samples = np.concatenate(samples_tmp)
@@ -809,7 +842,7 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
     pbar = pkbar.Pbar(name='Generating visualized downsampled points files, please wait...', target=len(samples))
     i_saved = 0
     for i, (sample, category) in enumerate(zip(samples, categories)):
-        
+
         # make every category name start from 0
         for num_category in i_categories:
             if i_saved + num_category > i:
@@ -836,11 +869,13 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
             if each not in ds_tmp:
                 rst_tmp.append(each)
         if config.test.visualize_downsampled_points.format == 'ply':
-            saved_path = f'{cat_path}/{category}{i-i_saved}_layer0.ply'
-            vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+            saved_path = f'{cat_path}/{category}{i - i_saved}_layer0.ply'
+            vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                  dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                         ('green', 'u1'), ('blue', 'u1')]), 'vertex')
             PlyData([vertex]).write(saved_path)
         elif config.test.visualize_downsampled_points.format == 'png':
-            saved_path = f'{cat_path}/{category}{i-i_saved}_layer0.png'
+            saved_path = f'{cat_path}/{category}{i - i_saved}_layer0.png'
             rst_vertex = np.array(rst_tmp)
             ds_vertex = np.array(ds_tmp)
             fig = plt.figure()
@@ -849,7 +884,7 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
             ax.set_ylim3d(-0.6, 0.6)
             ax.set_zlim3d(-0.6, 0.6)
             ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
-            ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:]/255, marker='o', s=s_red)
+            ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=s_red)
             plt.axis('off')
             plt.grid('off')
             plt.savefig(saved_path, bbox_inches='tight')
@@ -858,6 +893,7 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
             raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
+
 
 def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, cls_labels, mode, artifacts_path):
     base_path = f'{artifacts_path}/vis_ds_points/{mode}'
@@ -873,12 +909,13 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
     if config.neighbor2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
         bin_prob_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, (idx, bin_p) in enumerate(zip(index, bin_prob)):
             idx_tmp[layer].append(idx[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
             bin_prob_tmp[layer].append(bin_p[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis])
@@ -888,8 +925,8 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
     bin_prob = []
     for (idx_each, bin_prob_each) in zip(idx_tmp, bin_prob_tmp):
         index.append(np.concatenate(idx_each))
-        bin_prob.append(np.concatenate(bin_prob_each)) 
-    # start visualization
+        bin_prob.append(np.concatenate(bin_prob_each))
+        # start visualization
     pbar = pkbar.Pbar(name='Generating visualized downsampled points files, please wait...', target=len(samples))
     i_saved = 0
     for i, (sample, category) in enumerate(zip(samples, categories)):
@@ -907,19 +944,19 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
             xyzRGB.append(xyzRGB_tmp)
         cat_path = f'{base_path}/{category}'
         if not os.path.exists(cat_path):
-            os.makedirs(cat_path)   
-        txt_path = f'{cat_path}/{category}.txt'    
+            os.makedirs(cat_path)
+        txt_path = f'{cat_path}/{category}.txt'
         for layer, idx in enumerate(index):  # idx.shape == (B, H, K)
             with open(txt_path, 'a') as f:
-                row_str = f"{category}{i-i_saved}_layer{layer}:\t{', '.join([f'{num*100:.2f}%' for num in bin_prob[layer][i, 0]])}\n"
+                row_str = f"{category}{i - i_saved}_layer{layer}:\t{', '.join([f'{num * 100:.2f}%' for num in bin_prob[layer][i, 0]])}\n"
                 f.write(row_str)
             if layer != 0:
                 idx = idx[i, 0]  # only visualize the first head
-                for j in range(1, layer+1):
-                    idx = index[layer-j][i, 0][idx]   # index mapping
+                for j in range(1, layer + 1):
+                    idx = index[layer - j][i, 0][idx]  # index mapping
             else:
                 idx = index[layer][i, 0]
-            
+
             xyzRGB_tmp = deepcopy(xyzRGB)
             ds_tmp = []
             rst_tmp = []
@@ -930,11 +967,13 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
                 if each not in ds_tmp:
                     rst_tmp.append(each)
             if config.test.visualize_downsampled_points.format == 'ply':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(saved_path)
             elif config.test.visualize_downsampled_points.format == 'png':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}.png'
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}.png'
                 rst_vertex = np.array(rst_tmp)
                 ds_vertex = np.array(ds_tmp)
                 fig = plt.figure()
@@ -942,17 +981,20 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
                 ax.set_xlim3d(-0.6, 0.6)
                 ax.set_ylim3d(-0.6, 0.6)
                 ax.set_zlim3d(-0.6, 0.6)
-                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
-                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:]/255, marker='o', s=1)
+                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o',
+                           s=1)
+                ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
                 plt.savefig(saved_path, bbox_inches='tight')
                 plt.close(fig)
             else:
-                raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
-        pbar.update(i)             
+                raise ValueError(
+                    f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
+        pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
-    
+
+
 def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, cls_label, shape_ious, artifacts_path):
     base_path = f'{artifacts_path}/vis_ds_points'
     if os.path.exists(base_path):
@@ -972,12 +1014,13 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     if config.neighbor2point_block.enable:
         idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
         bin_p_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
-    i_categories =[]
+    i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis]
         i_categories.append(samples_toappend.shape[0])
         samples_tmp.append(samples_toappend)
-        categories_tmp.append(np.asarray(categories)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
+        categories_tmp.append(
+            np.asarray(categories)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
         ious_tmp.append(np.asarray(shape_ious)[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
         for layer, (idx, bin_p) in enumerate(zip(index, bin_prob)):
             idx_tmp[layer].append(idx[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis])
@@ -989,8 +1032,8 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     bin_prob = []
     for (idx_each, bin_p_each) in zip(idx_tmp, bin_p_tmp):
         index.append(np.concatenate(idx_each))
-        bin_prob.append(np.concatenate(bin_p_each)) 
-    # start visualization
+        bin_prob.append(np.concatenate(bin_p_each))
+        # start visualization
     pbar = pkbar.Pbar(name='Generating visualized downsampled points files, please wait...', target=len(samples))
     i_saved = 0
     if config.datasets.dataset_name == "shapenet_AnTao350M":
@@ -1014,16 +1057,16 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
         cat_path = f'{base_path}/{category}'
         if not os.path.exists(cat_path):
             os.makedirs(cat_path)
-            
-        txt_path = f'{cat_path}/{category}.txt'    
+
+        txt_path = f'{cat_path}/{category}.txt'
         for layer, idx in enumerate(index):  # idx.shape == (B, H, K)
             with open(txt_path, 'a') as f:
-                row_str = f"{category}{i-i_saved}_layer{layer}:\t{', '.join([f'{num*100:.2f}%' for num in bin_prob[layer][i, 0]])}\n"
+                row_str = f"{category}{i - i_saved}_layer{layer}:\t{', '.join([f'{num * 100:.2f}%' for num in bin_prob[layer][i, 0]])}\n"
                 f.write(row_str)
             if layer != 0:
                 idx = idx[i, 0]  # only visualize the first head
-                for j in range(1, layer+1):
-                    idx = index[layer-j][i, 0][idx]   # index mapping
+                for j in range(1, layer + 1):
+                    idx = index[layer - j][i, 0][idx]  # index mapping
             else:
                 idx = index[layer][i, 0]
             xyzRGB_tmp = deepcopy(xyzRGB)
@@ -1036,11 +1079,13 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
                 if each not in ds_tmp:
                     rst_tmp.append(each)
             if config.test.visualize_downsampled_points.format == 'ply':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}_{math.floor(iou * 1e5)}.ply'
-                vertex = PlyElement.describe(np.array(xyzRGB_tmp, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]), 'vertex')
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}_{math.floor(iou * 1e5)}.ply'
+                vertex = PlyElement.describe(np.array(xyzRGB_tmp,
+                                                      dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4'), ('red', 'u1'),
+                                                             ('green', 'u1'), ('blue', 'u1')]), 'vertex')
                 PlyData([vertex]).write(saved_path)
             elif config.test.visualize_downsampled_points.format == 'png':
-                saved_path = f'{cat_path}/{category}{i-i_saved}_layer{layer}_{math.floor(iou * 1e5)}.png'
+                saved_path = f'{cat_path}/{category}{i - i_saved}_layer{layer}_{math.floor(iou * 1e5)}.png'
                 rst_vertex = np.array(rst_tmp)
                 ds_vertex = np.array(ds_tmp)
                 fig = plt.figure()
@@ -1048,13 +1093,50 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
                 ax.set_xlim3d(-view_range, view_range)
                 ax.set_ylim3d(-view_range, view_range)
                 ax.set_zlim3d(-view_range, view_range)
-                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o', s=1)
+                ax.scatter(rst_vertex[:, 0], rst_vertex[:, 2], rst_vertex[:, 1], c=rst_vertex[:, 3:] / 255, marker='o',
+                           s=1)
                 ax.scatter(ds_vertex[:, 0], ds_vertex[:, 2], ds_vertex[:, 1], c=ds_vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
                 plt.savefig(saved_path, bbox_inches='tight')
                 plt.close(fig)
             else:
-                raise ValueError(f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
+                raise ValueError(
+                    f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
+
+
+def visualization_sampling_score(saved_sampling_score_dir='./modelnet_sampling_scores.pt', layer_to_visualize=0):
+    tensor = torch.load(saved_sampling_score_dir)
+    print(tensor.shape)
+
+    tensor = tensor[:, layer_to_visualize + 3, :]
+
+    # Example tensor of shape [2464, 5, 2048]
+
+    # Flatten the tensor to 1D for histogram
+    if layer_to_visualize != 0:
+        tensor = torch.reshape(tensor, (-1,))
+        tensor = tensor[tensor > -1.5]
+        tensor = torch.reshape(tensor, (tensor.shape[0], 1024))
+
+    # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
+    tensor = (tensor - torch.mean(tensor, dim=1,
+                                  keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+
+    flattened_tensor = tensor.flatten().cpu().numpy()
+    # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
+
+    min_value = float(np.min(flattened_tensor))
+    max_value = float(np.max(flattened_tensor))
+
+    # hist=torch.histc(flattened_tensor,bins=1000,min=min_value,max=max_value)
+    # print(hist.)
+
+    # Plotting the histogram
+    plt.hist(flattened_tensor, bins=1000, range=(min_value, max_value))  # (-2, 4))
+    plt.title("Histogram of Tensor Elements")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    plt.show()

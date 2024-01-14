@@ -16,9 +16,9 @@ from utils.check_config import set_config_run
 
 from utils.save_backup import save_backup
 
+
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
-
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -51,7 +51,7 @@ def main(config):
         OmegaConf.save(config, f'{local_path}/usr_config_test.yaml')
         print(f'Overwrite the previous run config with new run config.')
     config = set_config_run(config, "test")
-    
+
     if config.datasets.dataset_name == 'shapenet_Yi650M':
         dataloader.download_shapenet_Yi650M(config.datasets.url, config.datasets.saved_path)
     elif config.datasets.dataset_name == 'shapenet_AnTao350M':
@@ -64,14 +64,14 @@ def main(config):
     # multiprocessing for ddp
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(']', '')
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
+            ']', '')
         mp.spawn(test, args=(config,), nprocs=config.test.ddp.nproc_this_node, join=True)
     else:
         raise ValueError('Please use GPU for testing!')
 
 
 def test(local_rank, config):
-
     rank = config.test.ddp.rank_starts_from + local_rank
     # set files path
     if config.test.suffix.enable:
@@ -92,25 +92,59 @@ def test(local_rank, config):
     # gpu setting
     device = f'cuda:{local_rank}'
     torch.cuda.set_device(device)  # which gpu is used by current process
-    print(f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.test.ddp.which_gpu[local_rank]}')
+    print(
+        f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.test.ddp.which_gpu[local_rank]}')
 
     # get datasets
     if config.datasets.dataset_name == 'shapenet_Yi650M':
-        _, _, _, test_set = dataloader.get_shapenet_dataset_Yi650M(config.datasets.saved_path, config.datasets.mapping, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug, config.train.dataloader.data_augmentation.jitter.enable,
-                                                                   config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                   config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                   config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic,
-                                                                   config.test.dataloader.vote.enable, config.test.dataloader.vote.num_vote)
+        _, _, _, test_set = dataloader.get_shapenet_dataset_Yi650M(config.datasets.saved_path, config.datasets.mapping,
+                                                                   config.train.dataloader.selected_points,
+                                                                   config.train.dataloader.fps,
+                                                                   config.train.dataloader.data_augmentation.enable,
+                                                                   config.train.dataloader.data_augmentation.num_aug,
+                                                                   config.train.dataloader.data_augmentation.jitter.enable,
+                                                                   config.train.dataloader.data_augmentation.jitter.std,
+                                                                   config.train.dataloader.data_augmentation.jitter.clip,
+                                                                   config.train.dataloader.data_augmentation.rotate.enable,
+                                                                   config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                   config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                   config.train.dataloader.data_augmentation.translate.enable,
+                                                                   config.train.dataloader.data_augmentation.translate.x_range,
+                                                                   config.train.dataloader.data_augmentation.translate.y_range,
+                                                                   config.train.dataloader.data_augmentation.translate.z_range,
+                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                   config.train.dataloader.data_augmentation.anisotropic_scale.isotropic,
+                                                                   config.test.dataloader.vote.enable,
+                                                                   config.test.dataloader.vote.num_vote)
     elif config.datasets.dataset_name == 'shapenet_AnTao350M':
-        _, _, _, test_set = dataloader.get_shapenet_dataset_AnTao350M(config.datasets.saved_path, config.train.dataloader.selected_points, config.train.dataloader.fps, config.train.dataloader.data_augmentation.enable, config.train.dataloader.data_augmentation.num_aug, config.train.dataloader.data_augmentation.jitter.enable,
-                                                                      config.train.dataloader.data_augmentation.jitter.std, config.train.dataloader.data_augmentation.jitter.clip, config.train.dataloader.data_augmentation.rotate.enable, config.train.dataloader.data_augmentation.rotate.which_axis,
-                                                                      config.train.dataloader.data_augmentation.rotate.angle_range, config.train.dataloader.data_augmentation.translate.enable, config.train.dataloader.data_augmentation.translate.x_range,
-                                                                      config.train.dataloader.data_augmentation.translate.y_range, config.train.dataloader.data_augmentation.translate.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.enable,
-                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.x_range, config.train.dataloader.data_augmentation.anisotropic_scale.y_range, config.train.dataloader.data_augmentation.anisotropic_scale.z_range, config.train.dataloader.data_augmentation.anisotropic_scale.isotropic,
-                                                                      config.test.dataloader.vote.enable, config.test.dataloader.vote.num_vote)
+        _, _, _, test_set = dataloader.get_shapenet_dataset_AnTao350M(config.datasets.saved_path,
+                                                                      config.train.dataloader.selected_points,
+                                                                      config.train.dataloader.fps,
+                                                                      config.train.dataloader.data_augmentation.enable,
+                                                                      config.train.dataloader.data_augmentation.num_aug,
+                                                                      config.train.dataloader.data_augmentation.jitter.enable,
+                                                                      config.train.dataloader.data_augmentation.jitter.std,
+                                                                      config.train.dataloader.data_augmentation.jitter.clip,
+                                                                      config.train.dataloader.data_augmentation.rotate.enable,
+                                                                      config.train.dataloader.data_augmentation.rotate.which_axis,
+                                                                      config.train.dataloader.data_augmentation.rotate.angle_range,
+                                                                      config.train.dataloader.data_augmentation.translate.enable,
+                                                                      config.train.dataloader.data_augmentation.translate.x_range,
+                                                                      config.train.dataloader.data_augmentation.translate.y_range,
+                                                                      config.train.dataloader.data_augmentation.translate.z_range,
+                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.enable,
+                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
+                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
+                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
+                                                                      config.train.dataloader.data_augmentation.anisotropic_scale.isotropic,
+                                                                      config.test.dataloader.vote.enable,
+                                                                      config.test.dataloader.vote.num_vote)
     elif config.datasets.dataset_name == 'shapenet_Normal':
-        _, _, _, test_set = dataloader.get_shapenet_dataset_Normal(config.datasets, config.train.dataloader, config.test.dataloader.vote)
+        _, _, _, test_set = dataloader.get_shapenet_dataset_Normal(config.datasets, config.train.dataloader,
+                                                                   config.test.dataloader.vote)
     else:
         raise ValueError('Not implemented!')
 
@@ -118,7 +152,10 @@ def test(local_rank, config):
     test_sampler = torch.utils.data.distributed.DistributedSampler(test_set)
 
     # get dataloader
-    test_loader = torch.utils.data.DataLoader(test_set, config.test.dataloader.batch_size_per_gpu, num_workers=config.test.dataloader.num_workers, drop_last=True, prefetch_factor=config.test.dataloader.prefetch, pin_memory=config.test.dataloader.pin_memory, sampler=test_sampler)
+    test_loader = torch.utils.data.DataLoader(test_set, config.test.dataloader.batch_size_per_gpu,
+                                              num_workers=config.test.dataloader.num_workers, drop_last=True,
+                                              prefetch_factor=config.test.dataloader.prefetch,
+                                              pin_memory=config.test.dataloader.pin_memory, sampler=test_sampler)
 
     # get model
     my_model = seg_model.ShapeNetModel(config)
@@ -145,10 +182,11 @@ def test(local_rank, config):
     vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
     for mode in vis_test_gather_dict["trained"].keys():
         vis_test_gather_dict["trained"][mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
-    
+
     with torch.no_grad():
         if rank == 0:
-            print(f'Print Results: {config.test.print_results} - Visualize Predictions: {config.test.visualize_preds.enable} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable}')
+            print(
+                f'Print Results: {config.test.print_results} - Visualize Predictions: {config.test.visualize_preds.enable} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable}')
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
         for i, (samples, seg_labels, cls_label) in enumerate(test_loader):
             seg_labels, cls_label = seg_labels.to(device), cls_label.to(device)
@@ -160,11 +198,12 @@ def test(local_rank, config):
                     preds_list.append(preds)
                 preds = torch.mean(torch.stack(preds_list), dim=0)
                 samples = samples[0].to(device)
-                
+
                 # collect no voting result
                 preds_novo = preds_list[0]
                 loss_novo = loss_fn(preds_novo, seg_labels)
-                pred_novo_gather_list = [torch.empty_like(preds_novo).to(device) for _ in range(config.test.ddp.nproc_this_node)]
+                pred_novo_gather_list = [torch.empty_like(preds_novo).to(device) for _ in
+                                         range(config.test.ddp.nproc_this_node)]
                 torch.distributed.all_gather(pred_novo_gather_list, preds_novo)
                 if rank == 0:
                     preds_novo = torch.concat(pred_novo_gather_list, dim=0)
@@ -172,18 +211,20 @@ def test(local_rank, config):
                     loss_novo /= config.test.ddp.nproc_this_node
                     loss_novo_list.append(loss_novo.detach().cpu().numpy())
             else:
-                samples = samples.to(device)    
+                samples = samples.to(device)
                 preds = my_model(samples, cls_label)
             loss = loss_fn(preds, seg_labels)
 
             # collect the result among all gpus
             pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.test.ddp.nproc_this_node)]
-            seg_label_gather_list = [torch.empty_like(seg_labels).to(device) for _ in range(config.test.ddp.nproc_this_node)]
-            cls_label_gather_list = [torch.empty_like(cls_label).to(device) for _ in range(config.test.ddp.nproc_this_node)]
+            seg_label_gather_list = [torch.empty_like(seg_labels).to(device) for _ in
+                                     range(config.test.ddp.nproc_this_node)]
+            cls_label_gather_list = [torch.empty_like(cls_label).to(device) for _ in
+                                     range(config.test.ddp.nproc_this_node)]
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
-            
+
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
-            
+
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(seg_label_gather_list, seg_labels)
             torch.distributed.all_gather(cls_label_gather_list, cls_label)
@@ -196,11 +237,29 @@ def test(local_rank, config):
                 seg_label_list.append(torch.max(seg_labels.permute(0, 2, 1), dim=2)[1].detach().cpu().numpy())
                 cls_label = torch.concat(cls_label_gather_list, dim=0)
                 cls_label_list.append(torch.max(cls_label[:, :, 0], dim=1)[1].detach().cpu().numpy())
-                samples = torch.concat(sample_gather_list, dim=0) # samples.shape == (B, C, N)
+                samples = torch.concat(sample_gather_list, dim=0)  # samples.shape == (B, C, N)
                 sample_list.append(samples[:, :3, :].permute(0, 2, 1).detach().cpu().numpy())
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
+
+                if config.test.sampling_score_histogram.enable:
+                    if i == 0:
+                        torch_tensor_to_save_batch = None
+
+                    if i == len(test_loader) - 1:
+                        save_dir = 'shapenet_sampling_scores.pt'
+                    else:
+                        save_dir = None
+
+                    idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+                           vis_test_gather_dict["trained"]["idx"]]
+                    attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+                                     vis_test_gather_dict["trained"]["attention_point_score"]]
+
+                    torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
+                                                                     attention_map,
+                                                                     save_dir)
 
     if rank == 0:
         preds = np.concatenate(pred_list, axis=0)
@@ -227,10 +286,11 @@ def test(local_rank, config):
                 print(f'category_mIoU_novo: {category_miou_novo}')
                 for category in list(category_iou_novo.keys()):
                     print(f'{category}_novo: {category_iou_novo[category]}')
-        
+
         vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict, vis_test_gather_dict)
-        
+        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict,
+                                          vis_test_gather_dict)
+
         # calculate metrics
         shape_ious = metrics.calculate_shape_IoU(preds, seg_labels, cls_label, config.datasets.mapping)
         category_iou = metrics.calculate_category_IoU(shape_ious, cls_label, config.datasets.mapping)
@@ -253,14 +313,19 @@ def test(local_rank, config):
         # generating visualized downsampled points files
         if config.test.visualize_downsampled_points.enable:
             if config.neighbor2point_block.downsample.bin.enable[0]:
-                visualize_shapenet_downsampled_points_bin(config, samples, vis_concat_dict["trained"]["idx"], vis_concat_dict["trained"]["bin_prob"], cls_label, shape_ious, artifacts_path)
+                visualize_shapenet_downsampled_points_bin(config, samples, vis_concat_dict["trained"]["idx"],
+                                                          vis_concat_dict["trained"]["bin_prob"], cls_label, shape_ious,
+                                                          artifacts_path)
             else:
-                visualize_shapenet_downsampled_points(config, samples, vis_concat_dict["trained"]["idx"], cls_label, shape_ious, artifacts_path)
+                visualize_shapenet_downsampled_points(config, samples, vis_concat_dict["trained"]["idx"], cls_label,
+                                                      shape_ious, artifacts_path)
         # generating visualized prediction files
         if config.test.visualize_preds.enable:
-            visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious, vis_concat_dict["trained"]["idx"], artifacts_path)
+            visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious,
+                                           vis_concat_dict["trained"]["idx"], artifacts_path)
 
         # save_backup(artifacts_path, zip_file_path, backup_path)
+
 
 if __name__ == '__main__':
     main()
