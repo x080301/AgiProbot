@@ -249,7 +249,6 @@ def test(local_rank, config):
 
                     if i == len(test_loader) - 1:
                         save_dir = 'shapenet_sampling_scores.pt'
-                        print('------------------------------------')
                     else:
                         save_dir = None
 
