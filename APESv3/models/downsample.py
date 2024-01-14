@@ -239,8 +239,9 @@ class DownSampleWithSigma(nn.Module):
         self.idx = self.attention_point_score.topk(self.M, dim=-1)[1]
         # idx.shape == (B, H, M)
         idx_dropped = \
-        torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(self.attention_map.shape[-3] - self.M,
-                                                                               dim=-1, largest=False)[1]
+            torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(
+                self.attention_map.shape[-3] - self.M,
+                dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=self.idx[..., None, None].expand(-1, -1, -1, -1, k.shape[-1]))
@@ -283,7 +284,7 @@ class DownSampleWithSigma(nn.Module):
             energy = q @ (q.transpose(-1, -2) - k)  # Q@(Q-K)
         elif self.asm == "l2":
             energy = -1 * (q - k.transpose(-1, -2)) @ (
-                        q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
+                    q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
             energy = torch.mean(energy, dim=-2)  # energy.shape == (B, H, N, K)
             energy = energy.unsqueeze(-2)  # energy.shape == (B, H, N, 1, K)
         elif self.asm == "l2+":
@@ -413,7 +414,7 @@ class DownSampleCarve(nn.Module):
         elif self.boltzmann_enable:
             self.idx = self.boltzmann_idx_selection()
         idx_dropped = \
-        torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
+            torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=self.idx[..., None].expand(-1, -1, -1, k.shape[-1]))
@@ -735,8 +736,9 @@ class DownSampleInsert(nn.Module):
         elif self.boltzmann_enable:
             self.idx = self.boltzmann_idx_selection()
         idx_dropped = \
-        torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(self.attention_map.shape[-3] - self.M,
-                                                                               dim=-1, largest=False)[1]
+            torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(
+                self.attention_map.shape[-3] - self.M,
+                dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=self.idx[..., None, None].expand(-1, -1, -1, -1, k.shape[-1]))
@@ -779,7 +781,7 @@ class DownSampleInsert(nn.Module):
             energy = q @ (q.transpose(-1, -2) - k)  # Q@(Q-K)
         elif self.asm == "l2":
             energy = -1 * (q - k.transpose(-1, -2)) @ (
-                        q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
+                    q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
             energy = torch.mean(energy, dim=-2)  # energy.shape == (B, H, N, K)
             energy = energy.unsqueeze(-2)  # energy.shape == (B, H, N, 1, K)
         elif self.asm == "l2+":
