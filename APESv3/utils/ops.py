@@ -122,7 +122,7 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
-def sort_chunk(x, num_bins, dim, descending=False, bin_split_mode='uniform'):
+def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
     """
 
     :param x: torch.Tensor (B,1,N)
