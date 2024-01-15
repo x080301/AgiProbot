@@ -156,15 +156,15 @@ def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
             idx_chunks_bin_i = []
             for b in range(x.shape[0]):
                 if i == 0:
-                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - bin_width)
+                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - bin_width)[b]
                 elif i != num_bins - 1:
-                    indices = (z_normalized_x[b, 0, :] < (max_value_9772 - i * bin_width)) & (
-                            z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width))
+                    indices = (z_normalized_x[b, 0, :] < (max_value_9772 - i * bin_width)[b]) & (
+                            z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b])
                 else:  # i=num_bins - 1
-                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)
+                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b]
 
                 idx_chunks_bin_i_b = torch.nonzero(indices)
-                print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
+                # print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
                 num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
                 # print(f'num_points_in_bin: {num_points_in_bin_i}')
 
