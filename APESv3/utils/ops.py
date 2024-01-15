@@ -141,10 +141,11 @@ def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
         z_normalized_x = (x - torch.mean(x, dim=2, keepdim=True))
         # z_normalized_x.shape = (B,1,N)
         topk_values, _ = torch.topk(z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
-        max_value_9772 = topk_values[:, :, -1].item()
+        max_value_9772 = topk_values[:, :, -1]
         # max_value_9772.shape = (B,1)
         topk_values, _ = torch.topk(-z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
-        min_value_0228 = topk_values[:, :, -1].item()
+        min_value_0228 = topk_values[:, :, -1]
+        print(f'min_value_0228.shape={min_value_0228.shape}')
         # min_value_0228.shape = (B,1)
         bin_width = (max_value_9772 - min_value_0228) / num_bins
 
