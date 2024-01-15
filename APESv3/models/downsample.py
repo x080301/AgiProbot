@@ -353,9 +353,13 @@ class DownSampleCarve(nn.Module):
         self.bin_norm_mode = config_ds.bin.norm_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
         if self.bin_enable:
-            if self.bin_mode == "mode1" or self.bin_mode == 'nonuniform_split_bin':
+            if self.bin_mode == "mode1":
                 self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins / 2), 1, bias=False)
                 self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins / 2), q_out, 1, bias=False)
+            elif self.bin_mode == 'nonuniform_split_bin':
+                self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
+                self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
+
         # boltzmann
         self.boltzmann_enable = config_ds.boltzmann.enable[layer]
         self.boltzmann_T = config_ds.boltzmann.boltzmann_T[layer]
@@ -379,7 +383,7 @@ class DownSampleCarve(nn.Module):
         # if self.bin_enable and self.bin_mode == "mode1":
         if self.bin_enable:
             if self.bin_mode == "mode1" or self.bin_mode == 'nonuniform_split_bin':
-                x, self.bin_prob = self.bin_conv(x)
+                x, self.bin_prob = self.bin_conv(x, bin_mode=self.bin_mode)
         q = self.q_conv(x)
         # q.shape == (B, C, N)
         q = self.split_heads(q, self.num_heads, self.q_depth)
@@ -511,18 +515,30 @@ class DownSampleCarve(nn.Module):
         idx = attention_point_score.topk(self.M, dim=-1)[1]
         return idx, attention_point_score, sparse_attention_map, mask
 
-    def bin_conv(self, x):
-        bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins/2, N)
-        x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins/2, N)
-        x = self.bin_conv2(x)  # x.shape == (B, C, N)
+    def bin_conv(self, x, bin_mode='mode1'):
+        if bin_mode == 'nonuniform_split_bin':
+            bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
+            x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins, N)
+            x = self.bin_conv2(x)  # x.shape == (B, C, N)
 
-        bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]  # bin_prob_edge.shape == (B, num_bins/2, 1)
-        bin_prob_edge = bin_prob_edge.permute(0, 2, 1)  # bin_prob_edge.shape == (B, 1, num_bins/2)
-        bin_prob_edge = bin_prob_edge / self.scaling_factor
-        bin_prob_edge = ops.norm_range(bin_prob_edge, dim=-1, n_min=0.5, n_max=1, mode=self.bin_norm_mode)
-        bin_prob_inner = torch.flip((1 - bin_prob_edge), dims=(-1,))
-        bin_prob = torch.cat((bin_prob_edge, bin_prob_inner), dim=-1)  # bin_prob.shape == (B, 1, num_bins)
-        bin_prob = bin_prob.squeeze(1)  # bin_prob.shape == (B, num_bins)
+            bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+            # bin_prob_edge.shape == (B, num_bins, 1)
+            bin_prob = torch.nn.functional.softmax(bin_prob_edge, dim=1).squeeze(2)
+            # bin_prob.shape == (B, num_bins)
+
+        else:
+            bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins/2, N)
+            x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins/2, N)
+            x = self.bin_conv2(x)  # x.shape == (B, C, N)
+
+            bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[
+                0]  # bin_prob_edge.shape == (B, num_bins/2, 1)
+            bin_prob_edge = bin_prob_edge.permute(0, 2, 1)  # bin_prob_edge.shape == (B, 1, num_bins/2)
+            bin_prob_edge = bin_prob_edge / self.scaling_factor
+            bin_prob_edge = ops.norm_range(bin_prob_edge, dim=-1, n_min=0.5, n_max=1, mode=self.bin_norm_mode)
+            bin_prob_inner = torch.flip((1 - bin_prob_edge), dims=(-1,))
+            bin_prob = torch.cat((bin_prob_edge, bin_prob_inner), dim=-1)  # bin_prob.shape == (B, 1, num_bins)
+            bin_prob = bin_prob.squeeze(1)  # bin_prob.shape == (B, num_bins)
         return x, bin_prob
 
     def bin_idx_selection(self):
@@ -582,15 +598,23 @@ class DownSampleCarve(nn.Module):
         idx_batch_list = []
         k_batch_list = []
         for i in range(B):
-            k_list = []
+
             idx_list = []
+
+            chunk_size_list = []
             for j in range(self.num_bins):
-                # each bin has K samples
+                chunk_size_list.append(aps_chunks[j][i].shape[1])
+            sampling_scale = self.M / sum(chunk_size_list)
+
+            k_list = []
+            for j in range(self.num_bins):
+                # each bin has k samples
                 if j != self.num_bins - 1:
-                    k = int(2 * aps_chunks[j][i].shape[1] * self.bin_prob[i, j])
-                    # k = int(2 * self.M / self.num_bins * self.bin_prob[i, j])
+                    k = int(self.bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
+                    # bin_prob.shape == (B, num_bins)
                 else:
                     k = self.M - sum(k_list)
+
                 k_list.append(k)
 
                 if self.bin_sample_mode == "topk":
