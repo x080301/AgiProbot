@@ -1139,7 +1139,7 @@ def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_sco
     min_value = float(torch.min(flattened_tensor))
 
     topk_values, _ = torch.topk(flattened_tensor, int(flattened_tensor.shape[0] * 0.003), largest=True)
-    max_value_997 = topk_values[-1].item()
+    max_value_9772 = topk_values[-1].item()
 
     # max_value = float(np.max(flattened_tensor))
 

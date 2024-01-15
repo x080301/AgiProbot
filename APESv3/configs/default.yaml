@@ -194,7 +194,7 @@ neighbor2point_block:
       tau: [ 1, 1 ]
     bin:
       enable: [ false, false ]
-      mode: [ mode1, mode1 ] # mode1 or mode2, mode1 based on learnable parameter, mode2 based on Boltzmann
+      mode: [ mode1, mode1 ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
       num_bins: [ 8, 8 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random

@@ -20,15 +20,15 @@ def knn(a, b, k):
     :param k: int
     """
     inner = -2 * torch.matmul(a, b.transpose(2, 1))  # inner.shape == (B, N, M)
-    aa = torch.sum(a**2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
-    bb = torch.sum(b**2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
+    aa = torch.sum(a ** 2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
+    bb = torch.sum(b ** 2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
     # TODO: some values inside pairwise_distance is positive
     pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
     distance, idx = pairwise_distance.topk(k=k, dim=-1)  # idx.shape == (B, N, K)
     return distance, idx
 
 
-def select_neighbors(pcd, K, neighbor_type, normal_channel=False): # pcd.shape == (B, C, N)
+def select_neighbors(pcd, K, neighbor_type, normal_channel=False):  # pcd.shape == (B, C, N)
     pcd = pcd.permute(0, 2, 1)  # pcd.shape == (B, N, C)
     if normal_channel and pcd.shape[-1] == 6:
         _, idx = knn(pcd[:, :, :3], pcd[:, :, :3], K)  # idx.shape == (B, N, K, 3)
@@ -42,8 +42,9 @@ def select_neighbors(pcd, K, neighbor_type, normal_channel=False): # pcd.shape =
         neighbors = diff.permute(0, 3, 1, 2)  # output.shape == (B, C, N, K)
     else:
         raise ValueError(f'neighbor_type should be "neighbor" or "diff", but got {neighbor_type}')
-    return neighbors, idx # neighbors.shape == (B, C, N, K), idx.shape == (B, N, K)
-    
+    return neighbors, idx  # neighbors.shape == (B, C, N, K), idx.shape == (B, N, K)
+
+
 def select_neighbors_interpolate(unknown, known, known_feature, K=3):
     known = known.permute(0, 2, 1)  # known.shape == (B, M, C)
     known_feature = known_feature.permute(0, 2, 1)  # known_feature.shape == (B, M, C)
@@ -54,6 +55,7 @@ def select_neighbors_interpolate(unknown, known, known_feature, K=3):
     neighbors = neighbors.permute(0, 3, 1, 2)  # output.shape == (B, C, N, K)
     return neighbors, idx, d  # neighbors.shape == (B, C, N, K), idx.shape == (B, N, K), d.shape == (B, N, K)
 
+
 def group(pcd, K, group_type, normal_channel=False):
     if group_type == 'neighbor':
         neighbors, idx = select_neighbors(pcd, K, 'neighbor', normal_channel)  # neighbors.shape == (B, C, N, K)
@@ -62,7 +64,7 @@ def group(pcd, K, group_type, normal_channel=False):
         diff, idx = select_neighbors(pcd, K, 'diff', normal_channel)  # diff.shape == (B, C, N, K)
         output = diff  # output.shape == (B, C, N, K)
     elif group_type == 'center_neighbor':
-        neighbors, idx = select_neighbors(pcd, K, 'neighbor', normal_channel)   # neighbors.shape == (B, C, N, K)
+        neighbors, idx = select_neighbors(pcd, K, 'neighbor', normal_channel)  # neighbors.shape == (B, C, N, K)
         output = torch.cat([pcd[:, :, :, None].repeat(1, 1, 1, K), neighbors], dim=1)  # output.shape == (B, 2C, N, K)
     elif group_type == 'center_diff':
         diff, idx = select_neighbors(pcd, K, 'diff', normal_channel)  # diff.shape == (B, C, N, K)
@@ -71,20 +73,23 @@ def group(pcd, K, group_type, normal_channel=False):
         raise ValueError(f'group_type should be neighbor, diff, center_neighbor or center_diff, but got {group_type}')
     return output, idx
 
-def l2_global(q, k): # q.shape == (B, H, N, D), k.shape == (B, H, D, N)
+
+def l2_global(q, k):  # q.shape == (B, H, N, D), k.shape == (B, H, D, N)
     inner = -2 * torch.matmul(q, k)  # inner.shape == (B, H, N, N)
-    qq = torch.sum(q**2, dim=-1, keepdim=True)  # qq.shape == (B, H, N, 1)
-    kk = torch.sum(k.transpose(-2,-1)**2, dim=-1, keepdim=True)  # kk.shape == (B, H, N, 1)
+    qq = torch.sum(q ** 2, dim=-1, keepdim=True)  # qq.shape == (B, H, N, 1)
+    kk = torch.sum(k.transpose(-2, -1) ** 2, dim=-1, keepdim=True)  # kk.shape == (B, H, N, 1)
     qk_l2 = qq + inner + kk.transpose(-2, -1)  # qk_l2.shape == (B, H, N, N)
     return qk_l2
+
 
 def neighbor_mask(pcd, K):
     pcd = pcd.permute(0, 2, 1)  # pcd.shape == (B, N, C)
     _, idx = knn(pcd, pcd, K)  # idx.shape == (B, N, K)
     B, N, _ = idx.shape
-    mask = torch.zeros(B, N, N, dtype=torch.float32, device=idx.device) # mask.shape == (B, N, N)
+    mask = torch.zeros(B, N, N, dtype=torch.float32, device=idx.device)  # mask.shape == (B, N, N)
     mask.scatter_(2, idx, 1.0)
     return mask
+
 
 def gather_by_idx(pcd, idx):
     # pcd.shape == (B, C, N)
@@ -94,12 +99,14 @@ def gather_by_idx(pcd, idx):
     idx = idx.expand(-1, C, -1)
     # output = torch.zeros(B, C, K, dtype=torch.float32, device=pcd.device)
     # output.scatter_(2, idx, pcd) # output.shape == (B, C, K)
-    output = torch.gather(pcd, 2, idx) # output.shape == (B, C, K)
+    output = torch.gather(pcd, 2, idx)  # output.shape == (B, C, K)
     return output
+
 
 def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     if mode == 'minmax':
-        x_norm = (x - torch.min(x, dim=dim, keepdim=True)[0])/(torch.max(x, dim=dim, keepdim=True)[0]-torch.min(x, dim=dim, keepdim=True)[0] + 1e-8)
+        x_norm = (x - torch.min(x, dim=dim, keepdim=True)[0]) / (
+                torch.max(x, dim=dim, keepdim=True)[0] - torch.min(x, dim=dim, keepdim=True)[0] + 1e-8)
     elif mode == 'sigmoid':
         x_norm = torch.sigmoid(x)
     elif mode == 'tanh':
@@ -115,8 +122,57 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
-def sort_chunk(x, num_bins, dim, descending=False):
-    x_sorted, idx_sorted = torch.sort(x, dim=dim, descending=descending)
-    x_chunks = torch.chunk(x_sorted, num_bins, dim=dim) # x_chunks.shape == num_bins * (B, H, N/num_bins)
-    idx_chunks = torch.chunk(idx_sorted, num_bins, dim=dim) # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+def sort_chunk(x, num_bins, dim, descending=False, bin_split_mode='uniform'):
+    """
+
+    :param x: torch.Tensor (B,1,N)
+    :param num_bins: int
+    :param dim: int
+    :param descending: bool
+    :param bin_split_mode: str, 'uniform' or 'nonuniform'
+    :return: tuple or list of torch.Tensors (B,1,n).
+    """
+    if bin_split_mode == 'uniform':
+        x_sorted, idx_sorted = torch.sort(x, dim=dim, descending=descending)
+        x_chunks = torch.chunk(x_sorted, num_bins, dim=dim)  # x_chunks.shape == num_bins * (B, H, N/num_bins)
+        idx_chunks = torch.chunk(idx_sorted, num_bins, dim=dim)  # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+    elif bin_split_mode == 'nonuniform':
+
+        z_normalized_x = (x - torch.mean(x, dim=2, keepdim=True))
+        # z_normalized_x.shape = (B,1,N)
+        topk_values, _ = torch.topk(z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
+        max_value_9772 = topk_values[:, :, -1].item()
+        # max_value_9772.shape = (B,1)
+        topk_values, _ = torch.topk(-z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
+        min_value_0228 = topk_values[:, :, -1].item()
+        # min_value_0228.shape = (B,1)
+        bin_width = (max_value_9772 - min_value_0228) / num_bins
+
+        x_chunks = []
+        idx_chunks = []
+        for i in range(num_bins):
+            x_chunks_bin_i = []
+            idx_chunks_bin_i = []
+            for b in range(x.shape[0]):
+                if i == 0:
+                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - bin_width)
+                elif i != num_bins - 1:
+                    indices = (z_normalized_x[b, 0, :] < (max_value_9772 - i * bin_width)) & (
+                            z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width))
+                else:  # i=num_bins - 1
+                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)
+
+                idx_chunks_bin_i_b = torch.nonzero(indices)
+                num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
+                print(f'num_points_in_bin: {num_points_in_bin_i}')
+
+                idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(-1, num_points_in_bin_i))
+                x_chunks_bin_i.append(x[b, 0, idx_chunks_bin_i_b].reshape(-1, num_points_in_bin_i))
+
+            x_chunks.append(x_chunks_bin_i)
+            idx_chunks.append(idx_chunks_bin_i)
+
+    else:
+        raise NotImplementedError
+
     return x_chunks, idx_chunks

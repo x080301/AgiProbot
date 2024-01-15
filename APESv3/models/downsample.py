@@ -409,6 +409,8 @@ class DownSampleCarve(nn.Module):
                 self.idx, self.bin_k = self.bin_idx_selection()
             elif self.bin_mode == "mode2":
                 self.idx, self.bin_k = self.bin2_idx_selection()
+            elif self.bin_mode == 'nonuniform_split_bin':
+                self.idx, self.bin_k = self.nonuniform_bin_idx_selection()
             else:
                 raise NotImplementedError
         elif self.boltzmann_enable:
@@ -489,21 +491,20 @@ class DownSampleCarve(nn.Module):
             attention_point_score = torch.std(self.attention_map, dim=-1)
 
         # sparse attention map based
+        elif self.idx_mode == "sparse_row_sum":
+            attention_point_score = torch.sum(sparse_attention_map, dim=-1)
+        elif self.idx_mode == "sparse_row_std":
+            sparse_attention_map_std = sparse_attention_map.masked_select(mask != 0).view(
+                sparse_attention_map.shape[:-1] + (self.K,))
+            attention_point_score = torch.std(sparse_attention_map_std, dim=-1)
+        elif self.idx_mode == "sparse_col_sum":
+            attention_point_score = torch.sum(sparse_attention_map, dim=-2)
+        elif self.idx_mode == "sparse_col_avg":
+            attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
+        elif self.idx_mode == "sparse_col_sqr":
+            attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
         else:
-            if self.idx_mode == "sparse_row_sum":
-                attention_point_score = torch.sum(sparse_attention_map, dim=-1)
-            elif self.idx_mode == "sparse_row_std":
-                sparse_attention_map_std = sparse_attention_map.masked_select(mask != 0).view(
-                    sparse_attention_map.shape[:-1] + (self.K,))
-                attention_point_score = torch.std(sparse_attention_map_std, dim=-1)
-            elif self.idx_mode == "sparse_col_sum":
-                attention_point_score = torch.sum(sparse_attention_map, dim=-2)
-            elif self.idx_mode == "sparse_col_avg":
-                attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
-            elif self.idx_mode == "sparse_col_sqr":
-                attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
-            else:
-                raise ValueError('Please check the setting of idx mode!')
+            raise ValueError('Please check the setting of idx mode!')
         idx = attention_point_score.topk(self.M, dim=-1)[1]
         return idx, attention_point_score, sparse_attention_map, mask
 
@@ -545,6 +546,53 @@ class DownSampleCarve(nn.Module):
                     idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
                 elif self.bin_sample_mode == "uniform":
                     idx_tmp = torch.randperm(chunk_size)[:k]
+                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(self.attention_point_score.device)
+                elif self.bin_sample_mode == "random":
+                    if k == 0:
+                        continue
+                    aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
+                    aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
+                    aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
+                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+                else:
+                    raise ValueError(
+                        'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+                idx = torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+                idx_list.append(idx)
+            idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
+            idx_batch_list.append(idx_single)
+            k_single = torch.tensor(k_list).to(self.attention_point_score.device)
+            k_batch_list.append(k_single)
+        idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
+        k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
+        return idx_batch, k_batch
+
+    def nonuniform_bin_idx_selection(self):
+        # self.attention_point_score.shape == (B, H, N)
+        aps_chunks, idx_chunks = ops.sort_chunk(self.attention_point_score, self.num_bins, bin_split_mode='nonuniform')
+        # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+        B = len(aps_chunks[0])
+        H = aps_chunks[0][0].shape[0]
+        # chunk_size = aps_chunks[j][i].shape[1]
+        assert H == 1, "Number of heads should be 1!"
+
+        idx_batch_list = []
+        k_batch_list = []
+        for i in range(B):
+            k_list = []
+            idx_list = []
+            for j in range(self.num_bins):
+                # each bin has K samples
+                if j != self.num_bins - 1:
+                    k = int(2 * self.M / self.num_bins * self.bin_prob[i, j])
+                else:
+                    k = self.M - sum(k_list)
+                k_list.append(k)
+
+                if self.bin_sample_mode == "topk":
+                    idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
+                elif self.bin_sample_mode == "uniform":
+                    idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
                     idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(self.attention_point_score.device)
                 elif self.bin_sample_mode == "random":
                     if k == 0:
