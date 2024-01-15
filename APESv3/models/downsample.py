@@ -584,7 +584,8 @@ class DownSampleCarve(nn.Module):
             for j in range(self.num_bins):
                 # each bin has K samples
                 if j != self.num_bins - 1:
-                    k = int(2 * self.M / self.num_bins * self.bin_prob[i, j])
+                    k = int(2 * aps_chunks[j][i].shape[1] * self.bin_prob[i, j])
+                    # k = int(2 * self.M / self.num_bins * self.bin_prob[i, j])
                 else:
                     k = self.M - sum(k_list)
                 k_list.append(k)
