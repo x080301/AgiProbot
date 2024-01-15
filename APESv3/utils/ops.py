@@ -164,8 +164,9 @@ def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
                     indices = z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)
 
                 idx_chunks_bin_i_b = torch.nonzero(indices)
+                print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
                 num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
-                print(f'num_points_in_bin: {num_points_in_bin_i}')
+                # print(f'num_points_in_bin: {num_points_in_bin_i}')
 
                 idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(-1, num_points_in_bin_i))
                 x_chunks_bin_i.append(x[b, 0, idx_chunks_bin_i_b].reshape(-1, num_points_in_bin_i))
