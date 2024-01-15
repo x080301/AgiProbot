@@ -352,9 +352,10 @@ class DownSampleCarve(nn.Module):
         self.bin_sample_mode = config_ds.bin.sample_mode[layer]
         self.bin_norm_mode = config_ds.bin.norm_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
-        if self.bin_enable and self.bin_mode == "mode1":
-            self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins / 2), 1, bias=False)
-            self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins / 2), q_out, 1, bias=False)
+        if self.bin_enable:
+            if self.bin_mode == "mode1" or self.bin_mode == 'nonuniform_split_bin':
+                self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins / 2), 1, bias=False)
+                self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins / 2), q_out, 1, bias=False)
         # boltzmann
         self.boltzmann_enable = config_ds.boltzmann.enable[layer]
         self.boltzmann_T = config_ds.boltzmann.boltzmann_T[layer]
@@ -375,8 +376,10 @@ class DownSampleCarve(nn.Module):
 
     def forward(self, x, x_xyz=None):
         # x.shape == (B, C, N)
-        if self.bin_enable and self.bin_mode == "mode1":
-            x, self.bin_prob = self.bin_conv(x)
+        # if self.bin_enable and self.bin_mode == "mode1":
+        if self.bin_enable:
+            if self.bin_mode == "mode1" or self.bin_mode == 'nonuniform_split_bin':
+                x, self.bin_prob = self.bin_conv(x)
         q = self.q_conv(x)
         # q.shape == (B, C, N)
         q = self.split_heads(q, self.num_heads, self.q_depth)
