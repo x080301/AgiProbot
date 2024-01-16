@@ -614,12 +614,15 @@ class DownSampleCarve(nn.Module):
             for j in range(self.num_bins):
                 # each bin has k samples
                 if j != self.num_bins - 1:
-                    k = int(self.bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
+                    a = self.bin_prob[i, j]
+                    b = chunk_size_list[j]
+                    c = a * b * sampling_scale
+                    k = int(c)
                     # bin_prob.shape == (B, num_bins)
                 else:
                     k = self.M - sum(k_list)
 
-                print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
+                # print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
                 k_list.append(k)
 
                 if self.bin_sample_mode == "topk":
