@@ -642,7 +642,9 @@ class DownSampleCarve(nn.Module):
                 print(idx_tmp)
                 print(type(idx_tmp))
                 print(idx_tmp.shape)
-                idx = torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+                print(idx_chunks[j][i].shape)
+                idx = idx_chunks[j][i][
+                    1, idx_tmp[0]]  # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
                 idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
             idx_batch_list.append(idx_single)
