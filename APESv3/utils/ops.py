@@ -168,8 +168,8 @@ def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
                 num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
                 # print(f'num_points_in_bin: {num_points_in_bin_i}')
 
-                idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(-1, num_points_in_bin_i))
-                x_chunks_bin_i.append(x[b, 0, idx_chunks_bin_i_b].reshape(-1, num_points_in_bin_i))
+                idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(1, num_points_in_bin_i))
+                x_chunks_bin_i.append(x[b, 0, idx_chunks_bin_i_b].reshape(1, num_points_in_bin_i))
 
             x_chunks.append(x_chunks_bin_i)
             idx_chunks.append(idx_chunks_bin_i)
