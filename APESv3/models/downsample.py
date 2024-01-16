@@ -619,7 +619,7 @@ class DownSampleCarve(nn.Module):
                 else:
                     k = self.M - sum(k_list)
 
-                # print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
+                print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
                 k_list.append(k)
 
                 if self.bin_sample_mode == "topk":
