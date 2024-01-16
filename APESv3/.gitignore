@@ -164,8 +164,6 @@ datasets/
 results/
 wandb/
 artifacts/
-training_in_line_sever.txt
-training_in_line_workstation.txt
 # don't ignore subfolder datasets
 !*/datasets/
 

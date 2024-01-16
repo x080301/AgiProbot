@@ -6,4 +6,3 @@ git reset --hard origin/main
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/Rethinking_Attention_Experiment
 CUDA_VISIBLE_DEVICES=0,1 bash script/main_segmentation.sh cfgs/s3dis/pointmetabase-l.yaml wandb.use_wandb=True
 #---------------
-
