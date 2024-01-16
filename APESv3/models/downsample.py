@@ -623,12 +623,13 @@ class DownSampleCarve(nn.Module):
                     idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
                     idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(self.attention_point_score.device)
                 elif self.bin_sample_mode == "random":
-                    if k == 0:
-                        continue
-                    aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
-                    aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
-                    aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
-                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+                    if k != 0:
+                        aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
+                        aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
+                        aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
+                        print(f'k:{k}')
+                        print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
+                        idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
                 else:
                     raise ValueError(
                         'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
