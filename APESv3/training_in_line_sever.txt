@@ -7,6 +7,10 @@
 #cd /home/ies/fu/codes/APESv3
 #python train_modelnet.py train.ddp.which_gpu=[0] datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet'
 #---------------
-cd /home/ies/fu/codes/APESv3
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/seg-boltzmann.yaml wandb.name='shape_net'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[1] datasets=shapenet_Yi650M usr_config=configs/ununiform_bins_seg-boltzmann.yaml wandb.name='shape_net_ununiform_bin'
 #---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[1] datasets=shapenet_Yi650M usr_config=configs/uniform_bins_seg-boltzmann.yaml wandb.name='shape_net_uniform_bin'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[1] datasets=modelnet_AnTao420M usr_config=configs/ununiform_bins_cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_ununiform_bin'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[1] datasets=modelnet_AnTao420M usr_config=configs/uniform_bins_cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_uniform_bin'
