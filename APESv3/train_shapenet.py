@@ -580,5 +580,5 @@ def train(local_rank, config, random_seed,
 
 
 if __name__ == '__main__':
-    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+    # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
     main()
