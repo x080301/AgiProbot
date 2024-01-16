@@ -636,6 +636,8 @@ class DownSampleCarve(nn.Module):
                         # print(f'k:{k}')
                         # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+                    else:
+                        idx_tmp = torch.empty((1, 0))
                 else:
                     raise ValueError(
                         'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
