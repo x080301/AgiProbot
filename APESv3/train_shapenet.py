@@ -118,7 +118,7 @@ def train(local_rank, config, random_seed,
     dist.init_process_group(backend='nccl', init_method='env://')
 
     # gpu setting
-    device ='cpu' #f'cuda:{local_rank}'
+    device = f'cuda:{local_rank}'
     torch.cuda.set_device(device)  # which gpu is used by current process
     print(
         f'[init] pid: {os.getpid()} - global rank: {rank} - local rank: {local_rank} - cuda: {config.train.ddp.which_gpu[local_rank]}')
