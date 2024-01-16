@@ -617,6 +617,7 @@ class DownSampleCarve(nn.Module):
                     a = self.bin_prob[i, j]
                     b = chunk_size_list[j]
                     c = a * b * sampling_scale
+                    print(f'c:{c}')
                     k = int(c)
                     # bin_prob.shape == (B, num_bins)
                 else:
