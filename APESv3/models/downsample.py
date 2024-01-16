@@ -614,11 +614,8 @@ class DownSampleCarve(nn.Module):
             for j in range(self.num_bins):
                 # each bin has k samples
                 if j != self.num_bins - 1:
-                    a = self.bin_prob[i, j]
-                    b = chunk_size_list[j]
-                    c = a * b * sampling_scale
-                    print(f'c:{c}')
-                    k = int(c)
+
+                    k = int(self.bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
                     # bin_prob.shape == (B, num_bins)
                 else:
                     k = self.M - sum(k_list)
@@ -642,6 +639,9 @@ class DownSampleCarve(nn.Module):
                 else:
                     raise ValueError(
                         'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+                print(idx_tmp)
+                print(type(idx_tmp))
+                print(idx_tmp.shape)
                 idx = torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
                 idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
