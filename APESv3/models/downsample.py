@@ -607,6 +607,8 @@ class DownSampleCarve(nn.Module):
                 chunk_size_list.append(aps_chunks[j][i].shape[1])
             sampling_scale = self.M / sum(chunk_size_list)
             print(f'sampling_scale:{sampling_scale}')
+            print(f'self.M:{self.M}')
+            print(f'sum(chunk_size_list):{sum(chunk_size_list)}')
 
             k_list = []
             for j in range(self.num_bins):
