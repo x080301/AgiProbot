@@ -636,18 +636,17 @@ class DownSampleCarve(nn.Module):
                         # print(f'k:{k}')
                         # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
-                    else:
-                        idx_tmp = torch.empty((1, 0))
                 else:
                     raise ValueError(
                         'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
-                print(f'k:{k}')
-                print(f'idx_tmp:{idx_tmp}')
-                print(f'idx_tmp.shape:{idx_tmp.shape}')
-                print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
-                idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
-                # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
-                idx_list.append(idx)
+                # print(f'k:{k}')
+                # print(f'idx_tmp:{idx_tmp}')
+                # print(f'idx_tmp.shape:{idx_tmp.shape}')
+                # print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
+                if k != 0:
+                    idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
+                    # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+                    idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
             idx_batch_list.append(idx_single)
             k_single = torch.tensor(k_list).to(self.attention_point_score.device)
