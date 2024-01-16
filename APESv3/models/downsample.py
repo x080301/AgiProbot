@@ -606,9 +606,9 @@ class DownSampleCarve(nn.Module):
             for j in range(self.num_bins):
                 chunk_size_list.append(aps_chunks[j][i].shape[1])
             sampling_scale = self.M / sum(chunk_size_list)
-            print(f'sampling_scale:{sampling_scale}')
-            print(f'self.M:{self.M}')
-            print(f'chunk_size_list:{chunk_size_list}')
+            # print(f'sampling_scale:{sampling_scale}')
+            # print(f'self.M:{self.M}')
+            # print(f'chunk_size_list:{chunk_size_list}')
 
             k_list = []
             for j in range(self.num_bins):
@@ -619,7 +619,7 @@ class DownSampleCarve(nn.Module):
                 else:
                     k = self.M - sum(k_list)
 
-                print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
+                # print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
                 k_list.append(k)
 
                 if self.bin_sample_mode == "topk":
@@ -632,8 +632,8 @@ class DownSampleCarve(nn.Module):
                         aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
                         aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
                         aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
-                        print(f'k:{k}')
-                        print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
+                        # print(f'k:{k}')
+                        # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
                 else:
                     raise ValueError(
