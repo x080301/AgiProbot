@@ -161,7 +161,7 @@ def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
                     indices = (z_normalized_x[b, 0, :] < (max_value_9772 - i * bin_width)[b]) & (
                             z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b])
                 else:  # i=num_bins - 1
-                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b]
+                    indices = z_normalized_x[b, 0, :] < (max_value_9772 - i * bin_width)[b]
 
                 idx_chunks_bin_i_b = torch.nonzero(indices)
                 # print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
