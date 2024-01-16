@@ -639,9 +639,10 @@ class DownSampleCarve(nn.Module):
                 else:
                     raise ValueError(
                         'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
-                print(idx_tmp)
-                print(idx_tmp.shape)
-                print(idx_chunks[j][i].shape)
+                print(f'k:{k}')
+                print(f'idx_tmp:{idx_tmp}')
+                print(f'idx_tmp.shape:{idx_tmp.shape}')
+                print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
                 idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
                 # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
                 idx_list.append(idx)
