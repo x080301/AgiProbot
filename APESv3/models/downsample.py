@@ -359,6 +359,11 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == 'nonuniform_split_bin':
                 self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                 self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
+            elif self.sampling_score_multiple='':  # TODO
+                self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
+                self.bin_conv2 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
+            else:
+                raise NotImplementedError
 
         # boltzmann
         self.boltzmann_enable = config_ds.boltzmann.enable[layer]
