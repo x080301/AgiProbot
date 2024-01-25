@@ -388,8 +388,6 @@ def train(local_rank, config, random_seed,
                         raise ValueError('mode should be value or norm!')
                 optimizer.step()
 
-
-
             # collect the result from all gpus
             pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.train.ddp.nproc_this_node)]
             cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in
