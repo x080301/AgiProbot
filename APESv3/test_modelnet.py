@@ -13,7 +13,6 @@ import pkbar
 from utils.visualization import *
 from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
-
 from utils.save_backup import save_backup
 
 
@@ -201,14 +200,7 @@ def test(local_rank, config):
                                      range(config.test.ddp.nproc_this_node)]
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
-            # print(f'vis_test_gather_dict:{vis_test_gather_dict}')
-
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
-            # print(f'idx 0:{np.asarray(vis_test_gather_dict["trained"]["idx"][0]).shape}')
-            # print(f'idx 1:{np.asarray(vis_test_gather_dict["trained"]["idx"][1]).shape}')
-            # print(f'attention_point_score 0:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][0]).shape}')
-            # print(f'attention_point_score 1:{np.asarray(vis_test_gather_dict["trained"]["attention_point_score"][1]).shape}')
-            # exit()
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
             torch.distributed.all_gather(sample_gather_list, samples)
@@ -234,7 +226,8 @@ def test(local_rank, config):
                     else:
                         save_dir = None
 
-                    idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in vis_test_gather_dict["trained"]["idx"]]
+                    idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+                           vis_test_gather_dict["trained"]["idx"]]
                     attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
                                      vis_test_gather_dict["trained"]["attention_point_score"]]
 
@@ -273,12 +266,10 @@ def test(local_rank, config):
             if os.path.exists(ds_path):
                 shutil.rmtree(ds_path)
             for idx_mode in vis_test_gather_dict["ds_points"].keys():
-
                 if len(vis_test_gather_dict["ds_points"].keys()) == 1 and not config.test.few_points.enable:
                     index = vis_concat_dict["trained"]["idx"]
                 else:
                     index = vis_concat_dict["ds_points"][idx_mode]
-
                 if config.test.few_points.enable:
                     visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
                                                                      artifacts_path)
@@ -309,7 +300,8 @@ def test(local_rank, config):
             assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
             visualize_modelnet_combine(config, artifacts_path)
 
-
+        # storage and backup
+        # save_backup(artifacts_path, zip_file_path, backup_path)
 
 
 if __name__ == '__main__':
