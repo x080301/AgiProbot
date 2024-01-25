@@ -32,3 +32,60 @@ Install Pytorch3D:
 conda install -c fvcore -c iopath -c conda-forge fvcore=0.1.5 iopath=0.1.9 -y
 conda install -c pytorch3d pytorch3d=0.7.0 -y
 ```
+
+
+# How to run
+
+## Classification
+```bash
+bash cls_experiments.sh
+``` 
+or
+When using `AnTao420M` dataset, run: 
+train:
+```bash
+python train_modelnet.py datasets=modelnet_AnTao350M usr_config=YOUR/USR/CONFIG/PATH
+```
+test:
+```bash
+python test_modelnet.py datasets=modelnet_AnTao350M usr_config=YOUR/USR/CONFIG/PATH
+```
+
+## Segmentation
+```bash
+bash seg_experiments.sh
+``` 
+or
+When using `AnTao350M` dataset, run:  
+train:
+```bash
+python train_shapenet.py datasets=shapenet_AnTao350M usr_config=YOUR/USR/CONFIG/PATH
+```
+test:
+```bash
+python test_shapenet.py datasets=shapenet_AnTao350M usr_config=YOUR/USR/CONFIG/PATH
+```
+
+When using `Yi650M` dataset, run: 
+train: 
+```bash
+python train_shapenet.py datasets=shapenet_Yi650M usr_config=YOUR/USR/CONFIG/PATH
+```
+test: 
+```bash
+python test_shapenet.py datasets=shapenet_Yi650M usr_config=YOUR/USR/CONFIG/PATH
+```
+
+## Comparison
+```bash
+bash comp_experiments.sh
+``` 
+or
+train:
+```bash
+python train_comparison.py datasets=modelnet_Alignment1024 usr_config=YOUR/USR/CONFIG/PATH
+```
+test:
+```bash
+python test_comparison.py datasets=modelnet_Alignment1024 usr_config=YOUR/USR/CONFIG/PATH
+```
