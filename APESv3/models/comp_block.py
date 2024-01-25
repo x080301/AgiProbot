@@ -9,6 +9,7 @@ from models import downsample
 class Neighbor2PointAttentionBlock(nn.Module):
     def __init__(self, config_n2p_block):
         downsample_which        = config_n2p_block.downsample.ds_which
+        fl_which                = config_n2p_block.attention.fl_which
         super(Neighbor2PointAttentionBlock, self).__init__()
         self.embedding_list = nn.ModuleList([embedding.EdgeConv(config_n2p_block.embedding, layer) for layer in range(len(config_n2p_block.embedding.K))])
         if downsample_which == 'global':
@@ -21,7 +22,12 @@ class Neighbor2PointAttentionBlock(nn.Module):
             self.downsample_list = nn.ModuleList([downsample.DownSampleInsert(config_n2p_block.downsample, layer) for layer in range(len(config_n2p_block.downsample.M))])
         else:
             raise ValueError('Only global_carve and local_insert are valid for ds_which!')
-        self.neighbor2point_list = nn.ModuleList([attention.Neighbor2PointAttention(config_n2p_block.attention, layer) for layer in range(len(config_n2p_block.attention.K))])
+        if fl_which == 'n2p':
+            self.neighbor2point_list = nn.ModuleList([attention.Neighbor2PointAttention(config_n2p_block.attention, layer) for layer in range(len(config_n2p_block.attention.K))])
+        elif fl_which == 'p2p':
+            self.neighbor2point_list = nn.ModuleList([attention.Point2PointAttention(config_n2p_block.attention, layer) for layer in range(len(config_n2p_block.attention.K))])
+        else:
+            raise ValueError('Only n2p and p2p are valid for fl_which!')
     def forward(self, x):
         x_list = []
         x_xyz = x.clone()
