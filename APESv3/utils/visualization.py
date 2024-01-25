@@ -1,9 +1,12 @@
+import os
 import shutil
+import numpy as np
 import pkbar
 import math
 from plyfile import PlyData, PlyElement
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import matplotlib.image as Image
 from matplotlib import cm
 from collections import OrderedDict
 from .visualization_data_processing import *
@@ -1102,4 +1105,3 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
                     f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
-

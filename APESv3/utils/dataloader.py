@@ -464,9 +464,9 @@ def download_modelnet_Alignment1024(url, saved_path):
 
 class ModelNet_Alignment1024(torch.utils.data.Dataset):
     def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
-                 rotate, which_axis, angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
-                 anisotropic_scale, x_scale_range, y_scale_range, z_scale_range, isotropic):
-
+                 rotate, which_axis,
+                 angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
+                 x_scale_range, y_scale_range, z_scale_range, isotropic):
         super(ModelNet_Alignment1024, self).__init__()
         self.selected_points = selected_points
         self.fps_enable = fps_enable
