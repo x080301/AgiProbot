@@ -241,7 +241,7 @@ feature_learning_block:
     ff_conv1_channels_out: [ 256, 256, 256, 256, 256 ]
     ff_conv2_channels_in: [ 256, 256, 256, 256, 256 ]
     ff_conv2_channels_out: [ 64, 64, 64, 64, 64 ]
-    asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
+    asm: [ dot, dot, dot, dot, dot ]  # attention scoring method: dot, dot-sub, l2, l2+, if attention mode is vector_sub, asm is not used
 
 # the layer order inside the block is:
 # embedding -> point2point -> downsample -> point2point -> downsample -> point2point
