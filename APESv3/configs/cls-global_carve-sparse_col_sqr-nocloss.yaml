@@ -99,7 +99,7 @@ train:
     check_gradient_input_range: true
     check_gradient_output_range: true
     check_gradient_parameter_range: true
-neighbor2point_block:
+feature_learning_block:
   enable: true
   res_link:
     enable: true

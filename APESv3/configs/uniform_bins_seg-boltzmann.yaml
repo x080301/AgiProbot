@@ -88,7 +88,7 @@ test:  # only valid when running the test script
 # the layer order inside the block is:
 # embedding -> neighbor2point -> downsample -> neighbor2point -> downsample -> neighbor2point
 #                             -> upsample -> neighbor2point -> upsample.-> neighbor2point
-neighbor2point_block:
+feature_learning_block:
   enable: true
   STN: true
   embedding: # DGCNN
@@ -136,7 +136,7 @@ neighbor2point_block:
     v_out: [128, 128]
     num_heads: [4, 4]
   attention: # attention in feature learning
-    K: [32, 32, 32, 32, 32]  # 3 values in the list means neighbor2point_block includes 3 neighbor2point layers. The 'K' for each layer is 40, 40 and 40 respectively
+    K: [32, 32, 32, 32, 32]  # 3 values in the list means feature_learning_block includes 3 neighbor2point layers. The 'K' for each layer is 40, 40 and 40 respectively
     attention_mode: [scalar_dot, scalar_dot, scalar_dot, scalar_dot, scalar_dot] # scalar_dot, vector_sub
     group_type: [diff, diff, diff, diff, diff]  # diff, neighbor, center_neighbor or center_diff
     q_in: [128, 128, 128, 128, 128]
