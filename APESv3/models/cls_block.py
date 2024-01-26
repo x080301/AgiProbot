@@ -6,41 +6,41 @@ from models import attention
 from models import downsample
 
 
-class Neighbor2PointAttentionBlock(nn.Module):
-    def __init__(self, config_n2p_block):
-        downsample_which = config_n2p_block.downsample.ds_which
-        ff_conv2_channels_out = config_n2p_block.attention.ff_conv2_channels_out
-        self.res_link_enable = config_n2p_block.res_link.enable
-        fl_which = config_n2p_block.attention.fl_which
+class FeatureLearningBlock(nn.Module):
+    def __init__(self, config_feature_learning_block):
+        downsample_which = config_feature_learning_block.downsample.ds_which
+        ff_conv2_channels_out = config_feature_learning_block.attention.ff_conv2_channels_out
+        self.res_link_enable = config_feature_learning_block.res_link.enable
+        fl_which = config_feature_learning_block.attention.fl_which
 
-        super(Neighbor2PointAttentionBlock, self).__init__()
-        self.embedding_list = nn.ModuleList([embedding.EdgeConv(config_n2p_block.embedding, layer) for layer in
-                                             range(len(config_n2p_block.embedding.K))])
+        super(FeatureLearningBlock, self).__init__()
+        self.embedding_list = nn.ModuleList([embedding.EdgeConv(config_feature_learning_block.embedding, layer) for layer in
+                                             range(len(config_feature_learning_block.embedding.K))])
         if downsample_which == 'global':
-            self.downsample_list = nn.ModuleList([downsample.DownSample(config_n2p_block.downsample, layer) for layer in
-                                                  range(len(config_n2p_block.downsample.M))])
+            self.downsample_list = nn.ModuleList([downsample.DownSample(config_feature_learning_block.downsample, layer) for layer in
+                                                  range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'local':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleWithSigma(config_n2p_block.downsample, layer) for layer in
-                 range(len(config_n2p_block.downsample.M))])
+                [downsample.DownSampleWithSigma(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'global_carve':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleCarve(config_n2p_block.downsample, layer) for layer in
-                 range(len(config_n2p_block.downsample.M))])
+                [downsample.DownSampleCarve(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'local_insert':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleInsert(config_n2p_block.downsample, layer) for layer in
-                 range(len(config_n2p_block.downsample.M))])
+                [downsample.DownSampleInsert(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         else:
             raise ValueError('Only global_carve and local_insert are valid for ds_which!')
         if fl_which == 'n2p':
-            self.neighbor2point_list = nn.ModuleList(
-                [attention.Neighbor2PointAttention(config_n2p_block.attention, layer) for layer in
-                 range(len(config_n2p_block.attention.K))])
+            self.feature_learning_layer_list = nn.ModuleList(
+                [attention.Neighbor2PointAttention(config_feature_learning_block.attention, layer) for layer in
+                 range(len(config_feature_learning_block.attention.K))])
         elif fl_which == 'p2p':
-            self.neighbor2point_list = nn.ModuleList(
-                [attention.Point2PointAttention(config_n2p_block.attention, layer) for layer in
-                 range(len(config_n2p_block.attention.K))])
+            self.feature_learning_layer_list = nn.ModuleList(
+                [attention.Point2PointAttention(config_feature_learning_block.attention, layer) for layer in
+                 range(len(config_feature_learning_block.attention.K))])
         else:
             raise ValueError('Only n2p and p2p are valid for fl_which!')
 
@@ -64,14 +64,14 @@ class Neighbor2PointAttentionBlock(nn.Module):
             x = embedding(x)
             x_list.append(x)
         x = torch.cat(x_list, dim=1)
-        x = self.neighbor2point_list[0](x)
+        x = self.feature_learning_layer_list[0](x)
 
         if self.res_link_enable:
             res_link_list = []
             res_link_list.append(self.conv_list[0](x).max(dim=-1)[0])
             for i in range(len(self.downsample_list)):
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
-                x = self.neighbor2point_list[i + 1](x)
+                x = self.feature_learning_layer_list[i + 1](x)
                 x_xyz = ops.gather_by_idx(x_xyz, idx_select)
                 res_link_list.append(self.conv_list[i + 1](x).max(dim=-1)[0])
             self.res_link_list = res_link_list
@@ -80,7 +80,7 @@ class Neighbor2PointAttentionBlock(nn.Module):
         else:
             for i in range(len(self.downsample_list)):
                 x = self.downsample_list[i](x)[0][0]
-                x = self.neighbor2point_list[i + 1](x)
+                x = self.feature_learning_layer_list[i + 1](x)
             x = self.conv(x).max(dim=-1)[0]
             return x
 

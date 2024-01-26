@@ -11,10 +11,10 @@ class ShapeNetModel(nn.Module):
 
         # num_enabled_blocks = neighbor2point_enable + point2point_enable + edgeconv_enable
         # if num_enabled_blocks != 1:
-        #     raise ValueError(f'Only one of neighbor2point_block, point2point_block and edgecov_block should be enabled, but got {num_enabled_blocks} block(s) enabled!')
-        if config.neighbor2point_block.enable:
-            self.block = seg_block.Neighbor2PointAttentionBlock(config.neighbor2point_block)
-            output_channels = config.neighbor2point_block.attention.ff_conv2_channels_out[-1]
+        #     raise ValueError(f'Only one of feature_learning_block, point2point_block and edgecov_block should be enabled, but got {num_enabled_blocks} block(s) enabled!')
+        if config.feature_learning_block.enable:
+            self.block = seg_block.FeatureLearningBlock(config.feature_learning_block)
+            output_channels = config.feature_learning_block.attention.ff_conv2_channels_out[-1]
         # if point2point_enable:
         #     self.block = seg_block.Point2PointAttentionBlock(point2point_egdeconv_emb_K, point2point_egdeconv_emb_group_type,
         #                                            point2point_egdeconv_emb_conv1_in, point2point_egdeconv_emb_conv1_out, point2point_egdeconv_emb_conv2_in, point2point_egdeconv_emb_conv2_out,
@@ -53,7 +53,7 @@ class ShapeNetModel(nn.Module):
         self.conv4 = nn.Conv1d(256, 50, kernel_size=1, bias=False)
         self.dp1 = nn.Dropout(p=0.5)
         self.dp2 = nn.Dropout(p=0.5)
-        self.STN_enable = config.neighbor2point_block.STN
+        self.STN_enable = config.feature_learning_block.STN
         if self.STN_enable == True:
             self.STN = embedding.STN()
 

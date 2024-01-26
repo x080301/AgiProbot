@@ -8,13 +8,13 @@ class ModelNetModel(nn.Module):
 
         super(ModelNetModel, self).__init__()
 
-        if config.neighbor2point_block.enable:
-            self.block = cls_block.Neighbor2PointAttentionBlock(config.neighbor2point_block)
-            num_layers = len(config.neighbor2point_block.attention.K)
+        if config.feature_learning_block.enable:
+            self.block = cls_block.FeatureLearningBlock(config.feature_learning_block)
+            num_layers = len(config.feature_learning_block.attention.K)
         else:
             raise ValueError('This time only support neighbor2point block!')
 
-        self.res_link_enable = config.neighbor2point_block.res_link.enable
+        self.res_link_enable = config.feature_learning_block.res_link.enable
 
         self.aux_loss_enable = config.train.aux_loss.enable
         self.aux_loss_shared = config.train.aux_loss.shared
