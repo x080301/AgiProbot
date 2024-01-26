@@ -21,7 +21,7 @@ class Neighbor2PointAttention(nn.Module):
         ff_conv2_channels_in    = config_attention.ff_conv2_channels_in[layer]
         ff_conv2_channels_out   = config_attention.ff_conv2_channels_out[layer]
 
-        print(f'config_attention:{config_attention}')
+        print(f'config_attention:{type(config_attention)}')
         exit(-1)
 
         self.asm                = config_attention.asm[layer]
