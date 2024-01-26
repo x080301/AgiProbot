@@ -4,6 +4,7 @@ from models import seg_block
 from models import embedding
 from utils import ops
 
+
 class ShapeNetModel(nn.Module):
     def __init__(self, config):
 
@@ -37,11 +38,12 @@ class ShapeNetModel(nn.Module):
         #                                edgeconv_conv2_channel_in, edgeconv_conv2_channel_out)
         #     output_channels = edgeconv_conv2_channel_out[-1]
 
-        self.conv = nn.Sequential(nn.Conv1d(output_channels, 1024, 1, bias=False), nn.BatchNorm1d(1024), nn.LeakyReLU(negative_slope=0.2))
+        self.conv = nn.Sequential(nn.Conv1d(output_channels, 1024, 1, bias=False), nn.BatchNorm1d(1024),
+                                  nn.LeakyReLU(negative_slope=0.2))
         self.conv1 = nn.Sequential(nn.Conv1d(16, 64, kernel_size=1, bias=False),
                                    nn.BatchNorm1d(64),
                                    nn.LeakyReLU(negative_slope=0.2))
-        self.conv2 = nn.Sequential(nn.Conv1d(output_channels+2048+64, 1024, kernel_size=1, bias=False),
+        self.conv2 = nn.Sequential(nn.Conv1d(output_channels + 2048 + 64, 1024, kernel_size=1, bias=False),
                                    nn.BatchNorm1d(1024),
                                    nn.LeakyReLU(negative_slope=0.2))
         self.conv3 = nn.Sequential(nn.Conv1d(1024, 256, kernel_size=1, bias=False),
@@ -61,14 +63,14 @@ class ShapeNetModel(nn.Module):
         # x.shape == (B, 3, N)  category_id.shape == (B, 16, 1)
         B, C, N = x.shape
         # x.shape == (B, 3, N)
-        
+
         if self.STN_enable == True:
             x0, _ = ops.group(x, 32, 'center_diff')  # (B, 3, num_points) -> (B, 3*2, num_points, k)
             t = self.STN(x0)  # (B, 3, 3)
             x = x.transpose(2, 1)  # (B, 3, num_points) -> (B, num_points, 3)
             x = torch.bmm(x, t)  # (B, num_points, 3) * (B, 3, 3) -> (B, num_points, 3)
             x = x.transpose(2, 1)  # (B, num_points, 3) -> (B, 3, num_points)
-        
+
         x_tmp = self.block(x)
         # x_tmp.shape == (B, C, N)
         x = self.conv(x_tmp)
