@@ -143,3 +143,4 @@ feature_learning_block:
     ff_conv1_channels_out: [512, 512, 512, 512, 512]
     ff_conv2_channels_in: [512, 512, 512, 512, 512]
     ff_conv2_channels_out: [128, 128, 128, 128, 128]
+    asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
