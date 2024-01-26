@@ -296,14 +296,14 @@ def train(local_rank, config, random_seed,
     else:
         loss_fn = torch.nn.CrossEntropyLoss(reduction='mean')
 
-    if config.neighbor2point_block.enable:
-        num_ds_layers = len(config.neighbor2point_block.downsample.M)
+    if config.feature_learning_block.enable:
+        num_ds_layers = len(config.feature_learning_block.downsample.M)
     elif config.point2point_block.enable:
         num_ds_layers = len(config.point2point_block.downsample.M)
     elif config.edgeconv_block.enable:
         num_ds_layers = len(config.edgeconv_block.downsample.M)
     else:
-        raise ValueError('One of neighbor2point_block, point2point_block and edgeconv_block should be enabled!')
+        raise ValueError('One of feature_learning_block, point2point_block and edgeconv_block should be enabled!')
     val_miou_list = [0]
     val_category_miou_list = [0]
     val_ds_miou_list = [[0] for _ in range(num_ds_layers)]

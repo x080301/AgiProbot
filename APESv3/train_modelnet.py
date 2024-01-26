@@ -344,7 +344,7 @@ def train(local_rank, config, random_seed,
                 scaler.update()
             else:
                 preds = my_model(samples)
-                if config.neighbor2point_block.res_link.enable:
+                if config.feature_learning_block.res_link.enable:
                     if config.train.aux_loss.enable:
                         train_loss = loss_fn(preds[-1], cls_labels) + config.train.aux_loss.factor * aux_loss(preds,
                                                                                                               cls_labels,

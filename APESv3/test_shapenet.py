@@ -180,7 +180,7 @@ def test(local_rank, config):
     loss_novo_list = []
     vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
     for mode in vis_test_gather_dict["trained"].keys():
-        vis_test_gather_dict["trained"][mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        vis_test_gather_dict["trained"][mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
 
     with torch.no_grad():
         if rank == 0:
@@ -287,7 +287,7 @@ def test(local_rank, config):
                     print(f'{category}_novo: {category_iou_novo[category]}')
 
         vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict,
+        vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
                                           vis_test_gather_dict)
 
         # calculate metrics
@@ -311,7 +311,7 @@ def test(local_rank, config):
 
         # generating visualized downsampled points files
         if config.test.visualize_downsampled_points.enable:
-            if config.neighbor2point_block.downsample.bin.enable[0]:
+            if config.feature_learning_block.downsample.bin.enable[0]:
                 visualize_shapenet_downsampled_points_bin(config, samples, vis_concat_dict["trained"]["idx"],
                                                           vis_concat_dict["trained"]["bin_prob"], cls_label, shape_ious,
                                                           artifacts_path)
