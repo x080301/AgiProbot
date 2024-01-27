@@ -41,8 +41,11 @@ if __name__ == '__main__':
                                 stderr=subprocess.PIPE)
 
         new_training_in_line_txt = []
+        with open(training_txt, 'r') as file:
+            lines = file.readlines()
         belong_to_the_same_demo = False
-        for single_line in cmd_to_save:
+
+        for single_line in lines:
             if belong_to_the_same_demo:
                 if '----' in single_line:
                     belong_to_the_same_demo = False
