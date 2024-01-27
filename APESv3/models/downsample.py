@@ -316,15 +316,16 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     tensor_to_multiply = torch.zeros(B, M).to(bin_probability.device)
 
     for i, idx_in_one_bin in enumerate(bin_chunks_idx):
-        tensor_to_multiply.scatter_(1,
-                                    idx_in_one_bin.squeeze(dim=1),
-                                    1.0 + bin_probability[i] / M)
+        a = 1.0 + bin_probability[i] / M
+        b = idx_in_one_bin.squeeze(dim=1)
+        print(f'tensor_to_multiply.shape=={tensor_to_multiply.shape}')
+        tensor_to_multiply = tensor_to_multiply.scatter(1,
+                                                        b,
+                                                        a)
 
     tensor_to_multiply = torch.gather(tensor_to_multiply, dim=1, index=down_sampling_idx.squeeze(dim=1))
 
     x_ds = x_ds * tensor_to_multiply
-
-    print('--------------------get here!----------------')
 
     return x_ds
 
