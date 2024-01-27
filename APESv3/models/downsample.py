@@ -438,6 +438,7 @@ class DownSampleCarve(nn.Module):
 
         self.attention_map = self.attention_scoring(q, k)  # self.attention_map.shape == (B, H, N, N)
 
+        idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
         if self.bin_enable:
             if self.bin_mode == "mode1":
                 idx, _, idx_chunks = self.bin_idx_selection(self.attention_point_score, self.num_bins,
@@ -452,8 +453,7 @@ class DownSampleCarve(nn.Module):
         elif self.boltzmann_enable:
             idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
                                                self.boltzmann_T)
-        else:
-            idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
+
         # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
