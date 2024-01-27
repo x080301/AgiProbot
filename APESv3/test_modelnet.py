@@ -169,15 +169,15 @@ def test(local_rank, config):
 
     vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
     for idx_mode in vis_test_gather_dict["trained"].keys():
-        vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
     if config.test.visualize_downsampled_points.enable:
         for idx_mode in vis_test_gather_dict["ds_points"].keys():
             vis_test_gather_dict["ds_points"][idx_mode] = [[] for _ in
-                                                           range(len(config.neighbor2point_block.downsample.M))]
+                                                           range(len(config.feature_learning_block.downsample.M))]
     if config.test.visualize_attention_heatmap.enable:
         for idx_mode in vis_test_gather_dict["heatmap"].keys():
             vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
-                                                         range(len(config.neighbor2point_block.downsample.M))]
+                                                         range(len(config.feature_learning_block.downsample.M))]
 
     with torch.no_grad():
         if rank == 0:
@@ -241,7 +241,7 @@ def test(local_rank, config):
         samples = np.concatenate(sample_list, axis=0)
 
         vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.neighbor2point_block.downsample.M), vis_concat_dict,
+        vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
                                           vis_test_gather_dict)
 
         # calculate metrics
@@ -274,7 +274,7 @@ def test(local_rank, config):
                     visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
                                                                      artifacts_path)
                 else:
-                    if config.neighbor2point_block.downsample.bin.enable[0]:
+                    if config.feature_learning_block.downsample.bin.enable[0]:
                         visualize_modelnet_downsampled_points_bin(config, samples, index,
                                                                   vis_concat_dict["trained"]["bin_prob"], cls_labels,
                                                                   idx_mode, artifacts_path)
@@ -292,7 +292,7 @@ def test(local_rank, config):
                 else:
                     attention_map = vis_concat_dict["heatmap"][idx_mode]
                 visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, idx_mode, artifacts_path)
-            if config.neighbor2point_block.downsample.boltzmann.enable[0]:
+            if config.feature_learning_block.downsample.boltzmann.enable[0]:
                 aps_boltz = vis_concat_dict["trained"]["aps_boltz"]
                 visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann',
                                                 artifacts_path)
