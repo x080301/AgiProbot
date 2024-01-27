@@ -306,6 +306,27 @@ class DownSampleWithSigma(nn.Module):
         return x_res  # x_res.shape == (B, C, M)
 
 
+def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability):
+    B, C, N = input_x_shape
+    _, _, M = x_ds.shape
+
+    assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
+    assert bin_chunks_idx[0].shape[1] == 1, "Number of heads should be 1!"
+
+    tensor_to_multiply = torch.zeros(B, M)
+
+    for i, idx_in_one_bin in enumerate(bin_chunks_idx):
+        tensor_to_multiply.scatter_(1,
+                                    idx_in_one_bin.squeeze(dim=1),
+                                    1.0 + bin_probability[i] / M)
+
+    tensor_to_multiply = torch.gather(tensor_to_multiply, dim=1, index=down_sampling_idx.squeeze(dim=1))
+
+    x_ds = x_ds * tensor_to_multiply
+
+    return x_ds
+
+
 class DownSampleCarve(nn.Module):
     def __init__(self, config_ds, layer):
         super(DownSampleCarve, self).__init__()
@@ -352,6 +373,8 @@ class DownSampleCarve(nn.Module):
         self.bin_sample_mode = config_ds.bin.sample_mode[layer]
         self.bin_norm_mode = config_ds.bin.norm_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
+        self.enable_multiply = config_ds.bin.multiply[layer]
+
         if self.bin_enable:
             if self.bin_mode == "mode1":
                 self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins / 2), 1, bias=False)
@@ -415,16 +438,18 @@ class DownSampleCarve(nn.Module):
 
         if self.bin_enable:
             if self.bin_mode == "mode1":
-                idx, self.bin_k = self.bin_idx_selection()
+                idx, _, idx_chunks = self.bin_idx_selection(self.attention_point_score, self.num_bins,
+                                                            self.bin_prob, self.M)
             elif self.bin_mode == "mode2":
-                idx, self.bin_k = self.bin2_idx_selection()
+                idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
-                idx, self.bin_k = self.nonuniform_bin_idx_selection()
+                idx, _, idx_chunks = self.nonuniform_bin_idx_selection(self.attention_point_score,
+                                                                       self.num_bins, self.bin_prob)
             else:
                 raise NotImplementedError
         elif self.boltzmann_enable:
             idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
-                                                    self.boltzmann_T)
+                                               self.boltzmann_T)
         else:
             idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
         # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
@@ -449,6 +474,9 @@ class DownSampleCarve(nn.Module):
         # x_dropped = v_dropped.reshape(v_dropped.shape[0], v_dropped.shape[1], -1).permute(0, 2, 1)
         # v_dropped.shape == (B, C, N-M)
         # return (x_ds, idx), (x_dropped, idx_dropped)
+
+        if self.enable_multiply:
+            bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob)
 
         return (x_ds, idx), None
 
@@ -550,9 +578,9 @@ class DownSampleCarve(nn.Module):
 
         return x, bin_prob
 
-    def bin_idx_selection(self):
+    def bin_idx_selection(self, attention_point_score, num_bins, bin_prob, M):
         # self.attention_point_score.shape == (B, H, N)
-        aps_chunks, idx_chunks = ops.sort_chunk(self.attention_point_score, self.num_bins, dim=-1, descending=True)
+        aps_chunks, idx_chunks = ops.sort_chunk(attention_point_score, num_bins, dim=-1, descending=True)
         # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
         B, H, chunk_size = aps_chunks[0].shape
         assert H == 1, "Number of heads should be 1!"
@@ -562,19 +590,19 @@ class DownSampleCarve(nn.Module):
         for i in range(B):
             k_list = []
             idx_list = []
-            for j in range(self.num_bins):
+            for j in range(num_bins):
                 # each bin has K samples
-                if j != self.num_bins - 1:
-                    k = int(2 * self.M / self.num_bins * self.bin_prob[i, j])
+                if j != num_bins - 1:
+                    k = int(2 * M / num_bins * bin_prob[i, j])
                 else:
-                    k = self.M - sum(k_list)
+                    k = M - sum(k_list)
                 k_list.append(k)
 
                 if self.bin_sample_mode == "topk":
                     idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
                 elif self.bin_sample_mode == "uniform":
                     idx_tmp = torch.randperm(chunk_size)[:k]
-                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(self.attention_point_score.device)
+                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
                 elif self.bin_sample_mode == "random":
                     if k == 0:
                         continue
@@ -589,15 +617,15 @@ class DownSampleCarve(nn.Module):
                 idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
             idx_batch_list.append(idx_single)
-            k_single = torch.tensor(k_list).to(self.attention_point_score.device)
+            k_single = torch.tensor(k_list).to(attention_point_score.device)
             k_batch_list.append(k_single)
         idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
         k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
-        return idx_batch, k_batch
+        return idx_batch, k_batch, idx_chunks
 
-    def nonuniform_bin_idx_selection(self):
+    def nonuniform_bin_idx_selection(self, attention_point_score, num_bins, bin_prob):
         # self.attention_point_score.shape == (B, H, N)
-        aps_chunks, idx_chunks = ops.sort_chunk(self.attention_point_score, self.num_bins, bin_split_mode='nonuniform')
+        aps_chunks, idx_chunks = ops.sort_chunk(attention_point_score, num_bins, bin_split_mode='nonuniform')
         # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
         B = len(aps_chunks[0])
         H = aps_chunks[0][0].shape[0]
@@ -611,7 +639,7 @@ class DownSampleCarve(nn.Module):
             idx_list = []
 
             chunk_size_list = []
-            for j in range(self.num_bins):
+            for j in range(num_bins):
                 chunk_size_list.append(aps_chunks[j][i].shape[1])
             sampling_scale = self.M / sum(chunk_size_list)
             # print(f'sampling_scale:{sampling_scale}')
@@ -619,11 +647,11 @@ class DownSampleCarve(nn.Module):
             # print(f'chunk_size_list:{chunk_size_list}')
 
             k_list = []
-            for j in range(self.num_bins):
+            for j in range(num_bins):
                 # each bin has k samples
-                if j != self.num_bins - 1:
+                if j != num_bins - 1:
 
-                    k = int(self.bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
+                    k = int(bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
                     # bin_prob.shape == (B, num_bins)
                 else:
                     k = self.M - sum(k_list)
@@ -635,7 +663,7 @@ class DownSampleCarve(nn.Module):
                     idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
                 elif self.bin_sample_mode == "uniform":
                     idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
-                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(self.attention_point_score.device)
+                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
                 elif self.bin_sample_mode == "random":
                     if k != 0:
                         aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
@@ -657,11 +685,11 @@ class DownSampleCarve(nn.Module):
                     idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
             idx_batch_list.append(idx_single)
-            k_single = torch.tensor(k_list).to(self.attention_point_score.device)
+            k_single = torch.tensor(k_list).to(attention_point_score.device)
             k_batch_list.append(k_single)
         idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
         k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
-        return idx_batch, k_batch
+        return idx_batch, k_batch, idx_chunks
 
     def bin2_idx_selection(self):
         # self.attention_point_score.shape == (B, H, N)
