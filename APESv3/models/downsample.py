@@ -423,19 +423,19 @@ class DownSampleCarve(nn.Module):
             else:
                 raise NotImplementedError
         elif self.boltzmann_enable:
-            self.idx = self.boltzmann_idx_selection()
-        idx_dropped = \
-            torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
+            self.idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
+                                                    self.boltzmann_T)
+        # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=self.idx[..., None].expand(-1, -1, -1, k.shape[-1]))
         # attention_down.shape == (B, H, M, N)
-        attention_dropped = torch.gather(self.attention_map, dim=2,
-                                         index=idx_dropped[..., None].expand(-1, -1, -1, k.shape[-1]))
+        # attention_dropped = torch.gather(self.attention_map, dim=2,
+        #                                  index=idx_dropped[..., None].expand(-1, -1, -1, k.shape[-1]))
         # attention_dropped.shape == (B, H, N-M, N)
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
         # v_down.shape == (B, M, H, D)
-        v_dropped = (attention_dropped @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
+        # v_dropped = (attention_dropped @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
         # v_dropped.shape == (B, N-M, H, D)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
         # v_down.shape == (B, C, M)
@@ -444,9 +444,11 @@ class DownSampleCarve(nn.Module):
         if self.res == True:
             x_ds = self.res_block(x, x_ds)
 
-        x_dropped = v_dropped.reshape(v_dropped.shape[0], v_dropped.shape[1], -1).permute(0, 2, 1)
+        # x_dropped = v_dropped.reshape(v_dropped.shape[0], v_dropped.shape[1], -1).permute(0, 2, 1)
         # v_dropped.shape == (B, C, N-M)
-        return (x_ds, self.idx), (x_dropped, idx_dropped)
+        # return (x_ds, self.idx), (x_dropped, idx_dropped)
+
+        return (x_ds, self.idx), None
 
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N)
@@ -528,7 +530,7 @@ class DownSampleCarve(nn.Module):
 
             # bin_prob.shape == (B, num_bins)
 
-        else:
+        elif bin_mode == 'mode1':
             bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins/2, N)
             x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins/2, N)
             x = self.bin_conv2(x)  # x.shape == (B, C, N)
@@ -541,6 +543,9 @@ class DownSampleCarve(nn.Module):
             bin_prob_inner = torch.flip((1 - bin_prob_edge), dims=(-1,))
             bin_prob = torch.cat((bin_prob_edge, bin_prob_inner), dim=-1)  # bin_prob.shape == (B, 1, num_bins)
             bin_prob = bin_prob.squeeze(1)  # bin_prob.shape == (B, num_bins)
+        else:
+            raise NotImplementedError
+
         return x, bin_prob
 
     def bin_idx_selection(self):
@@ -720,16 +725,16 @@ class DownSampleCarve(nn.Module):
         self.bin_prob = k_batch / self.M
         return idx_batch, k_batch
 
-    def boltzmann_idx_selection(self):
-        B, H, N = self.attention_point_score.shape
-        aps_boltz = ops.norm_range(self.attention_point_score, dim=-1, n_min=0, n_max=1, mode=self.boltzmann_norm_mode)
-        aps_boltz /= self.boltzmann_T
-        self.aps_boltz = F.softmax(aps_boltz, dim=-1)
+    def boltzmann_idx_selection(self, attention_point_score, M, boltzmann_norm_mode, boltzmann_T):
+        B, H, N = attention_point_score.shape
+        aps_boltz = ops.norm_range(attention_point_score, dim=-1, n_min=0, n_max=1, mode=boltzmann_norm_mode)
+        aps_boltz /= boltzmann_T
+        aps_boltz = F.softmax(aps_boltz, dim=-1)
         idx_batch_list = []
         for i in range(B):
             idx_boltz_list = []
             for j in range(H):
-                idx_boltz = torch.multinomial(self.aps_boltz[i, j], num_samples=self.M, replacement=False)
+                idx_boltz = torch.multinomial(aps_boltz[i, j], num_samples=M, replacement=False)
                 idx_boltz_list.append(idx_boltz)
             idx_single = torch.stack(idx_boltz_list, dim=0)
             idx_batch_list.append(idx_single)
