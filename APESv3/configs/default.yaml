@@ -199,7 +199,7 @@ feature_learning_block:
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
-      multiply: [ true, true ]
+      multiply: [ false, false ]
     boltzmann:
       enable: [ false, false ]
       boltzmann_T: [ 1.0, 1.0 ]
