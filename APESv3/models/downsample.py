@@ -486,6 +486,7 @@ class DownSampleCarve(nn.Module):
         if self.enable_multiply:
             bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob)
 
+        self.idx = idx
         return (x_ds, idx), (None, None)
 
     def split_heads(self, x, heads, depth):
