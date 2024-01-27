@@ -328,8 +328,8 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
 
     tensor_to_multiply = torch.gather(tensor_to_multiply, dim=1, index=down_sampling_idx.squeeze(dim=1)).unsqueeze(1)
 
-    print(f'x_ds.shape=={x_ds.shape}')
-    print(f'tensor_to_multiply:{tensor_to_multiply.shape}')
+    # print(f'x_ds.shape=={x_ds.shape}')
+    # print(f'tensor_to_multiply:{tensor_to_multiply.shape}')
     x_ds = x_ds * tensor_to_multiply
 
     return x_ds
@@ -486,7 +486,7 @@ class DownSampleCarve(nn.Module):
         if self.enable_multiply:
             bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob)
 
-        return (x_ds, idx), None
+        return (x_ds, idx), (None, None)
 
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N)
