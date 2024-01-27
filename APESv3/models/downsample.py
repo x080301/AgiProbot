@@ -322,6 +322,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
             print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
             print(f'bin_probability[j, i]:{bin_probability[j, i].shape}')
             tensor_to_multiply[j, :][bin_chunks_idx[i].squeeze()[j, :]] = 1.0 + bin_probability[j, i] / M
+            print(torch.sum(tensor_to_multiply))
             # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
             #                                                             bin_chunks_idx[i].squeeze()[j, :],
             #                                                             1.0 + bin_probability[j, i] / M)
