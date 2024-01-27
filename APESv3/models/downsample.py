@@ -412,23 +412,25 @@ class DownSampleCarve(nn.Module):
             v = v + v_pe  # v.shape == (B, H, D, N)
 
         self.attention_map = self.attention_scoring(q, k)  # self.attention_map.shape == (B, H, N, N)
-        self.idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
+
         if self.bin_enable:
             if self.bin_mode == "mode1":
-                self.idx, self.bin_k = self.bin_idx_selection()
+                idx, self.bin_k = self.bin_idx_selection()
             elif self.bin_mode == "mode2":
-                self.idx, self.bin_k = self.bin2_idx_selection()
+                idx, self.bin_k = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
-                self.idx, self.bin_k = self.nonuniform_bin_idx_selection()
+                idx, self.bin_k = self.nonuniform_bin_idx_selection()
             else:
                 raise NotImplementedError
         elif self.boltzmann_enable:
-            self.idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
+            idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
                                                     self.boltzmann_T)
+        else:
+            idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
         # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
-                                      index=self.idx[..., None].expand(-1, -1, -1, k.shape[-1]))
+                                      index=idx[..., None].expand(-1, -1, -1, k.shape[-1]))
         # attention_down.shape == (B, H, M, N)
         # attention_dropped = torch.gather(self.attention_map, dim=2,
         #                                  index=idx_dropped[..., None].expand(-1, -1, -1, k.shape[-1]))
@@ -441,14 +443,14 @@ class DownSampleCarve(nn.Module):
         # v_down.shape == (B, C, M)
 
         # residual & feedforward
-        if self.res == True:
-            x_ds = self.res_block(x, x_ds)
+        if self.res is True:
+            x_ds = self.res_block(x, x_ds, idx)
 
         # x_dropped = v_dropped.reshape(v_dropped.shape[0], v_dropped.shape[1], -1).permute(0, 2, 1)
         # v_dropped.shape == (B, C, N-M)
-        # return (x_ds, self.idx), (x_dropped, idx_dropped)
+        # return (x_ds, idx), (x_dropped, idx_dropped)
 
-        return (x_ds, self.idx), None
+        return (x_ds, idx), None
 
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N)
@@ -474,8 +476,8 @@ class DownSampleCarve(nn.Module):
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
         return attention
 
-    def res_block(self, x, x_ds):  # x.shape == (B, C, N), x_ds.shape == (B, C, M)
-        x_tmp = torch.gather(x, dim=-1, index=self.idx)  # x_res.shape == (B, 1, M)
+    def res_block(self, x, x_ds, idx):  # x.shape == (B, C, N), x_ds.shape == (B, C, M)
+        x_tmp = torch.gather(x, dim=-1, index=idx)  # x_res.shape == (B, 1, M)
         x_res = self.bn1(x_ds + x_tmp)  # x_res.shape == (B, C, M)
         if self.ff == True:
             x_tmp = self.ffn(x_res)
