@@ -319,7 +319,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     for i in range(num_bins):
         for j in range(B):
             tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
-                                                                        bin_chunks_idx.squeeze()[i][j, :],
+                                                                        bin_chunks_idx[i].squeeze()[j, :],
                                                                         1.0 + bin_probability[j, i] / M)
 
     # print(f'bin_probability.shape=={bin_probability.shape}')
