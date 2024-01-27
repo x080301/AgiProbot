@@ -1,3 +1,9 @@
+import os
+
+os.environ['TORCH_USE_CUDA_DSA'] = '1'
+os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
+os.environ["HYDRA_FULL_ERROR"] = '1'
+
 import shutil
 from utils import dataloader, lr_scheduler
 from models import seg_model
@@ -8,7 +14,7 @@ import torch
 import pkbar
 import wandb
 from utils import metrics, debug
-import os
+
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.cuda import amp
@@ -580,6 +586,4 @@ def train(local_rank, config, random_seed,
 
 
 if __name__ == '__main__':
-    os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
-    os.environ["HYDRA_FULL_ERROR"] = '1'
     main()
