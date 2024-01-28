@@ -87,8 +87,8 @@ def check_config(config):
         bin_enable = config.feature_learning_block.downsample.bin.enable[i]
         boltzmann_enable = config.feature_learning_block.downsample.boltzmann.enable[i]
 
-        if bin_enable and boltzmann_enable:
-            raise ValueError("bin and boltzmann cannot be enabled at the same time!")
+        # if bin_enable and boltzmann_enable:
+        #     raise ValueError("bin and boltzmann cannot be enabled at the same time!")
 
         assert idx_mode in idx_mode_dict[config.feature_learning_block.downsample.ds_which], \
             f"When downsample mode is {config.feature_learning_block.downsample.ds_which}, idx_mode should be one of {idx_mode_dict[config.feature_learning_block.downsample.ds_which]}! Got: {idx_mode}"
