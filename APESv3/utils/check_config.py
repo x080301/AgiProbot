@@ -56,42 +56,42 @@ def check_config(config):
     if config.test.visualize_combine.enable:
         assert config.test.visualize_downsampled_points.num_vis == config.test.visualize_attention_heatmap.num_vis, "If vis_combine is enabled, downsample points and heatmap must be visualized in the same amount!"
         for idx_mode in config.test.visualize_combine.vis_which:
-            if idx_mode not in idx_mode_dict[config.neighbor2point_block.downsample.ds_which]:
+            if idx_mode not in idx_mode_dict[config.feature_learning_block.downsample.ds_which]:
                 raise ValueError(
-                    f"When visualize_combine is enabled, vis_which should be one of {idx_mode_dict[config.neighbor2point_block.downsample.ds_which]}! Got: {idx_mode}")
+                    f"When visualize_combine is enabled, vis_which should be one of {idx_mode_dict[config.feature_learning_block.downsample.ds_which]}! Got: {idx_mode}")
 
     # block
-    assert config.neighbor2point_block.enable and not config.point2point_block.enable and not config.edgeconv_block.enable, "Only N2P block can be enabled!"
+    assert config.feature_learning_block.enable and not config.point2point_block.enable and not config.edgeconv_block.enable, "Only N2P block can be enabled!"
 
-    # neighbor2point_block.embedding
-    if config.neighbor2point_block.embedding.normal_channel + (config.datasets.dataset_name == "shapenet_Normal") == 1:
+    # feature_learning_block.embedding
+    if config.feature_learning_block.embedding.normal_channel + (config.datasets.dataset_name == "shapenet_Normal") == 1:
         raise ValueError("embedding.normal_channel and dataset shapenet_Normal must be sync setted!")
     elif config.datasets.dataset_name == "shapenet_Normal":
-        assert config.neighbor2point_block.embedding.conv1_in[
+        assert config.feature_learning_block.embedding.conv1_in[
                    0] == 12, "When use dataset with normal vector, the first conv_in must be 12"
     else:
-        assert config.neighbor2point_block.embedding.conv1_in[
+        assert config.feature_learning_block.embedding.conv1_in[
                    0] == 6, "When didn't use dataset with normal vector, the first conv_in must be 6"
 
-        # neighbor2point_block.downsample    
-    for i in range(len(config.neighbor2point_block.downsample.M)):
-        q_in = config.neighbor2point_block.downsample.q_in[i]
-        q_out = config.neighbor2point_block.downsample.q_out[i]
-        k_in = config.neighbor2point_block.downsample.k_in[i]
-        k_out = config.neighbor2point_block.downsample.k_out[i]
-        v_in = config.neighbor2point_block.downsample.v_in[i]
-        v_out = config.neighbor2point_block.downsample.v_out[i]
-        num_heads = config.neighbor2point_block.downsample.num_heads[i]
-        num_bins = config.neighbor2point_block.downsample.bin.num_bins[i]
-        idx_mode = config.neighbor2point_block.downsample.idx_mode[i]
-        bin_enable = config.neighbor2point_block.downsample.bin.enable[i]
-        boltzmann_enable = config.neighbor2point_block.downsample.boltzmann.enable[i]
+        # feature_learning_block.downsample    
+    for i in range(len(config.feature_learning_block.downsample.M)):
+        q_in = config.feature_learning_block.downsample.q_in[i]
+        q_out = config.feature_learning_block.downsample.q_out[i]
+        k_in = config.feature_learning_block.downsample.k_in[i]
+        k_out = config.feature_learning_block.downsample.k_out[i]
+        v_in = config.feature_learning_block.downsample.v_in[i]
+        v_out = config.feature_learning_block.downsample.v_out[i]
+        num_heads = config.feature_learning_block.downsample.num_heads[i]
+        num_bins = config.feature_learning_block.downsample.bin.num_bins[i]
+        idx_mode = config.feature_learning_block.downsample.idx_mode[i]
+        bin_enable = config.feature_learning_block.downsample.bin.enable[i]
+        boltzmann_enable = config.feature_learning_block.downsample.boltzmann.enable[i]
 
         if bin_enable and boltzmann_enable:
             raise ValueError("bin and boltzmann cannot be enabled at the same time!")
 
-        assert idx_mode in idx_mode_dict[config.neighbor2point_block.downsample.ds_which], \
-            f"When downsample mode is {config.neighbor2point_block.downsample.ds_which}, idx_mode should be one of {idx_mode_dict[config.neighbor2point_block.downsample.ds_which]}! Got: {idx_mode}"
+        assert idx_mode in idx_mode_dict[config.feature_learning_block.downsample.ds_which], \
+            f"When downsample mode is {config.feature_learning_block.downsample.ds_which}, idx_mode should be one of {idx_mode_dict[config.feature_learning_block.downsample.ds_which]}! Got: {idx_mode}"
 
         if q_in != k_in or q_in != v_in or k_in != v_in:
             raise ValueError(f'q_in, k_in and v_in should be the same! Got q_in:{q_in}, k_in:{k_in}, v_in:{v_in}')
@@ -102,17 +102,17 @@ def check_config(config):
         assert num_bins % 2 == 0 and num_bins >= 2, "num_bins should be even and greater than 2!"
         assert num_heads == 1, "num_heads should be 1!"
 
-        # neighbor2point_block.attention
-    for i in range(len(config.neighbor2point_block.attention.K)):
-        num_heads = config.neighbor2point_block.attention.num_heads[i]
-        q_in = config.neighbor2point_block.attention.q_in[i]
-        q_out = config.neighbor2point_block.attention.q_out[i]
-        k_in = config.neighbor2point_block.attention.k_in[i]
-        k_out = config.neighbor2point_block.attention.k_out[i]
-        v_in = config.neighbor2point_block.attention.v_in[i]
-        v_out = config.neighbor2point_block.attention.v_out[i]
-        attention_mode = config.neighbor2point_block.attention.attention_mode[i]
-        group_type = config.neighbor2point_block.attention.group_type[i]
+        # feature_learning_block.attention
+    for i in range(len(config.feature_learning_block.attention.K)):
+        num_heads = config.feature_learning_block.attention.num_heads[i]
+        q_in = config.feature_learning_block.attention.q_in[i]
+        q_out = config.feature_learning_block.attention.q_out[i]
+        k_in = config.feature_learning_block.attention.k_in[i]
+        k_out = config.feature_learning_block.attention.k_out[i]
+        v_in = config.feature_learning_block.attention.v_in[i]
+        v_out = config.feature_learning_block.attention.v_out[i]
+        attention_mode = config.feature_learning_block.attention.attention_mode[i]
+        group_type = config.feature_learning_block.attention.group_type[i]
         if q_in != v_out:
             raise ValueError(f'q_in should be equal to v_out due to ResLink! Got q_in: {q_in}, v_out: {v_out}')
         if k_in != v_in:
@@ -127,15 +127,15 @@ def check_config(config):
         elif attention_mode == "vector_sub":
             assert group_type == "neighbor", "When attention_mode is vector_sub, group_type must be neighbor!"
 
-        # neighbor2point_block.upsample    
-    for i in range(len(config.neighbor2point_block.upsample.q_in)):
-        q_in = config.neighbor2point_block.upsample.q_in[i]
-        q_out = config.neighbor2point_block.upsample.q_out[i]
-        k_in = config.neighbor2point_block.upsample.k_in[i]
-        k_out = config.neighbor2point_block.upsample.k_out[i]
-        v_in = config.neighbor2point_block.upsample.v_in[i]
-        v_out = config.neighbor2point_block.upsample.v_out[i]
-        num_heads = config.neighbor2point_block.upsample.num_heads[i]
+        # feature_learning_block.upsample    
+    for i in range(len(config.feature_learning_block.upsample.q_in)):
+        q_in = config.feature_learning_block.upsample.q_in[i]
+        q_out = config.feature_learning_block.upsample.q_out[i]
+        k_in = config.feature_learning_block.upsample.k_in[i]
+        k_out = config.feature_learning_block.upsample.k_out[i]
+        v_in = config.feature_learning_block.upsample.v_in[i]
+        v_out = config.feature_learning_block.upsample.v_out[i]
+        num_heads = config.feature_learning_block.upsample.num_heads[i]
         if k_in != v_in:
             raise ValueError(f'k_in and v_in should be the same! Got k_in:{k_in}, v_in:{v_in}')
         if q_out != k_out:
