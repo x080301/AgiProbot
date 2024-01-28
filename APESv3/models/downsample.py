@@ -654,7 +654,10 @@ class DownSampleCarve(nn.Module):
                 k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
         k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
         k_point_to_choose = k_point_to_choose.round().int()
-        k_point_to_choose[:, -1] = k_point_to_choose[:, -1] + self.M - torch.sum(k_point_to_choose, dim=1)
+
+        correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
+        assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
+        k_point_to_choose[:, -1] = k_point_to_choose[:, -1] + correction_for_rouding
 
         idx_batch_list = []
         for i in range(B):
