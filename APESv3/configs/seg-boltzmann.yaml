@@ -11,7 +11,7 @@ train:
     selected_points: 2048  # points to be selected from every point cloud
     fps: false  #  whether to use fps to select points. if false, use random downsample to select points
     combine_trainval: true  # combine train and validation set as train set
-    batch_size_per_gpu: 16
+    batch_size_per_gpu: 8
     num_workers: 4  # the number of subprocess to load data
     prefetch: ${train.dataloader.batch_size_per_gpu}  # samples to be prefetched. e.g. 64 means 64*num_workers samples to be prefetched
     pin_memory: true  # pin memory in RAM
