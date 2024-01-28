@@ -122,59 +122,87 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
-def sort_chunk(x, num_bins, dim=-1, descending=False, bin_split_mode='uniform'):
+def sort_chunk_nonuniform(attention_point_score, bin_boundaries):
     """
 
-    :param x: torch.Tensor (B,1,N)
+    :param attention_point_score: (B,1,N)
+    :param bin_boundaries: list with size num_bins-1
+    :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
+    """
+    num_bins = len(bin_boundaries) + 1
+    B, H, N = attention_point_score.shape
+
+    x_chunks = []
+    idx_chunks = []
+
+    for i in range(num_bins):
+        x_chunks_one_bin = []
+        idx_chunks_one_bin = []
+        for j in range(B):
+            if i == 0:
+                index_in_bin = torch.where(attention_point_score[j, 1, :] > bin_boundaries[i])
+            elif i < num_bins - 1:
+                index_in_bin = torch.where(
+                    (attention_point_score[j, 1, :] > bin_boundaries[i]) + (
+                            attention_point_score[j, 1, :] < bin_boundaries[i - 1]))
+            else:
+                index_in_bin = torch.where(attention_point_score[j, 1, :] < bin_boundaries[i - 1])
+            x_chunks_one_bin.append(index_in_bin)
+            idx_chunks_one_bin.append(attention_point_score[j, 1, :][index_in_bin])
+        x_chunks.append(x_chunks_one_bin)
+        idx_chunks.append(idx_chunks_one_bin)
+
+    return x_chunks, idx_chunks
+
+    # z_normalized_x = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
+    # # z_normalized_x.shape = (B,1,N)
+    # topk_values, _ = torch.topk(z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
+    # max_value_9772 = topk_values[:, :, -1]
+    # # max_value_9772.shape = (B,1)
+    # topk_values, _ = torch.topk(-z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
+    # min_value_0228 = topk_values[:, :, -1]
+    # # print(f'min_value_0228.shape={min_value_0228.shape}')
+    # # min_value_0228.shape = (B,1)
+    # bin_width = (max_value_9772 - min_value_0228) / num_bins
+    #
+    # x_chunks = []
+    # idx_chunks = []
+    # for i in range(num_bins):
+    #     x_chunks_bin_i = []
+    #     idx_chunks_bin_i = []
+    #     for b in range(attention_point_score.shape[0]):
+    #         if i == 0:
+    #             indices = z_normalized_x[b, 0, :] > (max_value_9772 - bin_width)[b]
+    #         elif i != num_bins - 1:
+    #             indices = (z_normalized_x[b, 0, :] <= (max_value_9772 - i * bin_width)[b]) & (
+    #                     z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b])
+    #         else:  # i=num_bins - 1
+    #             indices = z_normalized_x[b, 0, :] <= (max_value_9772 - i * bin_width)[b]
+    #
+    #         idx_chunks_bin_i_b = torch.nonzero(indices)
+    #         # print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
+    #         num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
+    #         # print(f'num_points_in_bin: {num_points_in_bin_i}')
+    #
+    #         idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(1, num_points_in_bin_i))
+    #         x_chunks_bin_i.append(attention_point_score[b, 0, idx_chunks_bin_i_b].reshape(1, num_points_in_bin_i))
+    #
+    #     x_chunks.append(x_chunks_bin_i)
+    #     idx_chunks.append(idx_chunks_bin_i)
+
+
+def sort_chunk(attention_point_score, num_bins, dim=-1, descending=False):
+    """
+
+    :param attention_point_score: torch.Tensor (B,1,N)
     :param num_bins: int
     :param dim: int
     :param descending: bool
     :param bin_split_mode: str, 'uniform' or 'nonuniform'
     :return: tuple or list of torch.Tensors (B,1,n).
     """
-    if bin_split_mode == 'uniform':
-        x_sorted, idx_sorted = torch.sort(x, dim=dim, descending=descending)
-        x_chunks = torch.chunk(x_sorted, num_bins, dim=dim)  # x_chunks.shape == num_bins * (B, H, N/num_bins)
-        idx_chunks = torch.chunk(idx_sorted, num_bins, dim=dim)  # idx_sorted.shape == num_bins * (B, H, N/num_bins)
-    elif bin_split_mode == 'nonuniform':
-
-        z_normalized_x = (x - torch.mean(x, dim=2, keepdim=True))
-        # z_normalized_x.shape = (B,1,N)
-        topk_values, _ = torch.topk(z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
-        max_value_9772 = topk_values[:, :, -1]
-        # max_value_9772.shape = (B,1)
-        topk_values, _ = torch.topk(-z_normalized_x, k=int(z_normalized_x.shape[2] * 0.0228), dim=2, largest=True)
-        min_value_0228 = topk_values[:, :, -1]
-        # print(f'min_value_0228.shape={min_value_0228.shape}')
-        # min_value_0228.shape = (B,1)
-        bin_width = (max_value_9772 - min_value_0228) / num_bins
-
-        x_chunks = []
-        idx_chunks = []
-        for i in range(num_bins):
-            x_chunks_bin_i = []
-            idx_chunks_bin_i = []
-            for b in range(x.shape[0]):
-                if i == 0:
-                    indices = z_normalized_x[b, 0, :] > (max_value_9772 - bin_width)[b]
-                elif i != num_bins - 1:
-                    indices = (z_normalized_x[b, 0, :] <= (max_value_9772 - i * bin_width)[b]) & (
-                            z_normalized_x[b, 0, :] > (max_value_9772 - i * bin_width - bin_width)[b])
-                else:  # i=num_bins - 1
-                    indices = z_normalized_x[b, 0, :] <= (max_value_9772 - i * bin_width)[b]
-
-                idx_chunks_bin_i_b = torch.nonzero(indices)
-                # print(f'idx_chunks_bin_i_b.shape={idx_chunks_bin_i_b}')
-                num_points_in_bin_i = idx_chunks_bin_i_b.shape[0]
-                # print(f'num_points_in_bin: {num_points_in_bin_i}')
-
-                idx_chunks_bin_i.append(idx_chunks_bin_i_b.reshape(1, num_points_in_bin_i))
-                x_chunks_bin_i.append(x[b, 0, idx_chunks_bin_i_b].reshape(1, num_points_in_bin_i))
-
-            x_chunks.append(x_chunks_bin_i)
-            idx_chunks.append(idx_chunks_bin_i)
-
-    else:
-        raise NotImplementedError
+    x_sorted, idx_sorted = torch.sort(attention_point_score, dim=dim, descending=descending)
+    x_chunks = torch.chunk(x_sorted, num_bins, dim=dim)  # x_chunks.shape == num_bins * (B, H, N/num_bins)
+    idx_chunks = torch.chunk(idx_sorted, num_bins, dim=dim)  # idx_sorted.shape == num_bins * (B, H, N/num_bins)
 
     return x_chunks, idx_chunks

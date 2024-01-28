@@ -18,6 +18,13 @@ def check_config(config):
     cls_datasets = ["modelnet_AnTao420M", "modelnet_Alignment1024"]
     seg_datasets = ["shapenet_AnTao350M", "shapenet_Yi650M", "shapenet_Normal"]
 
+    bin_boundaries = config.feature_learning_block.downsample.bin.bin_boundaries
+    num_bins = config.feature_learning_block.downsample.bin.num_bins
+    for i, bin_boundaries_one_layer in enumerate(bin_boundaries):
+        if config.feature_learning_block.downsample.bin.enable[i] \
+                and config.feature_learning_block.downsample.bin.mode[i] == 'nonuniform_split_bin':
+            assert num_bins[i] == len(bin_boundaries_one_layer) + 1, 'Length of bin_boundaries should equal num_bins-1.'
+
     # train & test
     # gpu
     assert config.train.ddp.nproc_this_node == config.train.ddp.world_size == len(
@@ -280,7 +287,7 @@ def check_worldsize(config, mode):
 
 
 def set_config_run(config, mode):
-    # check_config(config)
+    check_config(config)
     # config = config_gpus(config, mode)
     config = check_worldsize(config, mode)
     config = set_port(config, mode)

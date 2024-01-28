@@ -312,7 +312,6 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     num_bins = len(bin_chunks_idx)
 
     assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
-    assert bin_chunks_idx[0].shape[1] == 1, "Number of heads should be 1!"
 
     tensor_to_multiply = torch.zeros(B, N).to(bin_probability.device)
 
@@ -321,7 +320,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
             # print(f'tensor_to_multiply[j, :].shape:{tensor_to_multiply[j, :].shape}')
             # print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
             # print(f'bin_probability[j, i]:{bin_probability[j, i]}')
-            tensor_to_multiply[j, :][bin_chunks_idx[i].squeeze()[j, :]] = 1.0 + bin_probability[j, i] / M
+            tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
             # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
             #                                                             bin_chunks_idx[i].squeeze()[j, :],
             #                                                             1.0 + bin_probability[j, i] / M)
@@ -390,6 +389,8 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == 'nonuniform_split_bin':
                 self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                 self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
+
+                self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
             else:
                 raise NotImplementedError
 
@@ -453,9 +454,11 @@ class DownSampleCarve(nn.Module):
                 idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
                 idx, _, idx_chunks = self.nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                       self.num_bins, self.bin_prob)
+                                                                       self.bin_boundaries,
+                                                                       self.bin_prob)
             else:
                 raise NotImplementedError
+
         elif self.boltzmann_enable:
             idx = self.boltzmann_idx_selection(self.attention_point_score, self.M, self.boltzmann_norm_mode,
                                                self.boltzmann_T)
@@ -632,41 +635,35 @@ class DownSampleCarve(nn.Module):
         k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
         return idx_batch, k_batch, idx_chunks
 
-    def nonuniform_bin_idx_selection(self, attention_point_score, num_bins, bin_prob):
+    def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob):
         # self.attention_point_score.shape == (B, H, N)
-        aps_chunks, idx_chunks = ops.sort_chunk(attention_point_score, num_bins, bin_split_mode='nonuniform')
+        aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries)
         # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
-        B = len(aps_chunks[0])
-        H = aps_chunks[0][0].shape[0]
+        num_bins = len(bin_boundaries)
+        B, H, N = attention_point_score.shape
+
         # chunk_size = aps_chunks[j][i].shape[1]
         assert H == 1, "Number of heads should be 1!"
 
+        k_point_to_choose = torch.zeros(B, num_bins).to(bin_prob.device)
+        for i in range(num_bins):
+            for j in range(B):
+                num_points_in_bin = aps_chunks[i][j].nelement()
+                k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
+        k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
+        k_point_to_choose = k_point_to_choose.round().int()
+
         idx_batch_list = []
-        k_batch_list = []
         for i in range(B):
 
             idx_list = []
-
-            chunk_size_list = []
-            for j in range(num_bins):
-                chunk_size_list.append(aps_chunks[j][i].shape[1])
-            sampling_scale = self.M / sum(chunk_size_list)
             # print(f'sampling_scale:{sampling_scale}')
             # print(f'self.M:{self.M}')
             # print(f'chunk_size_list:{chunk_size_list}')
 
-            k_list = []
             for j in range(num_bins):
                 # each bin has k samples
-                if j != num_bins - 1:
-
-                    k = int(bin_prob[i, j] * chunk_size_list[j] * sampling_scale)
-                    # bin_prob.shape == (B, num_bins)
-                else:
-                    k = self.M - sum(k_list)
-
-                # print(f'self.bin_prob[i, j]:{self.bin_prob[i, j]}')
-                k_list.append(k)
+                k = k_point_to_choose[i, j]
 
                 if self.bin_sample_mode == "topk":
                     idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
@@ -694,11 +691,9 @@ class DownSampleCarve(nn.Module):
                     idx_list.append(idx)
             idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
             idx_batch_list.append(idx_single)
-            k_single = torch.tensor(k_list).to(attention_point_score.device)
-            k_batch_list.append(k_single)
         idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
-        k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
-        return idx_batch, k_batch, idx_chunks
+        # k_point_to_choose.shape == (B, num_bins)
+        return idx_batch, k_point_to_choose, idx_chunks
 
     def bin2_idx_selection(self):
         # self.attention_point_score.shape == (B, H, N)
