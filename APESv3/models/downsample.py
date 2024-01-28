@@ -465,6 +465,7 @@ class DownSampleCarve(nn.Module):
 
         # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
+        print(f'idx.dtype:{idx.dtype}')
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=idx.unsqueeze(3).expand(-1, -1, -1, self.attention_map.shape[-1]))
         # attention_down.shape == (B, H, M, N)
