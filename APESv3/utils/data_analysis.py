@@ -140,8 +140,9 @@ def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_sco
 
     # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
     if z_normalization_miu:
-        # tensor = (tensor - torch.mean(tensor, dim=1,keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
-        tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+        tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) / torch.std(tensor, dim=1, unbiased=False,
+                                                                                keepdim=True)
+        # tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
     else:
         tensor = (tensor - torch.mean(tensor, dim=1,
                                       keepdim=True))
@@ -180,6 +181,31 @@ def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_sco
     plt.close()
 
 
+def sampling_score_bin_boundary(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0):
+    tensor = torch.load(saved_sampling_score_dir)
+    num_batch = tensor.shape[0]
+    print(tensor.shape)
+    tensor = tensor[:, layer_to_visualize + 3, :]
+    print(f'layer_to_visualize:{layer_to_visualize}')
+    if layer_to_visualize != 0:
+        tensor = torch.reshape(tensor, (-1,))
+        tensor = tensor[tensor > -1.5]
+        tensor = torch.reshape(tensor, (num_batch, 1024))
+
+    tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    flattened_tensor = tensor.flatten().cpu()
+    # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
+    sorted_value, sorted_index = torch.sort(flattened_tensor, dim=0)
+
+    for percent in range(0, 9):
+        percent = percent * 12.5
+        if percent == 100:
+            i = -1
+        else:
+            i = int(percent / 100 * len(sorted_value))
+        print(f'{percent}% highest value is {sorted_value[i]}')
+
+
 def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0,
                                         show_plt=False, save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore/', idx=None,
                                         bin_boundary=[0.3, 0.5, 0.8, 1.3]):
@@ -206,45 +232,46 @@ def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampl
             tensor = torch.reshape(tensor, (1, 1024))
 
     # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
-    tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    # tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
 
     flattened_tensor = tensor.flatten().cpu()
 
-    if idx is None:
-        sorted_value = flattened_tensor[flattened_tensor > 0]
-        # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
-        sorted_value, sorted_index = torch.sort(sorted_value, dim=0)
+    # if idx is None:
+    #     # sorted_value = flattened_tensor[flattened_tensor > 0]
+    #     # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
+    #     # sorted_value, sorted_index = torch.sort(sorted_value, dim=0)
+    #
+    #     # for percent in range(0, 120, 20):
+    #     #     if percent == 100:
+    #     #         i = -1
+    #     #     else:
+    #     #         i = int(percent / 100 * len(sorted_value))
+    #     #     print(f'{percent}% highest value is {sorted_value[i]}')
+    #
+    #     topk_values, _ = torch.topk(flattened_tensor, int(flattened_tensor.shape[0] * 0.03), largest=True)
+    #     max_value_97 = topk_values[-1].item()
+    #
+    #     plt.figure()
+    #     _, bins, patches = plt.hist(flattened_tensor, bins=500, range=(-0.5, max_value_97))  # (-2, 4))
+    #
+    #     colors = ['blue', 'cyan', 'green', 'red', 'magenta', 'yellow']
+    #
+    #     bin_boundary_extended = [-100]
+    #     bin_boundary_extended.extend(bin_boundary)
+    #
+    #     for i in range(6):
+    #         for bin_left, patch in zip(bins, patches):
+    #             if bin_left > bin_boundary_extended[i]:
+    #                 patch.set_facecolor(colors[i])
+    # else:
+    bin_boundary_extended = [-2]
+    bin_boundary_extended.extend(bin_boundary)
+    bin_boundary_extended.extend([100])
 
-        for percent in range(0, 120, 20):
-            if percent == 100:
-                i = -1
-            else:
-                i = int(percent / 100 * len(sorted_value))
-            print(f'{percent}% highest value is {sorted_value[i]}')
-
-        topk_values, _ = torch.topk(flattened_tensor, int(flattened_tensor.shape[0] * 0.03), largest=True)
-        max_value_97 = topk_values[-1].item()
-
-        plt.figure()
-        _, bins, patches = plt.hist(flattened_tensor, bins=500, range=(-0.5, max_value_97))  # (-2, 4))
-
-        colors = ['blue', 'cyan', 'green', 'red', 'magenta', 'yellow']
-
-        bin_boundary_extended = [-1, 0]
-        bin_boundary_extended.extend(bin_boundary)
-
-        for i in range(6):
-            for bin_left, patch in zip(bins, patches):
-                if bin_left > bin_boundary_extended[i]:
-                    patch.set_facecolor(colors[i])
-    else:
-        bin_boundary_extended = [-1, 0.001]
-        bin_boundary_extended.extend(bin_boundary)
-        bin_boundary_extended.extend([100])
-
-        hist, bin_edges = np.histogram(flattened_tensor, bins=bin_boundary_extended)
-        plt.figure()
-        plt.bar(np.arange(len(hist)), hist)
+    hist, bin_edges = np.histogram(flattened_tensor, bins=bin_boundary_extended)
+    plt.figure()
+    plt.bar(np.arange(len(hist)), hist)
 
     if show_plt:
         plt.show()
@@ -276,3 +303,21 @@ def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampl
     # plt.xlabel("Value")
     # plt.ylabel("Frequency")
     #
+
+
+def draw_pcd(idx, saved_sampling_score_dir='modelnet_sampling_scores.pt'):
+    import torch
+    import open3d as o3d
+
+    tensor = torch.load(saved_sampling_score_dir)
+    num_batch = tensor.shape[0]
+
+    tensor = tensor[idx, 0:3, :].cpu().numpy().transpose(1, 0)
+    print(tensor.shape)
+
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(tensor)
+
+    # o3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
+
+    o3d.visualization.draw_geometries([point_cloud])
