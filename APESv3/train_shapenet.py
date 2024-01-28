@@ -35,6 +35,7 @@ def main(config):
         exit(f'Working directory is not the same as project root. Exit.')
 
     # overwrite the default config with user config
+    config.mode = 'train'
     if config.usr_config:
         usr_config = OmegaConf.load(config.usr_config)
         config = OmegaConf.merge(config, usr_config)

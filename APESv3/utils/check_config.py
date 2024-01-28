@@ -27,10 +27,14 @@ def check_config(config):
 
     # train & test
     # gpu
-    assert config.train.ddp.nproc_this_node == config.train.ddp.world_size == len(
-        config.train.ddp.which_gpu), "Train GPU settings must match each other!"
-    assert config.test.ddp.nproc_this_node == config.test.ddp.world_size == len(
-        config.test.ddp.which_gpu), "Test GPU settings must match each other!"
+    if config.mode=='train':
+        assert config.train.ddp.nproc_this_node == config.train.ddp.world_size == len(
+            config.train.ddp.which_gpu), "Train GPU settings must match each other!"
+    elif config.mode=='test':
+        assert config.test.ddp.nproc_this_node == config.test.ddp.world_size == len(
+            config.test.ddp.which_gpu), "Test GPU settings must match each other!"
+    else:
+        raise NotImplementedError
 
     if config.train.epochs <= 50:
         assert config.test.visualize_preds.num_vis <= 5 and config.test.visualize_downsampled_points.num_vis <= 5 and config.test.visualize_attention_heatmap.num_vis <= 5, \

@@ -43,6 +43,7 @@ def main(config):
         raise ValueError('W&B is not enabled!')
 
     # overwrite the default config with previous run config
+    config.mode = 'test'
     run_config = OmegaConf.load(f'{local_path}/usr_config.yaml')
     if not config.test.suffix.enable:
         config = OmegaConf.merge(config, run_config)
