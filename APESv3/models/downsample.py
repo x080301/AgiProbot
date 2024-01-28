@@ -465,7 +465,7 @@ class DownSampleCarve(nn.Module):
 
         # idx_dropped = torch.sum(self.attention_map, dim=-2).topk(self.attention_map.shape[-1] - self.M, dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
-        print(f'idx.dtype:{idx.dtype}')
+        print(f'idx.dtype1:{idx.dtype}')
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=idx.unsqueeze(3).expand(-1, -1, -1, self.attention_map.shape[-1]))
         # attention_down.shape == (B, H, M, N)
@@ -639,6 +639,7 @@ class DownSampleCarve(nn.Module):
     def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob):
         # self.attention_point_score.shape == (B, H, N)
         aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries)
+        print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
         # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
         num_bins = len(bin_boundaries)
         B, H, N = attention_point_score.shape
@@ -695,6 +696,7 @@ class DownSampleCarve(nn.Module):
             idx_batch_list.append(idx_single)
         idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
         # k_point_to_choose.shape == (B, num_bins)
+        print(f'idx.dtype2:{idx.dtype}')
         return idx_batch, k_point_to_choose, idx_chunks
 
     def bin2_idx_selection(self):
