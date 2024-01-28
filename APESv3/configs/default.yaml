@@ -16,7 +16,7 @@ defaults:
 ################### Don't modify parameters above #######################
 
 ################### You can modify all parameters below #################
-
+mode: train
 wandb:
   enable: true
   api_key: d548a03793d0947aea18838d6b45447d207ec072  # your wandb api key

@@ -27,10 +27,10 @@ def check_config(config):
 
     # train & test
     # gpu
-    if config.mode=='train':
+    if config.mode == 'train':
         assert config.train.ddp.nproc_this_node == config.train.ddp.world_size == len(
             config.train.ddp.which_gpu), "Train GPU settings must match each other!"
-    elif config.mode=='test':
+    elif config.mode == 'test':
         assert config.test.ddp.nproc_this_node == config.test.ddp.world_size == len(
             config.test.ddp.which_gpu), "Test GPU settings must match each other!"
     else:
