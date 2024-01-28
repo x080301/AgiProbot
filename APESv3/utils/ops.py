@@ -147,8 +147,8 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries):
                             attention_point_score[j, 0, :] < bin_boundaries[i - 1]))[0]
             else:
                 index_in_bin = torch.where(attention_point_score[j, 0, :] < bin_boundaries[i - 1])[0]
-            x_chunks_one_bin.append(index_in_bin)
-            idx_chunks_one_bin.append(attention_point_score[j, 0, :][index_in_bin])
+            x_chunks_one_bin.append(index_in_bin.reshape(1, -1))
+            idx_chunks_one_bin.append(attention_point_score[j, 0, :][index_in_bin].reshape(1, -1))
         x_chunks.append(x_chunks_one_bin)
         idx_chunks.append(idx_chunks_one_bin)
 
