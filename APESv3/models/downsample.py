@@ -495,6 +495,7 @@ class DownSampleCarve(nn.Module):
 
     def output_variables(self, *args):
 
+        print(vars().keys())
         variables = None
         for i, key in enumerate(args):
             if i == 0:
