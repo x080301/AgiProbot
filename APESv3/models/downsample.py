@@ -499,13 +499,13 @@ class DownSampleCarve(nn.Module):
         variables = None
         for i, key in enumerate(args):
             if i == 0:
-                variables = getattr(vars()[self], key)
+                variables = getattr(vars()['self'], key)
                 # variables = vars()[f'self.{key}']
             elif i == 1:
-                variables = (variables,) + (getattr(vars()[self], key),)
+                variables = (variables,) + (getattr(vars()['self'], key),)
                 # variables = (variables,) + (vars()[f'self.{key}'],)
             else:
-                variables = variables + (getattr(vars()[self], key),)
+                variables = variables + (getattr(vars()['self'], key),)
                 # variables = variables + (vars()[f'self.{key}'],)
 
         return variables
