@@ -14,6 +14,9 @@ from utils.visualization import *
 from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
 from utils.save_backup import save_backup
+import datetime
+import socket
+import pickle
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
@@ -59,6 +62,7 @@ def main(config):
     else:
         raise ValueError('Not implemented!')
 
+    time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     # multiprocessing for ddp
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
@@ -69,7 +73,86 @@ def main(config):
         raise ValueError('Please use GPU for testing!')
 
 
+def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size, device):
+    variable_to_gather = downsample_module.output_variables(variable_name)
+
+    if isinstance(variable_to_gather, torch.Tensor):
+        variable_gather_list = [torch.empty_like(variable_to_gather).to(device) for _ in
+                                range(world_size)]
+        torch.distributed.all_gather(variable_gather_list, variable_to_gather)
+
+        if rank == 0:
+            return torch.concat(variable_gather_list, dim=0)
+
+    else:
+        # variable_to_gather: num_bins * (B,H,n) or num_bins * B * (H,n)
+
+        if isinstance(variable_to_gather[0], torch.Tensor):
+            variable_to_gather = torch.stack(variable_to_gather, dim=0)
+            variable_to_gather = variable_to_gather.permute(1, 0, 2, 3)
+            # variable_to_gather: (B,num_bins,H,n)
+            variable_gather_list = [torch.empty_like(variable_to_gather).to(device) for _ in
+                                    range(world_size)]
+            torch.distributed.all_gather(variable_gather_list, variable_to_gather)
+
+            if rank == 0:
+                return torch.concat(variable_gather_list, dim=0)
+                # return: (B,num_bins,H,n)
+
+        else:
+            # variable_to_gather: num_bins * B * (H,n)
+            num_bins = len(variable_to_gather)
+            B = len(variable_to_gather[0])
+
+            variable_in_batches = []
+            for i in range(B):
+                variable_in_one_batch = []
+                for j in range(num_bins):
+                    variable_in_one_batch.append(variable_to_gather[j][i])
+                # variable_in_one_batch: num_bins * (H,n)
+                variable_in_batches.append(variable_in_one_batch)
+            # variable_in_batches: B * num_bins * (H,n)
+
+            variable_gather_list = [None] * world_size
+            torch.distributed.all_gather(variable_gather_list, variable_in_batches)
+            # variable_gather_list: wolrd_size * B * num_bins * (H,n)
+            if rank == 0:
+                return [item for sublist in variable_gather_list for item in sublist]
+                # return: B * num_bins * (H,n)
+
+
+def reshape_gathered_variable(gathered_variable):
+    if isinstance(gathered_variable[0], torch.Tensor):
+        # gathered_variable: num_layers * (B, H, N) or num_layers * (B, num_bins, H, n) or num_layers * (B, num_bins)
+        gathered_variable = torch.stack(gathered_variable, dim=0)
+        gathered_variable = gathered_variable.transpose(0, 1)
+        # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or (B, num_layers, num_bins)
+    else:
+        # gathered_variable: num_layers * B * num_bins * (H,n)
+        num_layers = len(gathered_variable)
+        B = len(gathered_variable[0])
+
+        gathered_variable_in_batches = []
+        for i in range(B):
+            gathered_variable_in_one_batch = []
+            for j in range(num_layers):
+                gathered_variable_in_one_batch.append(gathered_variable[j][i])
+            # gathered_variable_in_one_batch: num_layers * num_bins * (H,n)
+            gathered_variable_in_batches.append(gathered_variable_in_one_batch)
+        # gathered_variable_in_batches: B * num_layers * num_bins * (H,n)
+        gathered_variable = gathered_variable_in_batches
+
+    return gathered_variable
+    # return: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+
+
 def test(local_rank, config):
+    hostname = socket.gethostname()
+    if 'iesservergpu' in hostname:
+        save_dir = f'/data/users/fu/APES/{config.wandb.name}/'
+    else:
+        save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/{config.wandb.name}/'
+
     rank = config.test.ddp.rank_starts_from + local_rank
     # set files path
     if config.test.suffix.enable:
@@ -168,6 +251,11 @@ def test(local_rank, config):
     cls_label_list = []
     sample_list = []
 
+    # sampling_score_list = []
+    # idx_down_list = []
+    # idx_in_bins_list = []
+    # probability_of_bins_list = []
+
     vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
     for idx_mode in vis_test_gather_dict["trained"].keys():
         vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
@@ -207,6 +295,50 @@ def test(local_rank, config):
             torch.distributed.all_gather(sample_gather_list, samples)
             torch.distributed.all_reduce(loss)
 
+            if config.test.visualize_combine.enable:
+                sampling_score_all_layers = []
+                idx_down_all_layers = []
+                idx_in_bins_all_layers = []
+                probability_of_bins_all_layers = []
+
+                for downsample_module in my_model.module.block.downsample_list:
+                    sampling_score_all_layers.append(
+                        gather_variable_from_gpus(downsample_module, 'attention_point_score',
+                                                  rank, config.test.ddp.nproc_this_node, device))
+
+                    idx_down_all_layers.append(
+                        gather_variable_from_gpus(downsample_module, 'idx',
+                                                  rank, config.test.ddp.nproc_this_node, device))
+
+                    idx_in_bins_all_layers.append(
+                        gather_variable_from_gpus(downsample_module, 'idx_chunks',
+                                                  rank, config.test.ddp.nproc_this_node, device))
+                    probability_of_bins_all_layers.append(
+                        gather_variable_from_gpus(downsample_module, 'bin_prob',
+                                                  rank, config.test.ddp.nproc_this_node, device))
+
+                if rank == 0:
+                    # sampling_score_all_layers: num_layers * (B,H,N) -> (B, num_layers, H, N)
+                    sampling_score = reshape_gathered_variable(sampling_score_all_layers)
+                    # idx_down_all_layers: num_layers * (B,H,M) -> (B, num_layers, H, N)
+                    idx_down = reshape_gathered_variable(idx_down_all_layers)
+                    # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+                    idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
+                    # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
+                    probability_of_bins = reshape_gathered_variable(probability_of_bins_all_layers)
+
+                    # sampling_score_list.append(sampling_score)
+                    # idx_down_list.append(idx_down)
+                    # idx_in_bins_list.append(idx_in_bins)
+                    # probability_of_bins_list.append(probability_of_bins)
+
+                    dict_to_dump = {'sampling_score': sampling_score,
+                                    'idx_down': idx_down,
+                                    'idx_in_bins': idx_in_bins,
+                                    'probability_of_bins': probability_of_bins}
+                    with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                        pickle.dump(dict_to_dump, f)
+
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
                 pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
@@ -218,23 +350,23 @@ def test(local_rank, config):
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
 
-                if config.test.sampling_score_histogram.enable:
-                    if i == 0:
-                        torch_tensor_to_save_batch = None
-
-                    if i == len(test_loader) - 1:
-                        save_dir = 'modelnet_sampling_scores.pt'
-                    else:
-                        save_dir = None
-
-                    idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
-                           vis_test_gather_dict["trained"]["idx"]]
-                    attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
-                                     vis_test_gather_dict["trained"]["attention_point_score"]]
-
-                    torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
-                                                                     attention_map,
-                                                                     save_dir)
+                # if config.test.sampling_score_histogram.enable:
+                #     if i == 0:
+                #         torch_tensor_to_save_batch = None
+                #
+                #     if i == len(test_loader) - 1:
+                #         save_dir = 'modelnet_sampling_scores.pt'
+                #     else:
+                #         save_dir = None
+                #
+                #     idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+                #            vis_test_gather_dict["trained"]["idx"]]
+                #     attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+                #                      vis_test_gather_dict["trained"]["attention_point_score"]]
+                #
+                #     torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
+                #                                                      attention_map,
+                #                                                      save_dir)
 
     if rank == 0:
         preds = np.concatenate(pred_list, axis=0)
@@ -267,14 +399,16 @@ def test(local_rank, config):
             if os.path.exists(ds_path):
                 shutil.rmtree(ds_path)
             for idx_mode in vis_test_gather_dict["ds_points"].keys():
-                if len(vis_test_gather_dict["ds_points"].keys()) == 1 and not config.test.few_points.enable:
-                    index = vis_concat_dict["trained"]["idx"]
-                else:
-                    index = vis_concat_dict["ds_points"][idx_mode]
                 if config.test.few_points.enable:
                     visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
                                                                      artifacts_path)
                 else:
+
+                    if len(vis_test_gather_dict["ds_points"].keys()) == 1:
+                        index = vis_concat_dict["trained"]["idx"]
+                    else:
+                        index = vis_concat_dict["ds_points"][idx_mode]
+
                     if config.feature_learning_block.downsample.bin.enable[0]:
                         visualize_modelnet_downsampled_points_bin(config, samples, index,
                                                                   vis_concat_dict["trained"]["bin_prob"], cls_labels,
@@ -297,9 +431,9 @@ def test(local_rank, config):
                 aps_boltz = vis_concat_dict["trained"]["aps_boltz"]
                 visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann',
                                                 artifacts_path)
-        if config.test.visualize_combine.enable:
-            assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
-            visualize_modelnet_combine(config, artifacts_path)
+        # if config.test.visualize_combine.enable:
+        #     assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
+        #     visualize_modelnet_combine(config, artifacts_path)
 
         # storage and backup
         # save_backup(artifacts_path, zip_file_path, backup_path)

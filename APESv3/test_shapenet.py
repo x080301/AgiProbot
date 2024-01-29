@@ -232,7 +232,7 @@ def test(local_rank, config):
             torch.distributed.all_reduce(loss)
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
-                pred_list.append(torch.max(preds.permute(0, 2, 1), dim=2)[1].detach().cpu().numpy())
+                pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
                 seg_labels = torch.concat(seg_label_gather_list, dim=0)
                 seg_label_list.append(torch.max(seg_labels.permute(0, 2, 1), dim=2)[1].detach().cpu().numpy())
                 cls_label = torch.concat(cls_label_gather_list, dim=0)
@@ -262,10 +262,11 @@ def test(local_rank, config):
                                                                      save_dir)
 
     if rank == 0:
+        samples = np.concatenate(sample_list, axis=0)
         preds = np.concatenate(pred_list, axis=0)
         seg_labels = np.concatenate(seg_label_list, axis=0)
         cls_label = np.concatenate(cls_label_list, axis=0)
-        samples = np.concatenate(sample_list, axis=0)
+
         if config.test.dataloader.vote.enable:
             preds_novo = np.concatenate(pred_novo_list, axis=0)
             shape_ious_novo = metrics.calculate_shape_IoU(preds_novo, seg_labels, cls_label, config.datasets.mapping)

@@ -493,6 +493,19 @@ class DownSampleCarve(nn.Module):
         self.idx = idx
         return (x_ds, idx), (None, None)
 
+    def output_variables(self, *args):
+
+        variables = None
+        for i, key in enumerate(args):
+            if i == 0:
+                variables = vars()[f'self.{key}']
+            elif i == 1:
+                variables = (variables,) + (vars()[f'self.{key}'],)
+            else:
+                variables = variables + (vars()[f'self.{key}'],)
+
+        return variables
+
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N)
         x = x.view(x.shape[0], heads, depth, x.shape[2])
