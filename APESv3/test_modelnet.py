@@ -89,7 +89,7 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
 
         if isinstance(variable_to_gather[0], torch.Tensor):
             variable_to_gather = torch.stack(variable_to_gather, dim=0)
-            variable_to_gather = variable_to_gather.permute(1, 0, 2, 3)
+            variable_to_gather = variable_to_gather.permute(1, 0, 2, 3).contiguous()
             # variable_to_gather: (B,num_bins,H,n)
             variable_gather_list = [torch.empty_like(variable_to_gather).to(device) for _ in
                                     range(world_size)]
@@ -125,7 +125,7 @@ def reshape_gathered_variable(gathered_variable):
     if isinstance(gathered_variable[0], torch.Tensor):
         # gathered_variable: num_layers * (B, H, N) or num_layers * (B, num_bins, H, n) or num_layers * (B, num_bins)
         gathered_variable = torch.stack(gathered_variable, dim=0)
-        gathered_variable = gathered_variable.transpose(0, 1)
+        gathered_variable = gathered_variable.transpose(0, 1).contiguous()
         # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or (B, num_layers, num_bins)
     else:
         # gathered_variable: num_layers * B * num_bins * (H,n)
