@@ -491,6 +491,7 @@ class DownSampleCarve(nn.Module):
             bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob)
 
         self.idx = idx
+        self.idx_chunks = idx_chunks
         return (x_ds, idx), (None, None)
 
     def output_variables(self, *args):
