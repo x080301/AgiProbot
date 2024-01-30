@@ -1,0 +1,18 @@
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[2] datasets=shapenet_Yi650M usr_config=configs/multiple_nonuniform_seg-boltzmann_shapenet.yaml wandb.name='shapenet_nonuniform_nds_multiple'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[2] datasets=modelnet_AnTao420M usr_config=configs/multiple_nonuniform_cls_modelnet-.yaml wandb.name='modelnet_nonuniform_nds_multiple'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/seg-boltzmann.yaml wandb.name='shapenet_v2'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=modelnet_AnTao420M usr_config=configs/cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_v2'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/multiple_uniform_bins_seg-boltzmann.yaml wandb.name='shapenet_multiple'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=modelnet_AnTao420M usr_config=configs/multiple_uniform_bins_cls-global_carve.yaml wandb.name='modelnet_multiple'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_Yi650M usr_config=configs/nonuniform_bins_seg-boltzmann.yaml wandb.name='shapenet_nonuniform_newdownsampling'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=modelnet_AnTao420M usr_config=configs/nonuniform_bins_cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_nonuniform_newdownsampling'
+#---------------
+echo wandb.name='modelnet_nonuniform_newdownsampling_____'
+#---------------
