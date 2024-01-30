@@ -499,7 +499,7 @@ class DownSampleCarve(nn.Module):
         # return (x_ds, idx), (x_dropped, idx_dropped)
 
         if self.enable_multiply:
-            bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob, self.direct_link_mode)
+            x_ds = bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob, self.direct_link_mode)
 
         self.idx = idx
         self.idx_chunks = idx_chunks
