@@ -56,12 +56,12 @@ def find_one_block_to_train(lines, trained_runs):
 
 def run_cmds(run_name, cmd_block, running_gpu):
     for single_line in cmd_block:
-        if 'which_gpu=[]' in single_line:
-            single_line.replace('which_gpu=[]', running_gpu)
         single_line = single_line.strip('\n')
+        if 'which_gpu=[]' in single_line:
+            single_line = single_line.replace('which_gpu=[]', running_gpu)
+
         result = subprocess.run(single_line, shell=True, text=True, stdout=None,  # subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        print(single_line)
         if result.returncode != 0:
             with open(f'train_logs/{run_name}.txt', 'w') as file:
                 file.writelines(result.stderr)
