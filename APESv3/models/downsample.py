@@ -398,7 +398,6 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == 'nonuniform_split_bin':
                 if 'no_link' in self.direct_link_mode:
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
-                    self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
                 else:
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
@@ -606,8 +605,6 @@ class DownSampleCarve(nn.Module):
                 # bin_prob.shape == (B, num_bins)
             elif self.direct_link_mode == 'no_link' or self.direct_link_mode == 'no_link_higher_gradient':
                 bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
-                x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins, N)
-                x = self.bin_conv2(x)  # x.shape == (B, C, N)
 
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
