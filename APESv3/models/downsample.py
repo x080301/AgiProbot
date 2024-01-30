@@ -396,6 +396,7 @@ class DownSampleCarve(nn.Module):
                 self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins / 2), q_out, 1, bias=False)
             elif self.bin_mode == 'nonuniform_split_bin':
                 if 'no_link' in self.direct_link_mode:
+                    print('------------------------------------------------')
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                 else:
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
