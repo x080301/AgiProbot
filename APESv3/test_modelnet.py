@@ -122,25 +122,40 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
 
 
 def reshape_gathered_variable(gathered_variable):
-    if isinstance(gathered_variable[0], torch.Tensor):
-        # gathered_variable: num_layers * (B, H, N) or num_layers * (B, num_bins, H, n) or num_layers * (B, num_bins)
-        gathered_variable = torch.stack(gathered_variable, dim=0)
-        gathered_variable = gathered_variable.transpose(0, 1).contiguous()
-        # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or (B, num_layers, num_bins)
-    else:
-        # gathered_variable: num_layers * B * num_bins * (H,n)
-        num_layers = len(gathered_variable)
-        B = len(gathered_variable[0])
+    # if isinstance(gathered_variable[0], torch.Tensor):
+    #     if len(gathered_variable[0].shape)==4:
+    #         # gathered_variable: num_layers * (B, num_bins, H, n)
+    #         num_layers = len(gathered_variable)
+    #         B = len(gathered_variable[0])
+    #
+    #         gathered_variable_in_batches = []
+    #         for i in range(B):
+    #             gathered_variable_in_one_batch = []
+    #             for j in range(num_layers):
+    #                 gathered_variable_in_one_batch.append(gathered_variable[j][i])
+    #             # gathered_variable_in_one_batch: num_layers * (num_bins, H, n)
+    #             gathered_variable_in_batches.append(gathered_variable_in_one_batch)
+    #         # gathered_variable_in_batches: B * num_layers * (num_bins, H, n)
+    #         gathered_variable = gathered_variable_in_batches
+    #     else:
+    #         # gathered_variable: num_layers * (B, H, N) or num_layers * (B, num_bins)
+    #         gathered_variable = torch.stack(gathered_variable, dim=0)
+    #         gathered_variable = gathered_variable.transpose(0, 1).contiguous()
+    #         # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins)
+    # else:
+    # gathered_variable: num_layers * B * num_bins * (H,n)
+    num_layers = len(gathered_variable)
+    B = len(gathered_variable[0])
 
-        gathered_variable_in_batches = []
-        for i in range(B):
-            gathered_variable_in_one_batch = []
-            for j in range(num_layers):
-                gathered_variable_in_one_batch.append(gathered_variable[j][i])
-            # gathered_variable_in_one_batch: num_layers * num_bins * (H,n)
-            gathered_variable_in_batches.append(gathered_variable_in_one_batch)
-        # gathered_variable_in_batches: B * num_layers * num_bins * (H,n)
-        gathered_variable = gathered_variable_in_batches
+    gathered_variable_in_batches = []
+    for i in range(B):
+        gathered_variable_in_one_batch = []
+        for j in range(num_layers):
+            gathered_variable_in_one_batch.append(gathered_variable[j][i])
+        # gathered_variable_in_one_batch: num_layers * num_bins * (H,n)
+        gathered_variable_in_batches.append(gathered_variable_in_one_batch)
+    # gathered_variable_in_batches: B * num_layers * num_bins * (H,n)
+    gathered_variable = gathered_variable_in_batches
 
     return gathered_variable
     # return: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
