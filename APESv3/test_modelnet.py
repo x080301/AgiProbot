@@ -175,9 +175,9 @@ def test(local_rank, config):
 
     hostname = socket.gethostname()
     if 'iesservergpu' in hostname:
-        save_dir = f'/data/users/fu/APES/{config.wandb.name}/'
+        save_dir = f'/data/users/fu/APES/test_results/{config.wandb.name}/'
     else:
-        save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/{config.wandb.name}/'
+        save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/test_results/{config.wandb.name}/'
     if rank == 0:
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
