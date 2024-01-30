@@ -36,4 +36,4 @@ SFB_zivid/SFB_Demo
 
 APESv3/training_in_line_sever.txt
 APESv3/training_in_line_workstation.txt
-APESv3/train_logs/*
+APESv3/train_logs/*.txt
