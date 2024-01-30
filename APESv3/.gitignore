@@ -166,4 +166,3 @@ wandb/
 artifacts/
 # don't ignore subfolder datasets
 !*/datasets/
-train_logs/*
