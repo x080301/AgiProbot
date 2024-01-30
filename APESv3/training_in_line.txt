@@ -23,4 +23,3 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/multiple_nonuniform_nds_nolink_seg-boltzmann_shapenet.yaml wandb.name='nolink_shapenet_nonuniform_nds_multiple'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/multiple_nonuniform_nds_nolink_cls_modelnet.yaml wandb.name='nolink_modelnet_nonuniform_nds_multiple'
-
