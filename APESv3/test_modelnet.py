@@ -143,7 +143,12 @@ def reshape_gathered_variable(gathered_variable):
     #         gathered_variable = gathered_variable.transpose(0, 1).contiguous()
     #         # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins)
     # else:
-    # gathered_variable: num_layers * B * num_bins * (H,n)
+
+    # gathered_variable:
+    # num_layers * B * num_bins * (H,n) or
+    # num_layers * (B, num_bins, H, n) or
+    # num_layers * (B, H, N) or
+    # num_layers * (B, num_bins)
     num_layers = len(gathered_variable)
     B = len(gathered_variable[0])
 
@@ -158,17 +163,24 @@ def reshape_gathered_variable(gathered_variable):
     gathered_variable = gathered_variable_in_batches
 
     return gathered_variable
-    # return: (B, num_layers, H, N) or (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+    # return:
+    # B * num_layers * num_bins * (H,n) or
+    # B * num_layers * (num_bins, H, n) or
+    # B * num_layers * (H, N) or
+    # B * num_layers * (num_bins)
 
 
 def test(local_rank, config):
+    rank = config.test.ddp.rank_starts_from + local_rank
+
     hostname = socket.gethostname()
     if 'iesservergpu' in hostname:
         save_dir = f'/data/users/fu/APES/{config.wandb.name}/'
     else:
         save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/{config.wandb.name}/'
+    if rank == 0:
+        os.mkdir(save_dir)
 
-    rank = config.test.ddp.rank_starts_from + local_rank
     # set files path
     if config.test.suffix.enable:
         artifacts_path = f'./artifacts/{config.wandb.name}_{config.test.suffix.remark}'
