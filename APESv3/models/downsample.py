@@ -324,7 +324,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
                 bin_probability_float = bin_probability[j, i].item
 
                 tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = \
-                    1.0 + bin_probability[j, i] #- bin_probability_float * (M - 1) / M
+                    1.0 + bin_probability[j, i] - bin_probability_float * (M - 1) / M
 
             else:
                 tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
