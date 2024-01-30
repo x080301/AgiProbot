@@ -306,7 +306,7 @@ class DownSampleWithSigma(nn.Module):
         return x_res  # x_res.shape == (B, C, M)
 
 
-def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability):
+def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability, direct_link_mode):
     B, C, N = input_x_shape
     _, _, M = x_ds.shape
     num_bins = len(bin_chunks_idx)
@@ -320,7 +320,14 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
             # print(f'tensor_to_multiply[j, :].shape:{tensor_to_multiply[j, :].shape}')
             # print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
             # print(f'bin_probability[j, i]:{bin_probability[j, i]}')
-            tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
+            if direct_link_mode == 'no_link_higher_gradient':
+                bin_probability_float = bin_probability[j, i].item
+
+                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = \
+                    1.0 + bin_probability[j, i] - bin_probability_float * (M - 1) / M
+
+            else:
+                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
             # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
             #                                                             bin_chunks_idx[i].squeeze()[j, :],
             #                                                             1.0 + bin_probability[j, i] / M)
@@ -381,6 +388,7 @@ class DownSampleCarve(nn.Module):
         self.bin_norm_mode = config_ds.bin.norm_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
         self.enable_multiply = config_ds.bin.multiply[layer]
+        self.direct_link_mode = config_ds.bin.direct_link_mode[layer]
 
         if self.bin_enable:
             if self.bin_mode == "mode1":
@@ -488,7 +496,7 @@ class DownSampleCarve(nn.Module):
         # return (x_ds, idx), (x_dropped, idx_dropped)
 
         if self.enable_multiply:
-            bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob)
+            bin_probability_multiple(x_ds, x.shape, idx, idx_chunks, self.bin_prob, self.direct_link_mode)
 
         self.idx = idx
         self.idx_chunks = idx_chunks
@@ -581,15 +589,23 @@ class DownSampleCarve(nn.Module):
 
     def bin_conv(self, x, bin_mode='mode1'):
         if bin_mode == 'nonuniform_split_bin':
-            bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
-            x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins, N)
-            x = self.bin_conv2(x)  # x.shape == (B, C, N)
+            if self.direct_link_mode == 'raw':
+                bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
+                x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins, N)
+                x = self.bin_conv2(x)  # x.shape == (B, C, N)
 
-            bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
-            # bin_prob_edge.shape == (B, num_bins, 1)
-            bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
+                bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+                # bin_prob_edge.shape == (B, num_bins, 1)
+                bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
 
-            # bin_prob.shape == (B, num_bins)
+                # bin_prob.shape == (B, num_bins)
+            elif self.direct_link_mode == 'no_link' or self.direct_link_mode == 'no_link_higher_gradient':
+                bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
+                bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+                # bin_prob_edge.shape == (B, num_bins, 1)
+                bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
+            else:
+                raise NotImplementedError
 
         elif bin_mode == 'mode1':
             bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins/2, N)
@@ -604,6 +620,7 @@ class DownSampleCarve(nn.Module):
             bin_prob_inner = torch.flip((1 - bin_prob_edge), dims=(-1,))
             bin_prob = torch.cat((bin_prob_edge, bin_prob_inner), dim=-1)  # bin_prob.shape == (B, 1, num_bins)
             bin_prob = bin_prob.squeeze(1)  # bin_prob.shape == (B, num_bins)
+
         else:
             raise NotImplementedError
 
