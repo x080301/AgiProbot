@@ -91,4 +91,4 @@ if __name__ == '__main__':
         else:
             trained_runs.append(run_name)
             if running_device == 'work_station' or '_test' not in run_name:
-                run_cmds(run_name, cmd_block, running_gpu[running_device])
+                print(run_cmds(run_name, cmd_block, running_gpu[running_device]))
