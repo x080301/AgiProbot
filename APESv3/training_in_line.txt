@@ -22,8 +22,6 @@ python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapen
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/nonuniform_bins_cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_nonuniform_newdownsampling'
 #---------------
-python test_modelnet.py datasets=modelnet_AnTao420M usr_config=configs/multiple_uniform_bins_cls-global_carve.yaml wandb.name='2024_01_29_07_57_modelnet_multiple' test.ddp.which_gpu=[]
-#---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/multiple_nonuniform_nds_nolink_seg_shapenet.yaml wandb.name='nolink_shapenet_nonuniform_nds_multiple'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/multiple_nonuniform_nds_nolink_cls_modelnet.yaml wandb.name='nolink_modelnet_nonuniform_nds_multiple'
