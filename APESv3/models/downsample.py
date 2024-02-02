@@ -607,6 +607,10 @@ class DownSampleCarve(nn.Module):
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
                 bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
+            elif self.direct_link_mode == 'no_link_no_sigmoid':
+                bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
+                bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+                bin_prob = bin_prob_edge.squeeze(2)
             else:
                 raise NotImplementedError
 

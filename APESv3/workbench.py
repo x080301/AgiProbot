@@ -5,27 +5,26 @@
 # sampling_score_bin_boundary(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0)
 # sampling_score_bin_boundary(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=1)
 
-# from utils.data_analysis import visualization_sampling_score
+from utils.data_analysis import visualization_sampling_score
+
+visualization_sampling_score(saved_sampling_score_dir='shapenet_sampling_scores.pt', layer_to_visualize=0,
+                             z_normalization_miu=True, show_plt=False,
+                             save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
+visualization_sampling_score(saved_sampling_score_dir='shapenet_sampling_scores.pt', layer_to_visualize=1,
+                             z_normalization_miu=True, show_plt=False,
+                             save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
+visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0,
+                             z_normalization_miu=True, show_plt=False,
+                             save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
+visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=1,
+                             z_normalization_miu=True, show_plt=False,
+                             save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
+
+# from utils.data_analysis import draw_pcd
 #
-# visualization_sampling_score(saved_sampling_score_dir='shapenet_sampling_scores.pt', layer_to_visualize=0,
-#                              z_normalization_miu=True, show_plt=False,
-#                              save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
-# visualization_sampling_score(saved_sampling_score_dir='shapenet_sampling_scores.pt', layer_to_visualize=1,
-#                              z_normalization_miu=True, show_plt=False,
-#                              save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
-# visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=0,
-#                              z_normalization_miu=True, show_plt=False,
-#                              save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
-# visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_scores.pt', layer_to_visualize=1,
-#                              z_normalization_miu=True, show_plt=False,
-#                              save_dir=r'C:/Users/Lenovo/Desktop/SamplingScore2/', idx=None)
-
-
-from utils.data_analysis import draw_pcd
-
-for i in range(5):
-    draw_pcd(idx=i, saved_sampling_score_dir='shapenet_sampling_scores.pt')
-    draw_pcd(idx=i, saved_sampling_score_dir='modelnet_sampling_scores.pt')
+# for i in range(5):
+#     draw_pcd(idx=i, saved_sampling_score_dir='shapenet_sampling_scores.pt')
+#     draw_pcd(idx=i, saved_sampling_score_dir='modelnet_sampling_scores.pt')
 
 # from utils.data_analysis import visualization_sampling_score_in_bin
 

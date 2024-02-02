@@ -111,10 +111,6 @@ feature_learning_block:
       multiply: [ true, true ]
     M: [1024, 512]
     asm: [dot, dot]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
-    boltzmann:
-      enable: [true, true]
-      boltzmann_T: [0.05, 0.05]
-      norm_mode: [minmax, minmax]
     q_in: [128, 128]
     q_out: [128, 128]
     k_in: [128, 128]

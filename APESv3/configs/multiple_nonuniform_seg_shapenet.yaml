@@ -110,13 +110,8 @@ feature_learning_block:
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       bin_boundaries: [ [ -0.609,-0.477,-0.362,-0.242,-0.095,0.132,0.623 ], [ -0.679,-0.514, -0.381,-0.241,-0.065,0.200,0.723 ] ]
       multiply: [ true, true ]
-      direct_link_mode: [ 'no_link', 'no_link' ]
     M: [ 1024, 512 ]
     asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
-    boltzmann:
-      enable: [ true, true ]
-      boltzmann_T: [ 0.05, 0.05 ]
-      norm_mode: [ minmax, minmax ]
     q_in: [ 128, 128 ]
     q_out: [ 128, 128 ]
     k_in: [ 128, 128 ]
