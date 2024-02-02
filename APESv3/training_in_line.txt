@@ -1,6 +1,6 @@
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/nosegmoid_multiple_nonuniform_nds_nolinkhighergradient_seg_shapenet.yaml wandb.name='nolinkhighergradient_shapenet_nonuniform_nds_multiple'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/nosegmoid_multiple_nonuniform_nds_nolinkhighergradient_seg_shapenet.yaml wandb.name='nosegmoid_nolinkhighergradient_shapenet_nonuniform_nds_multiple'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/nosegmoid_multiple_nonuniform_nds_nolinkhighergradient_cls_modelnet.yaml wandb.name='nolinkhighergradient_modelnet_nonuniform_nds_multiple'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/nosegmoid_multiple_nonuniform_nds_nolinkhighergradient_cls_modelnet.yaml wandb.name='nosegmoid_nolinkhighergradient_modelnet_nonuniform_nds_multiple'
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/multiple_nonuniform_nds_nolinkhighergradient_seg_shapenet.yaml wandb.name='nolinkhighergradient_shapenet_nonuniform_nds_multiple'
 #---------------
