@@ -84,6 +84,9 @@ test: # only valid when running the test script
     format: png  # png or ply
     vis_which: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ]  # which category to be visualized
     num_vis: 200  # how many point clouds to visualize for one category
+  visualize_combine:
+    enable: true
+    vis_which: [ sparse_col_sqr ]
 
 # the layer order inside the block is:
 # embedding -> neighbor2point -> downsample -> neighbor2point -> downsample -> neighbor2point

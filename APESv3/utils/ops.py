@@ -207,3 +207,100 @@ def sort_chunk(attention_point_score, num_bins, dim=-1, descending=False):
     idx_chunks = torch.chunk(idx_sorted, num_bins, dim=dim)  # idx_sorted.shape == num_bins * (B, H, N/num_bins)
 
     return x_chunks, idx_chunks
+
+
+def reshape_gathered_variable(gathered_variable):
+    # if isinstance(gathered_variable[0], torch.Tensor):
+    #     if len(gathered_variable[0].shape)==4:
+    #         # gathered_variable: num_layers * (B, num_bins, H, n)
+    #         num_layers = len(gathered_variable)
+    #         B = len(gathered_variable[0])
+    #
+    #         gathered_variable_in_batches = []
+    #         for i in range(B):
+    #             gathered_variable_in_one_batch = []
+    #             for j in range(num_layers):
+    #                 gathered_variable_in_one_batch.append(gathered_variable[j][i])
+    #             # gathered_variable_in_one_batch: num_layers * (num_bins, H, n)
+    #             gathered_variable_in_batches.append(gathered_variable_in_one_batch)
+    #         # gathered_variable_in_batches: B * num_layers * (num_bins, H, n)
+    #         gathered_variable = gathered_variable_in_batches
+    #     else:
+    #         # gathered_variable: num_layers * (B, H, N) or num_layers * (B, num_bins)
+    #         gathered_variable = torch.stack(gathered_variable, dim=0)
+    #         gathered_variable = gathered_variable.transpose(0, 1).contiguous()
+    #         # gathered_variable: (B, num_layers, H, N) or (B, num_layers, num_bins)
+    # else:
+
+    # gathered_variable:
+    # num_layers * B * num_bins * (H,n) or
+    # num_layers * (B, num_bins, H, n) or
+    # num_layers * (B, H, N) or
+    # num_layers * (B, num_bins)
+    num_layers = len(gathered_variable)
+    B = len(gathered_variable[0])
+
+    gathered_variable_in_batches = []
+    for i in range(B):
+        gathered_variable_in_one_batch = []
+        for j in range(num_layers):
+            gathered_variable_in_one_batch.append(gathered_variable[j][i])
+        # gathered_variable_in_one_batch: num_layers * num_bins * (H,n)
+        gathered_variable_in_batches.append(gathered_variable_in_one_batch)
+    # gathered_variable_in_batches: B * num_layers * num_bins * (H,n)
+    gathered_variable = gathered_variable_in_batches
+
+    return gathered_variable
+    # return:
+    # B * num_layers * num_bins * (H,n) or
+    # B * num_layers * (num_bins, H, n) or
+    # B * num_layers * (H, N) or
+    # B * num_layers * (num_bins)
+
+
+def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size, device):
+    variable_to_gather = downsample_module.output_variables(variable_name)
+
+    if isinstance(variable_to_gather, torch.Tensor):
+        variable_gather_list = [torch.empty_like(variable_to_gather).to(device) for _ in
+                                range(world_size)]
+        torch.distributed.all_gather(variable_gather_list, variable_to_gather)
+
+        if rank == 0:
+            return torch.concat(variable_gather_list, dim=0)
+
+    else:
+        # variable_to_gather: num_bins * (B,H,n) or num_bins * B * (H,n)
+
+        if isinstance(variable_to_gather[0], torch.Tensor):
+            variable_to_gather = torch.stack(variable_to_gather, dim=0)
+            variable_to_gather = variable_to_gather.permute(1, 0, 2, 3).contiguous()
+            # variable_to_gather: (B,num_bins,H,n)
+            variable_gather_list = [torch.empty_like(variable_to_gather).to(device) for _ in
+                                    range(world_size)]
+            torch.distributed.all_gather(variable_gather_list, variable_to_gather)
+
+            if rank == 0:
+                return torch.concat(variable_gather_list, dim=0)
+                # return: (B,num_bins,H,n)
+
+        else:
+            # variable_to_gather: num_bins * B * (H,n)
+            num_bins = len(variable_to_gather)
+            B = len(variable_to_gather[0])
+
+            variable_in_batches = []
+            for i in range(B):
+                variable_in_one_batch = []
+                for j in range(num_bins):
+                    variable_in_one_batch.append(variable_to_gather[j][i])
+                # variable_in_one_batch: num_bins * (H,n)
+                variable_in_batches.append(variable_in_one_batch)
+            # variable_in_batches: B * num_bins * (H,n)
+
+            variable_gather_list = [None] * world_size
+            torch.distributed.all_gather(variable_gather_list, variable_in_batches)
+            # variable_gather_list: wolrd_size * B * num_bins * (H,n)
+            if rank == 0:
+                return [item for sublist in variable_gather_list for item in sublist]
+                # return: B * num_bins * (H,n)
