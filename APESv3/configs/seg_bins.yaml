@@ -90,23 +90,26 @@ test:  # only valid when running the test script
 #                             -> upsample -> neighbor2point -> upsample.-> neighbor2point
 feature_learning_block:
   enable: true
-  STN: true
-  embedding: # DGCNN
-    K: [32, 32]
-    group_type: [center_diff, center_diff]  # neighbor, diff, center_neighbor or center_diff
-    normal_channel: false
-    conv1_in: [6, 128]
-    conv1_out: [64, 64]
-    conv2_in: [64, 64]
-    conv2_out: [64, 64]
-  downsample:
-    ds_which: global_carve  # global or local
-    M: [1024, 512]
-    asm: [dot, dot]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
-    boltzmann:
-      enable: [true, true]
-      boltzmann_T: [0.05, 0.05]
-      norm_mode: [minmax, minmax]
+    STN: true
+    embedding:
+      K: [ 32, 32 ]
+      group_type: [ center_diff, center_diff ]  # neighbor, diff, center_neighbor or center_diff
+      normal_channel: false
+      conv1_in: [ 6, 128 ]
+      conv1_out: [ 64, 64 ]
+      conv2_in: [ 64, 64 ]
+      conv2_out: [ 64, 64 ]
+    downsample:
+      ds_which: global_carve  # global or local
+      M: [ 1024, 512 ]
+      asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
+      bin:
+        enable: [ true, true ]
+        mode: [ mode1, mode1 ] # mode1 or mode2, mode1 based on learnable parameter, mode2 based on Boltzmann
+        num_bins: [ 6, 6 ]
+        scaling_factor: [ 1.0, 1.0 ]
+        sample_mode: [ random, random ] # topk or uniform or random
+        norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
     q_in: [128, 128]
     q_out: [128, 128]
     k_in: [128, 128]
@@ -114,7 +117,7 @@ feature_learning_block:
     v_in: [128, 128]
     v_out: [128, 128]
     num_heads: [1, 1]
-    idx_mode: [sparse_col_sqr, sparse_col_sqr] 
+    idx_mode: [sparse_col_sqr, sparse_col_sqr]
     # col_sum, row_std, sparse_row_sum, sparse_row_std, sparse_col_sum, sparse_col_avg, sparse_col_sqr，sparse_col_sum_sqr
   upsample:
     us_which: interpolation  # crossA or selfA or interpolation
@@ -128,8 +131,8 @@ feature_learning_block:
     v_in: [128, 128]
     v_out: [128, 128]
     num_heads: [4, 4]
-  attention: # attention in feature learning
-    K: [32, 32, 32, 32, 32]  # 3 values in the list means feature_learning_block includes 3 neighbor2point layers. The 'K' for each layer is 40, 40 and 40 respectively
+  attention: # feature learning layers
+    K: [32, 32, 32, 32, 32]  # 3 values in the list means neighbor2point_block includes 3 neighbor2point layers. The 'K' for each layer is 40, 40 and 40 respectively
     attention_mode: [scalar_dot, scalar_dot, scalar_dot, scalar_dot, scalar_dot] # scalar_dot, vector_sub
     group_type: [diff, diff, diff, diff, diff]  # diff, neighbor, center_neighbor or center_diff
     q_in: [128, 128, 128, 128, 128]
