@@ -702,8 +702,8 @@ class DownSampleCarve(nn.Module):
         while True:
             k_point_to_drop = torch.empty_like(k_point_to_choose)
             for i in range(B):
-                for j in range(num_bins - 1, -1):
-                    k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[i][j].nelement())
+                for j in range(num_bins):
+                    k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[j][i].nelement())
                     k_point_to_drop[i, j] = aps_chunks[i][j].nelement() - k_point_to_choose[i, j]
             correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
 
