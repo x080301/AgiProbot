@@ -350,11 +350,15 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
     B, num_bins = probability.shape
+    print(f'probability{probability.shape}')
+    print(f'max_num_points{max_num_points.shape}')
 
     num_points_to_choose = torch.zeros_like(probability, dtype=torch.long, device=probability.device)
     num_undecided_points = torch.zeros((B,), dtype=torch.long, device=probability.device) + total_points_to_choose
 
     for _ in range(num_bins):
+        print(f'max_num_points{max_num_points.shape}')
+        print(f'num_points_to_choose{num_points_to_choose.shape}')
         num_poins_to_drop = max_num_points - num_points_to_choose
         probability[num_poins_to_drop == 0] = 0
         num_undecided_points = num_undecided_points - torch.sum(num_points_to_choose, dim=1)
