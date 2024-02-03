@@ -402,7 +402,7 @@ class DownSampleCarve(nn.Module):
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
 
                 self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
-                self.normalization_mode = cofig_ds.bin.normalization_mode[layer]
+                self.normalization_mode = config_ds.bin.normalization_mode[layer]
             else:
                 raise NotImplementedError
 
