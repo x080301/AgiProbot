@@ -159,6 +159,9 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
 
             x_chunks_one_bin.append(attention_point_score[j, 0, :][index_in_bin].reshape(1, -1))
             idx_chunks_one_bin.append(index_in_bin.reshape(1, -1))
+
+            print(f'idex_in_bin{j} == {index_in_bin}')
+
         x_chunks.append(x_chunks_one_bin)
         idx_chunks.append(idx_chunks_one_bin)
     # print(f'idx.dtype4:{index_in_bin.dtype}')
