@@ -699,13 +699,15 @@ class DownSampleCarve(nn.Module):
         k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
         k_point_to_choose = k_point_to_choose.round().int()
 
+        k_point_to_drop = torch.empty_like(k_point_to_choose)
         for i in range(B):
             for j in range(num_bins - 1, -1):
                 k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[i][j].nelement())
+                k_point_to_drop[i, j] = aps_chunks[i][j].nelement() - k_point_to_choose[i, j]
         correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
         # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
         for i in range(B):
-            k_point_to_choose[i, torch.argmax(k_point_to_choose[i, :])] += int(correction_for_rouding[i])
+            k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
 
         idx_batch_list = []
         for i in range(B):
@@ -731,7 +733,7 @@ class DownSampleCarve(nn.Module):
                         aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
                         # print(f'k:{k}')
                         # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
-                        # print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
+                        print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
                 else:
                     raise ValueError(
