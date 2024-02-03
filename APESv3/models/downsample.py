@@ -728,7 +728,7 @@ class DownSampleCarve(nn.Module):
                         aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
                         # print(f'k:{k}')
                         # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
-                        print(f'aps_chunks_tmp{len(aps_chunks_tmp)},k{k}')
+                        print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
                 else:
                     raise ValueError(
