@@ -140,8 +140,8 @@ def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_sco
 
     # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
     if z_normalization_miu:
-        tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True))  # \
-        # / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+        tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) \
+            # / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
         # tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
     else:
         tensor = (tensor - torch.mean(tensor, dim=1,
@@ -174,10 +174,10 @@ def visualization_sampling_score(saved_sampling_score_dir='modelnet_sampling_sco
     else:
         if idx is None:
             plt.savefig(
-                f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_layer{layer_to_visualize}.png')
+                f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_histogram_layer{layer_to_visualize}.png')
         else:
             plt.savefig(
-                f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_layer{layer_to_visualize}_sample{idx}.png')
+                f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_histogram_layer{layer_to_visualize}_sample{idx}.png')
 
     plt.close()
 
@@ -193,7 +193,8 @@ def sampling_score_bin_boundary(saved_sampling_score_dir='modelnet_sampling_scor
         tensor = tensor[tensor > -1.5]
         tensor = torch.reshape(tensor, (num_batch, 1024))
 
-    tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    tensor = (tensor - torch.mean(tensor, dim=1,
+                                  keepdim=True))  # / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
     flattened_tensor = tensor.flatten().cpu()
     # flattened_tensor = flattened_tensor[flattened_tensor > -1.5]
     sorted_value, sorted_index = torch.sort(flattened_tensor, dim=0)
@@ -235,7 +236,8 @@ def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampl
 
     # tensor = (tensor - torch.min(tensor, dim=1, keepdim=True)[0]) / (torch.max(tensor, dim=1, keepdim=True)[0] - torch.min(tensor, dim=1, keepdim=True)[0] + 1e-8)
     # tensor = tensor / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
-    tensor = (tensor - torch.mean(tensor, dim=1, keepdim=True)) / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
+    tensor = (tensor - torch.mean(tensor, dim=1,
+                                  keepdim=True))  # / torch.std(tensor, dim=1, unbiased=False, keepdim=True)
 
     flattened_tensor = tensor.flatten().cpu()
 
@@ -282,6 +284,10 @@ def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampl
             plt.savefig(
                 f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_layer{layer_to_visualize}.png')
         else:
+            if layer_to_visualize == 1:
+                plt.ylim((0, 550))
+            else:
+                plt.ylim((0, 750))
             plt.savefig(
                 f'{save_dir}{saved_sampling_score_dir.split(".")[0]}_layer{layer_to_visualize}_sample{idx}.png')
 
