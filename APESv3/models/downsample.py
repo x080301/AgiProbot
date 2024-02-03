@@ -774,6 +774,7 @@ class DownSampleCarve(nn.Module):
         for i in range(B):
             for j in range(num_bins):
                 max_num_points[i, j] = aps_chunks[j][i].shape[1]
+        print(f'bin_prob{bin_prob}-----------')
         k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
         # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
