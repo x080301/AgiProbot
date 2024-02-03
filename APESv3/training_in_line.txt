@@ -1,6 +1,6 @@
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/nonuniform_bins_seg.yaml wandb.name='shapenet_nonuniform_newdownsampling'
 #---------------
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/seg_bins.yaml wandb.name='shapenet_v2'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/seg_bins.yaml wandb.name='shapenet_uniform_bins'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/nonuniform_bins_cls-global_carve-sparse_col_sqr-nocloss.yaml wandb.name='modelnet_nonuniform_newdownsampling'
 #---------------
