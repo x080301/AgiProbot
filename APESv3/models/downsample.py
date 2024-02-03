@@ -365,7 +365,17 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
 
         num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
                                                                              num_undecided_points)
-        print(f'num_points_to_choose{torch.sum(num_points_to_choose,dim=1)}')
+
+        print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
+
+        if torch.sum(torch.abs(torch.sum(num_points_to_choose, dim=1) - total_points_to_choose)) == 0:
+            break
+    else:
+        error = torch.sum(num_points_to_choose, dim=1) - total_points_to_choose
+        max_point_drop_bin = torch.argmax(num_poins_to_drop, dim=1)
+        for i in range(B):
+            assert abs(error[i]) < 3, 'correction_for_rouding seems to be too big.'
+            num_points_to_choose[i, max_point_drop_bin[i]] += error[i]
 
     return num_points_to_choose
 
@@ -380,12 +390,14 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     """
     num_undecided_points = num_undecided_points.reshape(-1, 1)
 
-    probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
-        max_num_points, dim=1, keepdim=True)
+    # probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
+    #     max_num_points, dim=1, keepdim=True)
 
     # print(f'max_num_points{max_num_points}')
     # print(f'probability{probability}')
     num_points_to_choose = probability * max_num_points
+    num_points_to_choose = num_points_to_choose * num_undecided_points / torch.sum(num_points_to_choose,
+                                                                                   dim=1, keepdim=True)
     # print(f'num_points_to_choose2:{num_points_to_choose}')
     num_points_to_choose = num_points_to_choose.int()
 
