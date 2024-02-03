@@ -760,7 +760,7 @@ class DownSampleCarve(nn.Module):
         #         for i in range(B):
         #             k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
 
-        max_num_points = torch.zeros(B, num_bins)
+        max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
         for i in range(B):
             for j in range(num_bins):
                 max_num_points[i, j] = aps_chunks[j][i].shape[1]
