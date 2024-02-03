@@ -374,7 +374,7 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
         error = torch.sum(num_points_to_choose, dim=1) - total_points_to_choose
         max_point_drop_bin = torch.argmax(num_poins_to_drop, dim=1)
         for i in range(B):
-            assert abs(error[i]) < 3, 'correction_for_rouding seems to be too big.'
+            assert abs(error[i]) <= num_bins, 'correction_for_rouding seems to be too big.'
             num_points_to_choose[i, max_point_drop_bin[i]] += error[i]
 
     return num_points_to_choose
