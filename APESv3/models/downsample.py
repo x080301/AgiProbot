@@ -366,7 +366,7 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
         num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
                                                                              num_undecided_points)
 
-        print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
+        # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
 
         if torch.sum(torch.abs(torch.sum(num_points_to_choose, dim=1) - total_points_to_choose)) == 0:
             break
@@ -787,7 +787,7 @@ class DownSampleCarve(nn.Module):
         for i in range(B):
             for j in range(num_bins):
                 max_num_points[i, j] = aps_chunks[j][i].shape[1]
-        print(f'bin_prob{bin_prob}-----------')
+        # print(f'bin_prob{bin_prob}-----------')
         k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
         # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
