@@ -385,6 +385,7 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     num_points_to_choose = num_points_to_choose.int()
     # num_points_to_choose = num_points_to_choose * total_points / torch.sum(num_points_to_choose, dim=1, keepdim=True)
     num_points_to_choose = torch.where(num_points_to_choose < max_num_points, num_points_to_choose, max_num_points)
+    print(f'num_points_to_choose:{num_points_to_choose}')
 
     return num_points_to_choose
 
