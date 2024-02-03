@@ -378,15 +378,17 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     :return: number of choosen points, torch.Tensor(B,num_bins);
     """
     num_undecided_points = num_undecided_points.reshape(-1, 1)
-    print(f'probability{probability}')
-    print(f'max_num_points{max_num_points}')
+
     probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
         max_num_points, dim=1, keepdim=True)
     num_points_to_choose = probability * max_num_points
+    print(f'num_points_to_choose2:{num_points_to_choose}')
     num_points_to_choose = num_points_to_choose.int()
+
+    print(f'num_points_to_choose1:{num_points_to_choose}')
     # num_points_to_choose = num_points_to_choose * total_points / torch.sum(num_points_to_choose, dim=1, keepdim=True)
     num_points_to_choose = torch.where(num_points_to_choose < max_num_points, num_points_to_choose, max_num_points)
-    print(f'num_points_to_choose:{torch.sum(num_points_to_choose,dim=1)}')
+    print(f'num_points_to_choose:{num_points_to_choose}')
 
     return num_points_to_choose
 
