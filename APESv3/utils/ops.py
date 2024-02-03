@@ -166,6 +166,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
         x_chunks.append(x_chunks_one_bin)
         idx_chunks.append(idx_chunks_one_bin)
     # print(f'idx.dtype4:{index_in_bin.dtype}')
+    exit(-1)
     return x_chunks, idx_chunks
 
     # z_normalized_x = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
