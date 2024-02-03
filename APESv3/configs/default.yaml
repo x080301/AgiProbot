@@ -202,6 +202,7 @@ feature_learning_block:
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       multiply: [ false, false ]
       direct_link_mode: [ 'raw', 'raw' ]
+      normalization_mode: [ z_score_no_std,z_score_no_std ] # no_normalization, z_score, z_score_no_std
     boltzmann:
       enable: [ false, false ]
       boltzmann_T: [ 1.0, 1.0 ]

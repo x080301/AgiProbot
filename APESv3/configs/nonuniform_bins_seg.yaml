@@ -110,6 +110,7 @@ feature_learning_block:
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       bin_boundaries: [ [ -0.561,-0.401,-0.2415,-0.033,0.404 ],[ -0.616,-0.424,-0.241,0.009,0.495 ] ]
       multiply: [ false, false ]
+      normalization_mode: [ z_score,z_score ] # no_normalization, z_score, z_score_no_std
     M: [ 1024, 512 ]
     asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
     q_in: [ 128, 128 ]

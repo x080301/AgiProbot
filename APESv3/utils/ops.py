@@ -122,15 +122,24 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
-def sort_chunk_nonuniform(attention_point_score, bin_boundaries):
+def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode='no_normalization'):
     """
 
     :param attention_point_score: (B,1,N)
     :param bin_boundaries: list with size num_bins-1
     :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
     """
+
     num_bins = len(bin_boundaries) + 1
     B, H, N = attention_point_score.shape
+
+    if normalization_mode == 'no_normalization':
+        pass
+    elif normalization_mode == 'z_score':
+        attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
+                                / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
+    elif normalization_mode == 'z_score_no_std':
+        attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
 
     x_chunks = []
     idx_chunks = []

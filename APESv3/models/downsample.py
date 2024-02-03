@@ -402,6 +402,7 @@ class DownSampleCarve(nn.Module):
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
 
                 self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+                self.normalization_mode = cofig_ds.bin.normalization_mode[layer]
             else:
                 raise NotImplementedError
 
@@ -678,9 +679,9 @@ class DownSampleCarve(nn.Module):
         k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
         return idx_batch, k_batch, idx_chunks
 
-    def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob):
+    def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
         # self.attention_point_score.shape == (B, H, N)
-        aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries)
+        aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
         # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
         # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
         num_bins = len(bin_boundaries)
