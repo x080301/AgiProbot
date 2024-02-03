@@ -699,7 +699,7 @@ class DownSampleCarve(nn.Module):
         k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
         k_point_to_choose = k_point_to_choose.round().int()
 
-        while True:
+        for _ in range(num_bins):
             k_point_to_drop = torch.empty_like(k_point_to_choose)
             for i in range(B):
                 for j in range(num_bins):
@@ -738,7 +738,7 @@ class DownSampleCarve(nn.Module):
                         aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
                         # print(f'k:{k}')
                         # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
-                        if aps_chunks_tmp.nelement()<k:
+                        if aps_chunks_tmp.nelement() < k:
                             print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
                             exit(-1)
                         idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
