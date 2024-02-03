@@ -341,6 +341,47 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     return x_ds
 
 
+def calculate_num_points_to_choose(probability, max_num_points, total_points_to_choose):
+    """
+
+    :param total_points_to_choose: Int
+    :param probability: torch.Tensor(B,num_bins)
+    :param max_num_points: torch.Tensor(B,num_bins)
+    :return: number of choosen points, torch.Tensor(B,num_bins)
+    """
+    B, num_bins = probability.shape
+
+    num_points_to_choose = torch.zeros_like(probability, dtype=torch.long, device=probability.device)
+    num_undecided_points = torch.zeros((B,), dtype=torch.long, device=probability.device) + total_points_to_choose
+
+    for _ in range(num_bins):
+        num_poins_to_drop = max_num_points - num_points_to_choose
+        probability[num_poins_to_drop == 0] = 0
+        num_undecided_points = num_undecided_points - torch.sum(num_points_to_choose, dim=1)
+
+        num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
+                                                                             num_undecided_points)
+
+    return num_points_to_choose
+
+
+def calculate_num_points_to_choose_one_iteration(probability, max_num_points, num_undecided_points):  # , total_points):
+    """
+
+    :param num_undecided_points: torch.Tensor(B,)
+    :param probability: torch.Tensor(B,num_bins)
+    :param max_num_points: torch.Tensor(B,num_bins)
+    :return: number of choosen points, torch.Tensor(B,num_bins);
+    """
+    probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
+        max_num_points, dim=1)
+    num_points_to_choose = probability * max_num_points
+    # num_points_to_choose = num_points_to_choose * total_points / torch.sum(num_points_to_choose, dim=1, keepdim=True)
+    num_points_to_choose = torch.where(num_points_to_choose < max_num_points, num_points_to_choose, max_num_points)
+
+    return num_points_to_choose
+
+
 class DownSampleCarve(nn.Module):
     def __init__(self, config_ds, layer):
         super(DownSampleCarve, self).__init__()
@@ -681,38 +722,46 @@ class DownSampleCarve(nn.Module):
         return idx_batch, k_batch, idx_chunks
 
     def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
+        # bin_prob.shape == (B, num_bins)
         # self.attention_point_score.shape == (B, H, N)
         aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
         # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
-        # aps_chunks.shape == num_bins * (B, H, N/num_bins), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+        # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
         num_bins = len(bin_boundaries)
         B, H, N = attention_point_score.shape
 
         # chunk_size = aps_chunks[j][i].shape[1]
         assert H == 1, "Number of heads should be 1!"
 
-        k_point_to_choose = torch.zeros(B, num_bins).to(bin_prob.device)
-        for i in range(num_bins):
-            for j in range(B):
-                num_points_in_bin = aps_chunks[i][j].nelement()
-                k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
-        k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
-        k_point_to_choose = k_point_to_choose.round().int()
+        # k_point_to_choose = torch.zeros(B, num_bins).to(bin_prob.device)
+        # for i in range(num_bins):
+        #     for j in range(B):
+        #         num_points_in_bin = aps_chunks[i][j].nelement()
+        #         k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
+        # k_point_to_choose = k_point_to_choose * self.M / torch.sum(k_point_to_choose, dim=1, keepdim=True)
+        # k_point_to_choose = k_point_to_choose.round().int()
 
-        for _ in range(num_bins):
-            k_point_to_drop = torch.empty_like(k_point_to_choose)
-            for i in range(B):
-                for j in range(num_bins):
-                    k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[j][i].nelement())
-                    k_point_to_drop[i, j] = aps_chunks[j][i].nelement() - k_point_to_choose[i, j]
-            correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
+        # for _ in range(num_bins):
+        #     k_point_to_drop = torch.empty_like(k_point_to_choose)
+        #     for i in range(B):
+        #         for j in range(num_bins):
+        #             k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[j][i].nelement())
+        #             k_point_to_drop[i, j] = aps_chunks[j][i].nelement() - k_point_to_choose[i, j]
+        #     correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
+        #
+        #     if torch.max(torch.abs(correction_for_rouding)) == 0:
+        #         break
+        #     else:
+        #         # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
+        #         for i in range(B):
+        #             k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
 
-            if torch.max(torch.abs(correction_for_rouding)) == 0:
-                break
-            else:
-                # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
-                for i in range(B):
-                    k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
+        max_num_points = torch.zeros(B, num_bins)
+        for i in range(B):
+            for j in range(num_bins):
+                max_num_points[i, j] = aps_chunks[j][i].shape[1]
+
+        k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
 
         idx_batch_list = []
         for i in range(B):
