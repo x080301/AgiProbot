@@ -377,6 +377,10 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins);
     """
+    print(f'probability {probability.shape}')
+    print(f'torch.sum(probability, dim=1, keepdim=True) {torch.sum(probability, dim=1, keepdim=True).shape}')
+    print(f'num_undecided_points {num_undecided_points.shape}')
+    print(f'torch.sum(max_num_points, dim=1) {torch.sum(max_num_points, dim=1).shape}')
     probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
         max_num_points, dim=1)
     num_points_to_choose = probability * max_num_points
@@ -764,7 +768,6 @@ class DownSampleCarve(nn.Module):
         for i in range(B):
             for j in range(num_bins):
                 max_num_points[i, j] = aps_chunks[j][i].shape[1]
-
         k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
 
         idx_batch_list = []
