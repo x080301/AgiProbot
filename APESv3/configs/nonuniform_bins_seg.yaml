@@ -104,7 +104,7 @@ feature_learning_block:
     bin:
       enable: [ true, true ]
       mode: [ nonuniform_split_bin, nonuniform_split_bin ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
-      num_bins: [ 8, 8 ]
+      num_bins: [ 6, 6 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
