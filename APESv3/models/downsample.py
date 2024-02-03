@@ -699,15 +699,20 @@ class DownSampleCarve(nn.Module):
         k_point_to_choose = k_point_to_choose / torch.sum(k_point_to_choose, dim=1, keepdim=True) * self.M
         k_point_to_choose = k_point_to_choose.round().int()
 
-        k_point_to_drop = torch.empty_like(k_point_to_choose)
-        for i in range(B):
-            for j in range(num_bins - 1, -1):
-                k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[i][j].nelement())
-                k_point_to_drop[i, j] = aps_chunks[i][j].nelement() - k_point_to_choose[i, j]
-        correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
-        # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
-        for i in range(B):
-            k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
+        while True:
+            k_point_to_drop = torch.empty_like(k_point_to_choose)
+            for i in range(B):
+                for j in range(num_bins - 1, -1):
+                    k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[i][j].nelement())
+                    k_point_to_drop[i, j] = aps_chunks[i][j].nelement() - k_point_to_choose[i, j]
+            correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
+
+            if torch.max(torch.abs(correction_for_rouding)) == 0:
+                break
+            else:
+                # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
+                for i in range(B):
+                    k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
 
         idx_batch_list = []
         for i in range(B):
