@@ -126,7 +126,7 @@ feature_learning_block:
     ds_which: global_carve
     bin:
       enable: [ true, true ]
-      bin_boundaries: [ [ -0.627,-0.427,-0.230,0.031,0.503 ], [ -0.534,-0.451,-0.346,-0.160,0.333 ] ]
+      bin_boundaries: [ [ 0.503,0.031, -0.230,-0.427,-0.627 ], [ 0.333,-0.160, -0.346,-0.451,-0.534 ] ]
       multiply: [ false, false ]
       mode: [ nonuniform_split_bin, nonuniform_split_bin ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
       num_bins: [ 6, 6 ]
