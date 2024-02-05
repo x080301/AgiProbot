@@ -239,6 +239,3 @@ test: # only valid when running the test script
     vis_which: [ 0, 4, 7, 8, 15, 17, 19, 26 ]  # which category to be visualized
     num_vis: 100  # how many point clouds to visualize for one category
     mode: one  # one, mode, compare
-  visualize_combine:
-    enable: false
-    vis_which: [ sparse_col_sqr ]
