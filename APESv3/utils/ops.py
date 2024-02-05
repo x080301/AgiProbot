@@ -319,7 +319,7 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
             torch.distributed.all_gather(data_size_gather_list, data_size)
 
             if rank == 0:
-                variable_gather_list = [torch.empty((int(torch.sum(data_size).item()),), dtype=float).to(device) for
+                variable_gather_list = [torch.empty((int(torch.sum(data_size).item()),), dtype=torch.float64).to(device) for
                                         data_size in data_size_gather_list]
             else:
                 variable_gather_list = None
