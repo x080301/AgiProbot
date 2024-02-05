@@ -81,7 +81,7 @@ def test(local_rank, config):
         save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/test_results/{config.wandb.name}/'
     if rank == 0:
         if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
+            os.mkdirs(save_dir)
 
     # set files path
     if config.test.suffix.enable:
