@@ -78,7 +78,7 @@ def test(local_rank, config):
     if 'iesservergpu' in hostname:
         save_dir = f'/data/users/fu/APES/test_results/{config.wandb.name}/'
     else:
-        save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/test_results/{config.wandb.name}/'
+        save_dir = f'/home/team1/cwu/FuHaoWorkspace/test_results/{config.wandb.name}/'
     if rank == 0:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -261,17 +261,19 @@ def test(local_rank, config):
                     # idx_in_bins_list.append(idx_in_bins)
                     # probability_of_bins_list.append(probability_of_bins)
 
-                    dict_to_dump = {'sampling_score': sampling_score,  # (B,n,3)
-                                    'idx_down': idx_down,  # B * num_layers * (H,N)
-                                    'idx_in_bins': idx_in_bins,
-                                    # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-                                    'probability_of_bins': probability_of_bins,
-                                    # (B, num_layers, num_bins)
-                                    'ground_truth': torch.concat(cls_label_gather_list, dim=0),  # (B,40)
-                                    'predictions': torch.concat(pred_gather_list, dim=0)  # (B,40)
-                                    }
-                    with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                        pickle.dump(dict_to_dump, f)
+                    data_dict = {'sampling_score': sampling_score,  # (B,n,3)
+                                 'idx_down': idx_down,  # B * num_layers * (H,N)
+                                 'idx_in_bins': idx_in_bins,
+                                 # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+                                 'probability_of_bins': probability_of_bins,
+                                 # (B, num_layers, num_bins)
+                                 'ground_truth': torch.concat(cls_label_gather_list, dim=0),  # (B,40)
+                                 'predictions': torch.concat(pred_gather_list, dim=0)  # (B,40)
+                                 }
+                    if config.test.save_pkl:
+                        with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                            pickle.dump(data_dict, f)
+                        print(f'save{i}')
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
