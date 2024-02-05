@@ -319,13 +319,14 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
             torch.distributed.all_gather(data_size_gather_list, data_size)
 
             if rank == 0:
-                variable_gather_list = [torch.empty((int(torch.sum(data_size).item()),), dtype=torch.float64).to(device) for
-                                        data_size in data_size_gather_list]
+                variable_gather_list = [
+                    torch.empty((int(torch.sum(data_size).item()),), dtype=variable_in_batches.dtype).to(device) for
+                    data_size in data_size_gather_list]
             else:
                 variable_gather_list = None
 
-            print(f'variable_in_batches:{variable_in_batches.dtype}')
-            print(f'variable_gather_list:{variable_gather_list[0].dtype}')
+            # print(f'variable_in_batches:{variable_in_batches.dtype}')
+            # print(f'variable_gather_list:{variable_gather_list[0].dtype}')
             torch.distributed.gather(variable_in_batches, gather_list=variable_gather_list, dst=0)
             # variable_gather_list: world_size * (B * num_bins * (n1+n2+n3+...))
             variable_to_return = []
