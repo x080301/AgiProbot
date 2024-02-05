@@ -300,21 +300,42 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
 
         else:
             # variable_to_gather: num_bins * B * (H,n)
+
             num_bins = len(variable_to_gather)
             B = len(variable_to_gather[0])
 
+            data_size = torch.empty((B, num_bins), device=variable_to_gather[0][0].device)
             variable_in_batches = []
             for i in range(B):
-                variable_in_one_batch = []
+                variable_in_batches = []
                 for j in range(num_bins):
-                    variable_in_one_batch.append(variable_to_gather[j][i])
-                # variable_in_one_batch: num_bins * (H,n)
-                variable_in_batches.append(variable_in_one_batch)
-            # variable_in_batches: B * num_bins * (H,n)
+                    variable_in_batches.append(variable_to_gather[j][i].flatten())
+                    data_size[i, j] = variable_to_gather[j][i].nelement()
+            # variable_in_batches: (B * num_bins) * (n,)
+            variable_in_batches = torch.concat(variable_in_batches, dim=0)
+            # variable_in_batches: (B * num_bins * n),
 
-            variable_gather_list = [None] * world_size
-            torch.distributed.all_gather(variable_gather_list, variable_in_batches)
-            # variable_gather_list: wolrd_size * B * num_bins * (H,n)
+            data_size_gather_list = [torch.empty_like(data_size).to(device) for _ in range(world_size)]
+            torch.distributed.all_gather(data_size_gather_list, data_size)
+
             if rank == 0:
-                return [item for sublist in variable_gather_list for item in sublist]
-                # return: B * num_bins * (H,n)
+                variable_gather_list = [torch.empty((torch.sum(data_size),)) for data_size in data_size_gather_list]
+            else:
+                variable_gather_list = None
+
+            torch.distributed.gather(variable_in_batches, gather_list=variable_gather_list, dst=0)
+            # variable_gather_list: world_size * (B * num_bins * (n1+n2+n3+...))
+            variable_to_return = []
+            for data_size, variable_in_batches in zip(data_size_gather_list, variable_gather_list):
+                # variable_in_batches: (B * num_bins * n),
+                # data_size: (B , num_bins)
+                data_begin_idex = 0
+                for i in range(B):
+                    variable_in_one_batch = []
+                    for j in range(num_bins):
+                        one_variable = variable_in_batches[data_begin_idex:data_begin_idex + data_size[i, j]].reshape(1,
+                                                                                                                      -1)
+                        variable_in_one_batch.append(one_variable)
+                    # variable_in_one_batch: num_bins * (1,n)
+                    variable_to_return.append(variable_in_one_batch)
+            # variable_to_return: B * num_bins * (H,n)
