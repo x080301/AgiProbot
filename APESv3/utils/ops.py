@@ -334,12 +334,13 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
             for data_size, variable_in_batches in zip(data_size_gather_list, variable_gather_list):
                 # variable_in_batches: (B * num_bins * n),
                 # data_size: (B , num_bins)
-                data_begin_idex = 0
+                begin_idex = 0
                 for i in range(B):
                     variable_in_one_batch = []
                     for j in range(num_bins):
-                        one_variable = variable_in_batches[data_begin_idex:data_begin_idex + data_size[i, j]].reshape(1,
-                                                                                                                      -1)
+                        end_index = begin_idex + int(data_size[i, j].item())
+                        one_variable = variable_in_batches[begin_idex:end_index].reshape(1, -1)
+                        begin_idex = end_index
                         variable_in_one_batch.append(one_variable)
                     # variable_in_one_batch: num_bins * (1,n)
                     variable_to_return.append(variable_in_one_batch)
