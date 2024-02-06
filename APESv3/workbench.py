@@ -90,8 +90,8 @@ def visualization_heatmap():
         B = sample_batch.shape[0]
 
         for j in range(B):
-            sampling_score = sampling_score_batch[j][0].flatten()  # (num_layers, H, N)
-            sample = sample_batch[j]  # (N,3)
+            sampling_score = sampling_score_batch[j][0].flatten().cpu()  # (N,)
+            sample = sample_batch[j].cpu()  # (N,3)
             category = mapping[int(label_batch[j])]
 
             visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
