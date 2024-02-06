@@ -312,7 +312,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     num_bins = len(bin_chunks_idx)
 
     # bin_prob.shape == (B, num_bins)
-    bin_probability_0 = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
+    bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
 
     tensor_to_multiply = torch.zeros(B, N).to(bin_probability.device)
@@ -323,13 +323,13 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
             # print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
             # print(f'bin_probability[j, i]:{bin_probability[j, i]}')
             if direct_link_mode == 'no_link_higher_gradient':
-                bin_probability_float = bin_probability_0[j, i].item
+                bin_probability_float = bin_probability[j, i].item
 
                 tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = \
-                    1.0 + bin_probability_0[j, i] - bin_probability_float * (M - 1) / M
+                    1.0 + bin_probability[j, i] - bin_probability_float * (M - 1) / M
 
             else:
-                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability_0[j, i] / M
+                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
             # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
             #                                                             bin_chunks_idx[i].squeeze()[j, :],
             #                                                             1.0 + bin_probability[j, i] / M)
