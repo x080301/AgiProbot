@@ -86,15 +86,11 @@ def visualization_heatmap():
         sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
         sample_batch = data_dict['samples']  # (B,N,3)
         label_batch = data_dict['ground_truth']
-        print(sampling_score_batch)
-        print(f'len(sampling_score_batch){len(sampling_score_batch)}')
-        print(f'sampling_score_batch{sampling_score_batch[0].shape}')
-        print(f'sampling_score_batch{sampling_score_batch[1].shape}')
 
-        B = sampling_score_batch.shape[0]
+        B = sample_batch.shape[0]
 
         for j in range(B):
-            sampling_score = sampling_score_batch[j]  # (num_layers, H, N)
+            sampling_score = sampling_score_batch[j][0].flatten()  # (num_layers, H, N)
             sample = sample_batch[j]  # (N,3)
             category = mapping[int(label_batch[j])]
 
