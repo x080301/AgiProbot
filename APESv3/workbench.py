@@ -86,6 +86,7 @@ def visualization_heatmap():
         sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
         sample_batch = data_dict['samples']  # (B,N,3)
         label_batch = data_dict['ground_truth']
+        print(sampling_score_batch)
 
         B = sampling_score_batch.shape[0]
 
