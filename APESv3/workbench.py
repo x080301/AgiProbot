@@ -112,8 +112,8 @@ def num_points_in_bins():
 
         for j in range(16):
             for k in range(2):
-                print(f'num_points_in_bins,sample{i * 16 + j},layer{k}:{num_points_in_bins[j][k]}')
-                print(f'probability_of_bins,sample{i * 16 + j},layer{k}:{probability_of_bins[j, k]}')
+                print(f'num_points_in_bins,sample{i * 16 + j},layer{k}:{[item.shape[1] for item in num_points_in_bins[j][k]]}')
+                print(f'probability_of_bins,sample{i * 16 + j},layer{k}:{probability_of_bins[j][k]}')
 
 
 # from utils.data_analysis import estimate_sigma
