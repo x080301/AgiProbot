@@ -261,14 +261,16 @@ def test(local_rank, config):
                     # idx_in_bins_list.append(idx_in_bins)
                     # probability_of_bins_list.append(probability_of_bins)
 
-                    data_dict = {'sampling_score': sampling_score,  # (B,n,3)
+                    data_dict = {'sampling_score': sampling_score,  # (B, num_layers, H, N)
+                                 'samples': torch.concat(sample_gather_list, dim=0),  # (B,N,3)
                                  'idx_down': idx_down,  # B * num_layers * (H,N)
                                  'idx_in_bins': idx_in_bins,
                                  # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                                  'probability_of_bins': probability_of_bins,
                                  # (B, num_layers, num_bins)
-                                 'ground_truth': torch.concat(cls_label_gather_list, dim=0),  # (B,40)
-                                 'predictions': torch.concat(pred_gather_list, dim=0)  # (B,40)
+                                 'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
+                                 # (B,)
+                                 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
                     if config.test.save_pkl:
                         with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:

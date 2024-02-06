@@ -12,6 +12,41 @@ from collections import OrderedDict
 from .visualization_data_processing import *
 
 
+def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
+    # make every category name start from 0
+    my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
+    xyzRGB = []
+
+    # atten = atten[0]
+    # if mode == "trained_boltzmann":
+    #     atten = np.log(atten)
+    #     atten = atten - np.mean(atten) + 0.5
+    # else:
+    #     atten = (atten - np.mean(atten)) / np.std(atten) + 0.5
+
+    for xyz, rgb in zip(sample, atten):
+        xyzRGB_tmp = []
+        xyzRGB_tmp.extend(list(xyz))
+        RGB = 255 * np.asarray(my_cmap(rgb))[:3]
+        xyzRGB_tmp.extend(list(RGB))
+        xyzRGB.append(xyzRGB_tmp)
+
+    saved_path = f'{save_path}/sample{i}_{category}.png'
+    vertex = np.array(xyzRGB)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim3d(-0.6, 0.6)
+    ax.set_ylim3d(-0.6, 0.6)
+    ax.set_zlim3d(-0.6, 0.6)
+    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+    plt.axis('off')
+    plt.grid('off')
+    plt.savefig(saved_path, bbox_inches='tight')
+    plt.close(fig)
+
+    print(f'Done! .png file is saved in {saved_path}')
+
+
 def visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious, index, artifacts_path):
     base_path = f'{artifacts_path}/vis_pred'
     if os.path.exists(base_path):
