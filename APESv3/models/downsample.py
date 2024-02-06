@@ -373,7 +373,7 @@ class DownSampleCarve(nn.Module):
                 bin_prob = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
                 # print(f'bin_prob_edge before bin_prob:{bin_prob_edge[0, :, 0]}')
-                bin_prob = F.sigmoid(bin_prob).squeeze(2)
+                # bin_prob = F.sigmoid(bin_prob).squeeze(2)
 
                 # bin_prob.shape == (B, num_bins)
             elif self.direct_link_mode == 'no_link' or self.direct_link_mode == 'no_link_higher_gradient':
