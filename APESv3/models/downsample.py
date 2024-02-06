@@ -338,7 +338,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
 
     # print(f'x_ds.shape=={x_ds.shape}')
     # print(f'tensor_to_multiply:{tensor_to_multiply.shape}')
-    x_ds = x_ds * torch.sum(bin_probability)#tensor_to_multiply
+    x_ds = x_ds +1#* torch.sum(bin_probability)#tensor_to_multiply
 
     return x_ds
 
