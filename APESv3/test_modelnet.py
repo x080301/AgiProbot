@@ -275,7 +275,7 @@ def test(local_rank, config):
                     if config.test.save_pkl:
                         with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                             pickle.dump(data_dict, f)
-                        print(f'save{i}')
+                        # print(f'save{i}')
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
