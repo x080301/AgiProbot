@@ -97,6 +97,25 @@ def visualization_heatmap():
             visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
 
 
+def num_points_in_bins():
+    from utils.visualization import visualization_heatmap_one_shape
+    import pickle
+    import os
+    from tqdm import tqdm
+    for i in tqdm(range(20)):
+        with open(
+                f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_03_23_07_modelnet_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                'rb') as f:
+            data_dict = pickle.load(f)
+        num_points_in_bins = data_dict['idx_in_bins']  # B * num_layers * (H,N)
+        probability_of_bins = data_dict['probability_of_bins']  # (B, num_layers, num_bins)
+
+        for j in range(16):
+            for k in range(2):
+                print(f'num_points_in_bins,sample{i * 16 + j},layer{k}:{num_points_in_bins[j][k].flatten()}')
+                print(f'probability_of_bins,sample{i * 16 + j},layer{k}:{probability_of_bins[j, k]}')
+
+
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 
@@ -111,4 +130,5 @@ def visualization_heatmap():
 
 # find_sampling_score_bin_boundary()
 # visualization_histogram_in_boundary()
-visualization_heatmap()
+# visualization_heatmap()
+num_points_in_bins()

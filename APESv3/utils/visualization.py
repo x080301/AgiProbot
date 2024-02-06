@@ -17,10 +17,16 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
     xyzRGB = []
 
+    atten = np.log(atten)
+    atten = (atten - np.mean(atten)) / np.std(atten) + 0.5
+
+    x_norm = (x - torch.min(x, dim=dim, keepdim=True)[0]) / (
+            torch.max(x, dim=dim, keepdim=True)[0] - torch.min(x, dim=dim, keepdim=True)[0] + 1e-8)
+
     # atten = atten[0]
     # if mode == "trained_boltzmann":
-    #     atten = np.log(atten)
-    #     atten = atten - np.mean(atten) + 0.5
+    # atten = np.log(atten)
+    # atten = atten - np.mean(atten) + 0.5
     # else:
     #     atten = (atten - np.mean(atten)) / np.std(atten) + 0.5
 
