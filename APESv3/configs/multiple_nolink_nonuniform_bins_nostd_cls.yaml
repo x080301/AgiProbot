@@ -126,14 +126,15 @@ feature_learning_block:
     ds_which: global_carve
     bin:
       enable: [ true, true ]
-      bin_boundaries: [ [ -0.689,-0.522, -0.380,-0.230,-0.045,0.219,0.721 ], [ -0.560,-0.492,-0.428,-0.346,-0.220,0.014,0.629 ] ]
+      bin_boundaries: [ [ 6.065e-06,3.737e-07,-2.851e-06, -5.421e-06,-8.08e-06 ],[ 5.914e-05,-2.619e-05,-5.652e-05,-7.882e-05,-0.0001078 ] ]
       multiply: [ true, true ]
+      direct_link_mode: [ 'raw', 'raw' ] # raw, no_link, no_link_higher_gradient
       mode: [ nonuniform_split_bin, nonuniform_split_bin ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
-      num_bins: [ 8, 8 ]
+      num_bins: [ 6, 6 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
-      direct_link_mode: [ 'no_link', 'no_link' ]
+      normalization_mode: [ z_score_no_std,z_score_no_std ] # no_normalization, z_score, z_score_no_std
     M:
       - 1024
       - 512

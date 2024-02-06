@@ -311,6 +311,8 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     _, _, M = x_ds.shape
     num_bins = len(bin_chunks_idx)
 
+    # bin_prob.shape == (B, num_bins)
+    bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
 
     tensor_to_multiply = torch.zeros(B, N).to(bin_probability.device)
@@ -499,6 +501,7 @@ class DownSampleCarve(nn.Module):
         if self.bin_enable:
             if self.bin_mode == "mode1" or self.bin_mode == 'nonuniform_split_bin':
                 x, self.bin_prob = self.bin_conv(x, bin_mode=self.bin_mode)
+                # bin_prob.shape == (B, num_bins)
         q = self.q_conv(x)
         # q.shape == (B, C, N)
         q = self.split_heads(q, self.num_heads, self.q_depth)
