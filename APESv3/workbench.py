@@ -62,6 +62,7 @@ def visualization_heatmap():
     from utils.visualization import visualization_heatmap_one_shape
     import pickle
     import os
+    from tqdm import tqdm
 
     mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
                8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser', 15: 'flower_pot',
@@ -76,7 +77,7 @@ def visualization_heatmap():
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    for i in range(20):
+    for i in tqdm(range(20)):
         with open(
                 f'/data/users/fu/APES/test_results/2024_02_03_23_07_modelnet_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
                 'rb') as f:
