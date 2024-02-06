@@ -312,7 +312,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     num_bins = len(bin_chunks_idx)
 
     # bin_prob.shape == (B, num_bins)
-    bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
+    # bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
 
     tensor_to_multiply = torch.zeros(B, N).to(bin_probability.device)
