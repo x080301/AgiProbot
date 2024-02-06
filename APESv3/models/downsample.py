@@ -364,7 +364,7 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
         num_undecided_points = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
 
         num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
-                                                                             num_undecided_points,max_num_points)
+                                                                             num_undecided_points, max_num_points)
 
         # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
 
@@ -380,7 +380,8 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     return num_points_to_choose
 
 
-def calculate_num_points_to_choose_one_iteration(probability, max_num_points, num_undecided_points,num_points_in_bins):  # , total_points):
+def calculate_num_points_to_choose_one_iteration(probability, max_num_points, num_undecided_points,
+                                                 num_points_in_bins):  # , total_points):
     """
 
     :param num_undecided_points: torch.Tensor(B,)
@@ -669,6 +670,7 @@ class DownSampleCarve(nn.Module):
 
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
+                print(f'bin_prob_edge before bin_prob:{bin_prob_edge[0, :, 0]}')
                 bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
 
                 # bin_prob.shape == (B, num_bins)
