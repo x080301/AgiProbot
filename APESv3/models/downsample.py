@@ -239,7 +239,7 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == 'nonuniform_split_bin':
                 idx, _, idx_chunks = self.nonuniform_bin_idx_selection(self.attention_point_score,
                                                                        self.bin_boundaries,
-                                                                       bin_prob,
+                                                                       copy.deepcopy(bin_prob),
                                                                        self.normalization_mode)
             else:
                 raise NotImplementedError
@@ -455,7 +455,6 @@ class DownSampleCarve(nn.Module):
         return idx_batch, k_batch, idx_chunks
 
     def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
-        bin_prob = copy.deepcopy(bin_prob)
         # bin_prob.shape == (B, num_bins)
         # self.attention_point_score.shape == (B, H, N)
         aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
