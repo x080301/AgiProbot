@@ -3,6 +3,7 @@ from torch import nn
 from utils import ops
 import math
 import torch.nn.functional as F
+import copy
 
 
 def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability, direct_link_mode):
@@ -370,11 +371,11 @@ class DownSampleCarve(nn.Module):
                 x = torch.cat((x, bin_prob_edge), dim=1)  # x.shape == (B, C+num_bins, N)
                 x = self.bin_conv2(x)  # x.shape == (B, C, N)
 
-                bin_prob_ = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+                bin_prob = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
                 # print(f'bin_prob_edge before bin_prob:{bin_prob_edge[0, :, 0]}')
-                bin_prob = F.sigmoid(bin_prob_).squeeze(2)
-                #bin_prob = bin_prob.squeeze(2)
+                bin_prob = F.sigmoid(bin_prob).squeeze(2)
+                # bin_prob = bin_prob.squeeze(2)
 
                 # bin_prob.shape == (B, num_bins)
             elif self.direct_link_mode == 'no_link' or self.direct_link_mode == 'no_link_higher_gradient':
@@ -454,6 +455,7 @@ class DownSampleCarve(nn.Module):
         return idx_batch, k_batch, idx_chunks
 
     def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
+        bin_prob = copy.deepcopy(bin_prob)
         # bin_prob.shape == (B, num_bins)
         # self.attention_point_score.shape == (B, H, N)
         aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
