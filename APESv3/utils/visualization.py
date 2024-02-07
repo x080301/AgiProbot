@@ -12,6 +12,7 @@ import pickle
 import os
 from tqdm import tqdm
 from .visualization_data_processing import *
+import torch
 
 
 def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
@@ -1505,7 +1506,8 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 idx_in_bins_batch = data_dict['idx_in_bins']
                 # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                 label_batch = data_dict['ground_truth']  # (B,)
-                probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()
+                probability_of_bins_batch = data_dict['probability_of_bins']  # B * num_layers * (num_bins)
+                probability_of_bins_batch = torch.asarray(probability_of_bins_batch)
                 # (B, num_layers, num_bins)
 
                 B, num_layers, num_bins = probability_of_bins_batch.shape

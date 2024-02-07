@@ -269,7 +269,7 @@ def test(local_rank, config):
                                  'idx_in_bins': idx_in_bins,
                                  # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                                  'probability_of_bins': probability_of_bins,
-                                 # (B, num_layers, num_bins)
+                                 # B * num_layers * (num_bins)
                                  'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
                                  # (B,)
                                  'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
