@@ -255,6 +255,7 @@ def test(local_rank, config):
                     idx_down = reshape_gathered_variable(idx_down_all_layers)
                     # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                     idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
+                    print(f'type(idx_in_bins[0][0][0]{type(idx_in_bins[0][0][0])}')
                     # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
                     probability_of_bins = reshape_gathered_variable(probability_of_bins_all_layers)
 
