@@ -284,6 +284,8 @@ def test(local_rank, config):
                                               index=i)
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
                                                          save_path=f'{save_dir}downsampled_points', index=i)
+                        visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
+                                                     save_path=f'{save_dir}points_in_bins', index=i)
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)

@@ -1420,18 +1420,29 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']  # (B,)
             idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+            idx_in_bins_batch = data_dict['idx_in_bins']
+            # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
 
             B = sample_batch.shape[0]
-            num_layers = len(idx_down_batch[0])
+            num_layers = len(idx_in_bins_batch[0])
+            num_bins = len(idx_in_bins_batch[0][0])
 
             for j in range(B):
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
                 idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+
+                idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+                for k in range(num_layers):
+                    idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+
                 for k in range(num_layers):
                     if k != 0:
                         idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+                        for l in range(num_bins):
+                            idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
 
                     xyzRGB = []
 
@@ -1444,7 +1455,12 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                         xyzRGB.append(xyzRGB_tmp)
 
                     vertex = np.array(xyzRGB)  # (N,3+3)
-                    vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
+
+                    colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
+                    # Red, Lime, Blue, Gold, Cyan, Purple
+                    for l in range(num_bins):
+                        vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
+                            colors[l]
 
                     saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
 
@@ -1458,7 +1474,5 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     plt.grid('off')
                     plt.savefig(saved_path, bbox_inches='tight')
                     plt.close(fig)
-
-                    # print(f'.png file is saved in {saved_path}')
     else:
         raise NotImplementedError
