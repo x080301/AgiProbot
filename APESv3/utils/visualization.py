@@ -1367,13 +1367,17 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     category = mapping[int(label_batch[j])]
 
                     idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+
                     idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+                    for k in range(num_layers):
+                        idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+
                     for k in range(num_layers):
                         if k != 0:
                             idx_down[k] = idx_down[k - 1][idx_down[k]]
 
                             for l in range(num_bins):
-                                idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l].flatten().cpu().numpy()]
+                                idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
 
                         xyzRGB = []
 
@@ -1391,7 +1395,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                         # Red, Lime, Blue, Gold, Cyan, Purple
                         for l in range(num_bins):
                             vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
-                            colors[l]
+                                colors[l]
 
                         saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
 
