@@ -15,30 +15,30 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     assert down_sampling_idx.shape[1] == 1, "Number of heads should be 1!"
 
-    # tensor_to_multiply = torch.zeros(B,1, M).to(bin_probability.device) + torch.sum(bin_probability)
+    tensor_to_multiply = torch.zeros(B, N).to(bin_probability.device)
 
-    # for i in range(num_bins):
-    #     for j in range(B):
-    #         # print(f'tensor_to_multiply[j, :].shape:{tensor_to_multiply[j, :].shape}')
-    #         # print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
-    #         # print(f'bin_probability[j, i]:{bin_probability[j, i]}')
-    #         if direct_link_mode == 'no_link_higher_gradient':
-    #             bin_probability_float = bin_probability[j, i].item
-    #
-    #             tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = \
-    #                 1.0 + bin_probability[j, i] - bin_probability_float * (M - 1) / M
-    #
-    #         else:
-    #             tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
-    #         # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
-    #         #                                                             bin_chunks_idx[i].squeeze()[j, :],
-    #         #                                                             1.0 + bin_probability[j, i] / M)
+    for i in range(num_bins):
+        for j in range(B):
+            # print(f'tensor_to_multiply[j, :].shape:{tensor_to_multiply[j, :].shape}')
+            # print(f'bin_chunks_idx[i].squeeze()[j, :]:{bin_chunks_idx[i].squeeze()[j, :].shape}')
+            # print(f'bin_probability[j, i]:{bin_probability[j, i]}')
+            if direct_link_mode == 'no_link_higher_gradient':
+                bin_probability_float = bin_probability[j, i].item
 
-    # tensor_to_multiply = torch.gather(tensor_to_multiply, dim=1, index=down_sampling_idx.squeeze(dim=1)).unsqueeze(1)
+                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = \
+                    1.0 + bin_probability[j, i] - bin_probability_float * (M - 1) / M
+
+            else:
+                tensor_to_multiply[j, :][bin_chunks_idx[i][j].flatten()] = 1.0 + bin_probability[j, i] / M
+            # tensor_to_multiply[j, :] = tensor_to_multiply[j, :].scatter(0,
+            #                                                             bin_chunks_idx[i].squeeze()[j, :],
+            #                                                             1.0 + bin_probability[j, i] / M)
+
+    tensor_to_multiply = torch.gather(tensor_to_multiply, dim=1, index=down_sampling_idx.squeeze(dim=1)).unsqueeze(1)
 
     # print(f'x_ds.shape=={x_ds.shape}')
     # print(f'tensor_to_multiply:{tensor_to_multiply.shape}')
-    x_ds = x_ds * torch.sum(bin_probability)  # tensor_to_multiply
+    x_ds = x_ds * tensor_to_multiply
 
     return x_ds
 
@@ -383,7 +383,7 @@ class DownSampleCarve(nn.Module):
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
                 bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
-            elif self.direct_link_mode == 'no_link_no_sigmoid':
+            elif self.direct_link_mode == 'no_link_no_sigmoid':  # TODO try avoid negative value
                 bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 bin_prob = bin_prob_edge.squeeze(2)
