@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as Image
 from matplotlib import cm
 from collections import OrderedDict
-from utils.visualization import visualization_heatmap_one_shape
 import pickle
 import os
 from tqdm import tqdm
