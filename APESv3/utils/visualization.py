@@ -1492,7 +1492,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                    39: 'xbox'}
 
         if data_dict is None:
-            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/points_in_bins/'
+            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
             if not os.path.exists(save_path):
                 os.makedirs(save_path)
 
