@@ -1566,6 +1566,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 os.makedirs(save_path)
 
             idx_in_bins_batch = data_dict['idx_in_bins']
+            print(f'type(idx_in_bins_batch[0][0][0]{type(idx_in_bins_batch[0][0][0])}')
             # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
             label_batch = data_dict['ground_truth']  # (B,)
             probability_of_bins_batch = data_dict['probability_of_bins']  # B * num_layers * (num_bins)
@@ -1580,6 +1581,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
                 category = mapping[int(label_batch[j])]
                 idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+                print(f'type(idx_in_bins[0][0]{type(idx_in_bins[0][0])}')
 
                 for k in range(num_layers):
                     idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
