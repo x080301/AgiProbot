@@ -89,6 +89,11 @@ def visualization_points_in_bins():
     visualization_points_in_bins()
 
 
+def visualization_histogram():
+    from utils.visualization import visualization_histogram
+    visualization_histogram()
+
+
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 
@@ -106,4 +111,5 @@ def visualization_points_in_bins():
 # visualization_heatmap()
 # num_points_in_bins()
 # visualization_downsampled_points()
-visualization_points_in_bins()
+# visualization_points_in_bins()
+visualization_histogram()
