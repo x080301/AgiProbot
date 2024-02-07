@@ -1,4 +1,3 @@
-import os
 import shutil
 import numpy as np
 import pkbar
@@ -9,6 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.image as Image
 from matplotlib import cm
 from collections import OrderedDict
+from utils.visualization import visualization_heatmap_one_shape
+import pickle
+import os
+from tqdm import tqdm
 from .visualization_data_processing import *
 
 
@@ -1149,3 +1152,55 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
                     f'format should be png or ply, but got {config.test.visualize_downsampled_points.format}')
         pbar.update(i)
     print(f'Done! All files are saved in {base_path}')
+
+
+def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index=None):
+    if mode == 'modelnet':
+
+        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
+                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
+                   15: 'flower_pot',
+                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
+                   23: 'night_stand',
+                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
+                   31: 'stairs',
+                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
+                   39: 'xbox'}
+
+        if data_dict is None:
+            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/heat_map'
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+
+            for i in tqdm(range(20)):
+                with open(
+                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                        'rb') as f:
+                    data_dict = pickle.load(f)
+
+                sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+                sample_batch = data_dict['samples']  # (B,N,3)
+                label_batch = data_dict['ground_truth']
+
+                B = sample_batch.shape[0]
+
+                for j in range(B):
+                    sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
+                    sample = sample_batch[j].cpu().numpy()  # (N,3)
+                    category = mapping[int(label_batch[j])]
+
+                    visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
+        else:
+            sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+            sample_batch = data_dict['samples']  # (B,N,3)
+            label_batch = data_dict['ground_truth']
+            B = sample_batch.shape[0]
+
+            for j in range(B):
+                sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
+                sample = sample_batch[j].cpu().numpy()  # (N,3)
+                category = mapping[int(label_batch[j])]
+
+                visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+    else:
+        raise NotImplementedError

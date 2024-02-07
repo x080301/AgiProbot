@@ -279,6 +279,9 @@ def test(local_rank, config):
                             pickle.dump(data_dict, f)
                         # print(f'save{i}')
 
+                    if i < 10:
+                        visualization_heatmap(mode='modelnet', data_dict=data_dict, save_path=save_dir, index=i)
+
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
                 pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
