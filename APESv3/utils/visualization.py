@@ -1190,6 +1190,9 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
 
                     visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
         else:
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+
             sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']
@@ -1275,7 +1278,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
         else:
             # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
-
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+                
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']  # (B,)
             idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
