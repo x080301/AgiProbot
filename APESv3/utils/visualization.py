@@ -1507,7 +1507,9 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                 label_batch = data_dict['ground_truth']  # (B,)
                 probability_of_bins_batch = data_dict['probability_of_bins']  # B * num_layers * (num_bins)
-                probability_of_bins_batch = torch.asarray(probability_of_bins_batch).cpu().numpy()
+                probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
+                probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0).cpu().numpy()
+
                 # (B, num_layers, num_bins)
 
                 B, num_layers, num_bins = probability_of_bins_batch.shape
