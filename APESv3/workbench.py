@@ -78,6 +78,12 @@ def num_points_in_bins():
                 print(f'probability_of_bins,sample{i * 16 + j},layer{k}:{probability_of_bins[j][k]}')
 
 
+def visualization_downsampled_points():
+    from utils.visualization import visualization_downsampled_points
+
+    visualization_downsampled_points()
+
+
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 
@@ -92,5 +98,6 @@ def num_points_in_bins():
 
 # find_sampling_score_bin_boundary()
 # visualization_histogram_in_boundary()
-visualization_heatmap()
+# visualization_heatmap()
 # num_points_in_bins()
+visualization_downsampled_points()

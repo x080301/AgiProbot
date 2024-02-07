@@ -55,7 +55,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     plt.savefig(saved_path, bbox_inches='tight')
     plt.close(fig)
 
-    print(f'Done! .png file is saved in {saved_path}')
+    print(f'.png file is saved in {saved_path}')
 
 
 def visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious, index, artifacts_path):
@@ -1189,6 +1189,90 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                     category = mapping[int(label_batch[j])]
 
                     visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
+        else:
+            sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+            sample_batch = data_dict['samples']  # (B,N,3)
+            label_batch = data_dict['ground_truth']
+            B = sample_batch.shape[0]
+
+            for j in range(B):
+                sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
+                sample = sample_batch[j].cpu().numpy()  # (N,3)
+                category = mapping[int(label_batch[j])]
+
+                visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+    else:
+        raise NotImplementedError
+
+
+def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None):
+    if mode == 'modelnet':
+
+        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
+                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
+                   15: 'flower_pot',
+                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
+                   23: 'night_stand',
+                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
+                   31: 'stairs',
+                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
+                   39: 'xbox'}
+
+        if data_dict is None:
+            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+
+            for i in tqdm(range(20)):
+                with open(
+                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                        'rb') as f:
+                    data_dict = pickle.load(f)
+
+                sample_batch = data_dict['samples']  # (B,N,3)
+                label_batch = data_dict['ground_truth']  # (B,)
+                idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+
+                B = sample_batch.shape[0]
+                num_layers = len(idx_down_batch[0])
+
+                for j in range(B):
+                    sample = sample_batch[j].cpu().numpy()  # (N,3)
+                    category = mapping[int(label_batch[j])]
+
+                    idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+                    for k in range(num_layers):
+                        if k != 0:
+                            idx_down[i] = idx_down[i - 1][idx_down[i]]
+
+                        xyzRGB = []
+
+                        for xyz in sample:
+                            xyzRGB_tmp = []
+                            xyzRGB_tmp.extend(list(xyz))
+                            # print(my_cmap)
+                            # print(np.asarray(my_cmap(rgb)))
+                            xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                            xyzRGB.append(xyzRGB_tmp)
+
+                        vertex = np.array(xyzRGB)  # (N,3+3)
+                        vertex[idx_down[i], 3], vertex[idx_down[i], 4], vertex[idx_down[i], 5] = 255, 0, 0# red color
+
+
+                        saved_path = f'{save_path}/sample{i*B+j}_{category}_layer{k}.png'
+
+                        fig = plt.figure()
+                        ax = fig.add_subplot(projection='3d')
+                        ax.set_xlim3d(-0.6, 0.6)
+                        ax.set_ylim3d(-0.6, 0.6)
+                        ax.set_zlim3d(-0.6, 0.6)
+                        ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+                        plt.axis('off')
+                        plt.grid('off')
+                        plt.savefig(saved_path, bbox_inches='tight')
+                        plt.close(fig)
+
+                        print(f'.png file is saved in {saved_path}')
         else:
             sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
             sample_batch = data_dict['samples']  # (B,N,3)
