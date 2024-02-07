@@ -55,7 +55,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     plt.savefig(saved_path, bbox_inches='tight')
     plt.close(fig)
 
-    print(f'.png file is saved in {saved_path}')
+    # print(f'.png file is saved in {saved_path}')
 
 
 def visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious, index, artifacts_path):
@@ -1256,10 +1256,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                             xyzRGB.append(xyzRGB_tmp)
 
                         vertex = np.array(xyzRGB)  # (N,3+3)
-                        vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0# red color
+                        vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-
-                        saved_path = f'{save_path}/sample{i*B+j}_{category}_layer{k}.png'
+                        saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
 
                         fig = plt.figure()
                         ax = fig.add_subplot(projection='3d')
@@ -1272,18 +1271,53 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                         plt.savefig(saved_path, bbox_inches='tight')
                         plt.close(fig)
 
-                        print(f'.png file is saved in {saved_path}')
+                        # print(f'.png file is saved in {saved_path}')
         else:
-            sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+            # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+
+
             sample_batch = data_dict['samples']  # (B,N,3)
-            label_batch = data_dict['ground_truth']
+            label_batch = data_dict['ground_truth']  # (B,)
+            idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+
             B = sample_batch.shape[0]
+            num_layers = len(idx_down_batch[0])
 
             for j in range(B):
-                sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
-                visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+                idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+                for k in range(num_layers):
+                    if k != 0:
+                        idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+                    xyzRGB = []
+
+                    for xyz in sample:
+                        xyzRGB_tmp = []
+                        xyzRGB_tmp.extend(list(xyz))
+                        # print(my_cmap)
+                        # print(np.asarray(my_cmap(rgb)))
+                        xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                        xyzRGB.append(xyzRGB_tmp)
+
+                    vertex = np.array(xyzRGB)  # (N,3+3)
+                    vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
+
+                    saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+
+                    fig = plt.figure()
+                    ax = fig.add_subplot(projection='3d')
+                    ax.set_xlim3d(-0.6, 0.6)
+                    ax.set_ylim3d(-0.6, 0.6)
+                    ax.set_zlim3d(-0.6, 0.6)
+                    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+                    plt.axis('off')
+                    plt.grid('off')
+                    plt.savefig(saved_path, bbox_inches='tight')
+                    plt.close(fig)
+
+                    # print(f'.png file is saved in {saved_path}')
     else:
         raise NotImplementedError
