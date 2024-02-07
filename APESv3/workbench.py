@@ -73,13 +73,13 @@ def visualization_heatmap():
                32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                39: 'xbox'}
 
-    save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_03_23_07_modelnet_nonuniform_newdownsampling/heat_map'
+    save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/heat_map'
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
     for i in tqdm(range(20)):
         with open(
-                f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_03_23_07_modelnet_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
                 'rb') as f:
             data_dict = pickle.load(f)
 
