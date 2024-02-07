@@ -3,7 +3,6 @@ from torch import nn
 from utils import ops
 import math
 import torch.nn.functional as F
-import copy
 
 
 def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability, direct_link_mode):
@@ -138,11 +137,8 @@ class DownSampleCarve(nn.Module):
         self.q_conv = nn.Conv1d(q_in, q_out, 1, bias=False)
         self.k_conv = nn.Conv1d(k_in, k_out, 1, bias=False)
         self.v_conv = nn.Conv1d(v_in, v_out, 1, bias=False)
-        # gumble softmax
-        if gumble == True:
-            self.softmax = GumbleSoftmax(tau=tau, dim=-1)
-        else:
-            self.softmax = nn.Softmax(dim=-1)
+
+        self.softmax = nn.Softmax(dim=-1)
         # downsample res link
         if self.res:
             self.bn1 = nn.BatchNorm1d(v_out)
