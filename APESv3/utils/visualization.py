@@ -1191,6 +1191,7 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
 
                     visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
         else:
+            data_dict = deepcopy(data_dict)
             if not os.path.exists(save_path):
                 os.makedirs(save_path)
 
@@ -1277,6 +1278,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
                         # print(f'.png file is saved in {saved_path}')
         else:
+            data_dict = deepcopy(data_dict)
             # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
             if not os.path.exists(save_path):
@@ -1413,6 +1415,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
 
                         # print(f'.png file is saved in {saved_path}')
         else:
+            data_dict = deepcopy(data_dict)
             # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
             if not os.path.exists(save_path):
@@ -1560,6 +1563,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                         # print(f'.png file is saved in {saved_path}')
         else:
+            data_dict = deepcopy(data_dict)
             # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
             if not os.path.exists(save_path):
