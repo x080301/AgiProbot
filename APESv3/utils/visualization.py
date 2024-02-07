@@ -1256,7 +1256,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                             xyzRGB.append(xyzRGB_tmp)
 
                         vertex = np.array(xyzRGB)  # (N,3+3)
-                        vertex[idx_down[i], 3], vertex[idx_down[i], 4], vertex[idx_down[i], 5] = 255, 0, 0# red color
+                        vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0# red color
 
 
                         saved_path = f'{save_path}/sample{i*B+j}_{category}_layer{k}.png'
