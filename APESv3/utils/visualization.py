@@ -1243,7 +1243,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
                     for k in range(num_layers):
                         if k != 0:
-                            idx_down[i] = idx_down[i - 1][idx_down[i]]
+                            idx_down[k] = idx_down[k - 1][idx_down[k]]
 
                         xyzRGB = []
 
