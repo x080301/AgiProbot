@@ -1543,7 +1543,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                         color = 'tab:blue'
                         ax2.set_ylabel('Probabilities in Bins', color=color)
-                        ax2.set_ylim([0, 1])
+                        ax2.set_ylim([0, 100])
                         ax2.plot(bins, probabilities_in_bins * 100, color=color, marker='o')
                         ax2.tick_params(axis='y', labelcolor=color)
 
