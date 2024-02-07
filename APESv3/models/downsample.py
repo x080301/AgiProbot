@@ -270,6 +270,7 @@ class DownSampleCarve(nn.Module):
 
         self.idx = idx
         self.idx_chunks = idx_chunks
+        self.bin_prob = bin_prob
         return (x_ds, idx), (None, None)
 
     def output_variables(self, *args):

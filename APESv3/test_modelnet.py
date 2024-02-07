@@ -216,6 +216,8 @@ def test(local_rank, config):
             pred_gather_list = [torch.empty_like(preds).to(device) for _ in range(config.test.ddp.nproc_this_node)]
             cls_label_gather_list = [torch.empty_like(cls_labels).to(device) for _ in
                                      range(config.test.ddp.nproc_this_node)]
+
+            samples = samples.permute(0, 2, 1)  # samples: (B,3,N)->(B,N,3)
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
             vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
