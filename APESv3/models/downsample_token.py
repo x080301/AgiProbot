@@ -207,6 +207,7 @@ class DownSampleToken(nn.Module):
         self.num_heads = config_ds.num_heads[layer]
         self.normalization_mode = config_ds.bin.normalization_mode[layer]
         self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+        self.M = config_ds.M[layer]
 
         q_in = config_ds.q_in[layer]
         q_out = config_ds.q_out[layer]
