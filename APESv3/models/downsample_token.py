@@ -250,13 +250,13 @@ class DownSampleToken(nn.Module):
 
             energy = q @ k  # energy: (B,N,N+num_bins)
 
-            energy = energy.squeeze(dim=1)
+            energy = energy.unsqueeze(dim=1)
             energy_points, energy_bins = torch.split(energy, [N, self.num_bins], dim=-1)
             # energy_points: (B,H,N,N)
             # energy_bins: (B,H,N,num_bins)
 
             bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,1,num_bins)
-            bin_prob = bin_prob.unsqueeze(1)  # x_bins: (B,num_bins)
+            bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
             # print(f'bin_prob.shape:{bin_prob.shape}')
         else:
             raise NotImplementedError
