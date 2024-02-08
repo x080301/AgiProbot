@@ -8,8 +8,8 @@ from utils import ops
 def get_sparse_attention_map(x, K, attention_map):
     mask = ops.neighbor_mask(x, K)
     mask = mask.unsqueeze(1).expand(-1, attention_map.shape[1], -1, -1)
-    print(f'attention_map.shape{attention_map.shape}')
-    print(f'mask.shape{mask.shape}')
+    # print(f'attention_map.shape{attention_map.shape}')
+    # print(f'mask.shape{mask.shape}')
     sparse_attention_map = attention_map * mask
     return mask, sparse_attention_map
 
