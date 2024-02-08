@@ -231,7 +231,7 @@ class DownSampleToken(nn.Module):
         # x.shape == (B, C, N)
         B, C, N = x.shape
 
-        bin_tokens = einops.repeat(self.bolt_token, '1 c num_bins -> b c num_bins', b=B)
+        bin_tokens = einops.repeat(self.bin_tokens, '1 c num_bins -> b c num_bins', b=B)
         # bin_tokens.shape ==(B,C,num_bins)
 
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
