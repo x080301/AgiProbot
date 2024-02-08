@@ -142,11 +142,10 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     for i in range(B):
         for j in range(num_bins):
             max_num_points[i, j] = aps_chunks[j][i].shape[1]
-    print(f' bin_prob{bin_prob}-----------')
-    start = time.time()
+    # print(f' bin_prob{bin_prob}-----------')
+
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
-    end = time.time()
-    print(f'runing time is {str(end - start)}')
+
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
     idx_batch_list = []
@@ -267,12 +266,16 @@ class DownSampleToken(nn.Module):
             idx_down, _, idx_chunks = bin_idx_selection(attention_point_score, self.num_bins,
                                                         bin_prob, self.M, self.bin_sample_mode)
         elif self.bin_mode == 'nonuniform_split_bin':
+            start = time.time()
+
             idx_down, _, idx_chunks = nonuniform_bin_idx_selection(attention_point_score,
                                                                    self.bin_boundaries,
                                                                    bin_prob,
                                                                    self.normalization_mode,
                                                                    self.M,
                                                                    self.bin_sample_mode)
+            end = time.time()
+            print(f'runing time is {str(end - start)}')
         else:
             raise NotImplementedError
 
