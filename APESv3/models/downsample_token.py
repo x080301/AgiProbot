@@ -85,11 +85,8 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
         probability[num_poins_to_drop == 0] = 0
         num_undecided_points = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
 
-        start = time.time()
         num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
                                                                              num_undecided_points, max_num_points)
-        end = time.time()
-        print(f'runing time is {str(end - start)}')
 
         # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
 
@@ -145,9 +142,11 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     for i in range(B):
         for j in range(num_bins):
             max_num_points[i, j] = aps_chunks[j][i].shape[1]
-    # print(f' bin_prob{bin_prob}-----------')
-    print()
+    print(f' bin_prob{bin_prob}-----------')
+    start = time.time()
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+    end = time.time()
+    print(f'runing time is {str(end - start)}')
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
     idx_batch_list = []
