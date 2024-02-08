@@ -248,21 +248,21 @@ class DownSampleToken(nn.Module):
 
             q = einops.rearrange(q, 'b 1 c n -> b 1 n c')  # q: (B, 1, N, C)
 
-            energy = q @ k  # energy: (B,N,N+num_bins)
+            energy = q @ k  # energy: (B,1,N,N+num_bins)
 
-            energy_points, energy_bins = torch.split(energy, [N, self.num_bins], dim=-1)
-            # energy_points: (B,H,N,N)
-            # energy_bins: (B,H,N,num_bins)
+            attention_map = self.softmax(energy)  # attention_map: (B,1,N,N+num_bins)
 
-            bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,1,num_bins)
+            attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
+            # energy_points: (B,1,H,N,N)
+            # energy_bins: (B,1,H,N,num_bins)
+
+            bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
             # print(f'bin_prob.shape:{bin_prob.shape}')
         else:
             raise NotImplementedError
 
-        attention_map = self.softmax(energy_points)  # attention_map: (B,H,N,N)
-
-        mask, sparse_attention_map = get_sparse_attention_map(x, self.K, attention_map)
+        mask, sparse_attention_map = get_sparse_attention_map(x, self.K, attention_points)
         sparse_num = torch.sum(mask, dim=-2) + 1e-8
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
 
@@ -281,8 +281,12 @@ class DownSampleToken(nn.Module):
 
         attention_down = torch.gather(attention_map, dim=2,
                                       index=idx_down.unsqueeze(3).expand(-1, -1, -1, attention_map.shape[-1]))
+        # attention_map: (B,H,N,N+num_bins)
+        # attention_down: (B,H,M,N+num_bins)
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
-        # v_down.shape == (B, M, H, D)
+        # attention_down: (B,H,M,N+num_bins)
+        # v.permute(0, 1, 3, 2): (B, H, N+num_bins, C)
+        # v_down.shape == (B, M, H, C)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
         # v_down.shape == (B, C, M)
 
