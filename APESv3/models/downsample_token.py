@@ -280,8 +280,8 @@ class DownSampleToken(nn.Module):
         else:
             raise NotImplementedError
 
-        attention_down = torch.gather(self.attention_map, dim=2,
-                                      index=idx_down.unsqueeze(3).expand(-1, -1, -1, self.attention_map.shape[-1]))
+        attention_down = torch.gather(attention_map, dim=2,
+                                      index=idx_down.unsqueeze(3).expand(-1, -1, -1, attention_map.shape[-1]))
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
         # v_down.shape == (B, M, H, D)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
