@@ -241,16 +241,15 @@ class DownSampleToken(nn.Module):
 
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
 
-        q = self.q_conv(x)  # q.shape == (B, C, N)
-        k = self.k_conv(x_and_token)  # k.shape ==  (B,C,N+num_bins)
-        v = self.v_conv(x_and_token)  # v.shape ==  (B,C,N+num_bins)
-
         if self.num_heads == 1:
-            q = einops.rearrange(q, 'b c n -> b n c')  # q: (B, N, C)
+            q = self.q_conv(x).unsqueeze(dim=1)  # q.shape == (B, 1, C, N)
+            k = self.k_conv(x_and_token).unsqueeze(dim=1)  # k.shape ==  (B, 1, C, N+num_bins)
+            v = self.v_conv(x_and_token).unsqueeze(dim=1)  # v.shape ==  (B, 1, C, N+num_bins)
+
+            q = einops.rearrange(q, 'b 1 c n -> b 1 n c')  # q: (B, 1, N, C)
 
             energy = q @ k  # energy: (B,N,N+num_bins)
 
-            energy = energy.unsqueeze(dim=1)
             energy_points, energy_bins = torch.split(energy, [N, self.num_bins], dim=-1)
             # energy_points: (B,H,N,N)
             # energy_bins: (B,H,N,num_bins)
