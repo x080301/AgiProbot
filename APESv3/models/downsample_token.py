@@ -266,7 +266,6 @@ class DownSampleToken(nn.Module):
             idx_down, _, idx_chunks = bin_idx_selection(attention_point_score, self.num_bins,
                                                         bin_prob, self.M, self.bin_sample_mode)
         elif self.bin_mode == 'nonuniform_split_bin':
-            start = time.time()
 
             idx_down, _, idx_chunks = nonuniform_bin_idx_selection(attention_point_score,
                                                                    self.bin_boundaries,
@@ -274,8 +273,6 @@ class DownSampleToken(nn.Module):
                                                                    self.normalization_mode,
                                                                    self.M,
                                                                    self.bin_sample_mode)
-            end = time.time()
-            print(f'runing time is {str(end - start)}')
         else:
             raise NotImplementedError
 
