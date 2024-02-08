@@ -1,10 +1,12 @@
 import torch
 from torch import nn
+
 from utils import ops
 from models import embedding
 from models import attention
 from models import downsample
 from models import upsample
+from models import downsample_token
 
 
 class FeatureLearningBlock(nn.Module):
@@ -31,6 +33,10 @@ class FeatureLearningBlock(nn.Module):
         elif downsample_which == 'local_insert':
             self.downsample_list = nn.ModuleList(
                 [downsample.DownSampleInsert(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
+        elif downsample_which == 'token':
+            self.downsample_list = nn.ModuleList(
+                [downsample_token.DownSampleToken(config_feature_learning_block.downsample, layer) for layer in
                  range(len(config_feature_learning_block.downsample.M))])
         else:
             raise ValueError('Only global_carve and local_insert are valid for ds_which!')

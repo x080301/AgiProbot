@@ -4,6 +4,7 @@ from utils import ops
 from models import embedding
 from models import attention
 from models import downsample
+from models import downsample_token
 
 
 class FeatureLearningBlock(nn.Module):
@@ -14,11 +15,13 @@ class FeatureLearningBlock(nn.Module):
         fl_which = config_feature_learning_block.attention.fl_which
 
         super(FeatureLearningBlock, self).__init__()
-        self.embedding_list = nn.ModuleList([embedding.EdgeConv(config_feature_learning_block.embedding, layer) for layer in
-                                             range(len(config_feature_learning_block.embedding.K))])
+        self.embedding_list = nn.ModuleList(
+            [embedding.EdgeConv(config_feature_learning_block.embedding, layer) for layer in
+             range(len(config_feature_learning_block.embedding.K))])
         if downsample_which == 'global':
-            self.downsample_list = nn.ModuleList([downsample.DownSample(config_feature_learning_block.downsample, layer) for layer in
-                                                  range(len(config_feature_learning_block.downsample.M))])
+            self.downsample_list = nn.ModuleList(
+                [downsample.DownSample(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'local':
             self.downsample_list = nn.ModuleList(
                 [downsample.DownSampleWithSigma(config_feature_learning_block.downsample, layer) for layer in
@@ -31,8 +34,12 @@ class FeatureLearningBlock(nn.Module):
             self.downsample_list = nn.ModuleList(
                 [downsample.DownSampleInsert(config_feature_learning_block.downsample, layer) for layer in
                  range(len(config_feature_learning_block.downsample.M))])
+        elif downsample_which == 'token':
+            self.downsample_list = nn.ModuleList(
+                [downsample_token.DownSampleToken(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         else:
-            raise ValueError('Only global_carve and local_insert are valid for ds_which!')
+            raise NotImplementedError
         if fl_which == 'n2p':
             self.feature_learning_layer_list = nn.ModuleList(
                 [attention.Neighbor2PointAttention(config_feature_learning_block.attention, layer) for layer in
