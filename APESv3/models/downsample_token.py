@@ -146,7 +146,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     for i in range(B):
         for j in range(num_bins):
             max_num_points[i, j] = aps_chunks[j][i].shape[1]
-    # print(f'bin_prob{bin_prob}-----------')
+    # print(f' bin_prob{bin_prob}-----------')
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
@@ -252,7 +252,8 @@ class DownSampleToken(nn.Module):
             # energy_points: (B,H,N,N)
             # energy_bins: (B,H,N,num_bins)
 
-            bin_prob, _ = torch.max(energy_bins, dim=-2).unsqueeze(1)  # x_bins: (B,num_bins)
+            bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,1,num_bins)
+            bin_prob = bin_prob.unsqueeze(1)
         else:
             raise NotImplementedError
 
