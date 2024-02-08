@@ -9,6 +9,8 @@ def check_config(config):
     '''
 
     idx_mode_dict = {
+        "token": ["col_sum", "row_std", "sparse_row_sum", "sparse_row_std", "sparse_col_sum", "sparse_col_avg",
+                  "sparse_col_sqr"],
         "global_carve": ["col_sum", "row_std", "sparse_row_sum", "sparse_row_std", "sparse_col_sum", "sparse_col_avg",
                          "sparse_col_sqr"],
         "local": ["local_std"],
@@ -64,7 +66,8 @@ def check_config(config):
     assert config.feature_learning_block.enable and not config.point2point_block.enable and not config.edgeconv_block.enable, "Only N2P block can be enabled!"
 
     # feature_learning_block.embedding
-    if config.feature_learning_block.embedding.normal_channel + (config.datasets.dataset_name == "shapenet_Normal") == 1:
+    if config.feature_learning_block.embedding.normal_channel + (
+            config.datasets.dataset_name == "shapenet_Normal") == 1:
         raise ValueError("embedding.normal_channel and dataset shapenet_Normal must be sync setted!")
     elif config.datasets.dataset_name == "shapenet_Normal":
         assert config.feature_learning_block.embedding.conv1_in[
