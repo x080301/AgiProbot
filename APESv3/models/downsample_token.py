@@ -248,14 +248,13 @@ class DownSampleToken(nn.Module):
             energy = q @ k  # energy: (B,N,N+num_bins)
 
             energy = einops.rearrange(energy, 'b n nnb -> b 1 n nnb')
+            energy_points, energy_bins = torch.split(energy, [N, self.num_bins], dim=-1)
+            # energy_points: (B,H,N,N)
+            # energy_bins: (B,H,N,num_bins)
+
+            bin_prob, _ = torch.max(energy_bins, dim=-2).unsqueeze(1)  # x_bins: (B,num_bins)
         else:
             raise NotImplementedError
-
-        energy_points, energy_bins = torch.split(energy, [N, self.num_bins], dim=-1)
-        # energy_points: (B,H,N,N)
-        # energy_bins: (B,H,N,num_bins)
-
-        bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,H,num_bins)
 
         attention_map = self.softmax(energy_points)  # attention_map: (B,H,N,N)
 
