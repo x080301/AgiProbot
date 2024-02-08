@@ -227,7 +227,7 @@ class DownSampleToken(nn.Module):
         self.idx = None
         self.attention_point_score = None
 
-    def forward(self, x):
+    def forward(self, x, x_xyz=None):
         # x.shape == (B, C, N)
         B, C, N = x.shape
 
