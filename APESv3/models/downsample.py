@@ -325,6 +325,9 @@ class DownSampleCarve(nn.Module):
     def get_sparse_attention_map(self, x):
         mask = ops.neighbor_mask(x, self.K)
         mask = mask.unsqueeze(1).expand(-1, self.attention_map.shape[1], -1, -1)
+        print(f'attention_map.shape{self.attention_map.shape}')
+        print(f'mask.shape{mask.shape}')
+        exit(-1)
         sparse_attention_map = self.attention_map * mask
         return mask, sparse_attention_map
 
