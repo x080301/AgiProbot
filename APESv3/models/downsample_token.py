@@ -67,6 +67,7 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
+    print(f'probability.shape:{probability.shape}')
     B, num_bins = probability.shape
     # print(f'probability{probability.shape}')
     # print(f'max_num_points{max_num_points.shape}')
@@ -253,7 +254,8 @@ class DownSampleToken(nn.Module):
             # energy_bins: (B,H,N,num_bins)
 
             bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,1,num_bins)
-            bin_prob = bin_prob.unsqueeze(1)
+            bin_prob = bin_prob.unsqueeze(1)# x_bins: (B,num_bins)
+            print(f'bin_prob.shape:{bin_prob.shape}')
         else:
             raise NotImplementedError
 
