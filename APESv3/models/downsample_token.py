@@ -255,7 +255,7 @@ class DownSampleToken(nn.Module):
         # energy_points: (B,H,N,N)
         # energy_bins: (B,H,N,num_bins)
 
-        bin_prob = torch.max(energy_bins, dim=-2)  # x_bins: (B,H,num_bins)
+        bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,H,num_bins)
 
         attention_map = self.softmax(energy_points)  # attention_map: (B,H,N,N)
 
