@@ -3,6 +3,7 @@ import torch
 import einops
 
 from utils import ops
+import time
 
 
 def get_sparse_attention_map(x, K, attention_map):
@@ -84,8 +85,11 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
         probability[num_poins_to_drop == 0] = 0
         num_undecided_points = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
 
+        start = time.time()
         num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
                                                                              num_undecided_points, max_num_points)
+        end = time.time()
+        print(f'runing time is {str(end - start)}')
 
         # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
 
@@ -112,19 +116,11 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     """
     num_undecided_points = num_undecided_points.reshape(-1, 1)
 
-    # probability = probability / torch.sum(probability, dim=1, keepdim=True) * num_undecided_points / torch.sum(
-    #     max_num_points, dim=1, keepdim=True)
-
-    # print(f'max_num_points{max_num_points}')
-    # print(f'probability{probability}')
     num_points_to_choose = probability * num_points_in_bins
     num_points_to_choose = num_points_to_choose * num_undecided_points / torch.sum(num_points_to_choose,
                                                                                    dim=1, keepdim=True)
-    # print(f'num_points_to_choose2:{num_points_to_choose}')
     num_points_to_choose = num_points_to_choose.int()
 
-    # print(f'num_points_to_choose1:{num_points_to_choose}')
-    # num_points_to_choose = num_points_to_choose * total_points / torch.sum(num_points_to_choose, dim=1, keepdim=True)
     num_points_to_choose = torch.where(num_points_to_choose < max_num_points, num_points_to_choose, max_num_points)
     # print(f'num_points_to_choose:{num_points_to_choose}')
 
@@ -150,6 +146,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
         for j in range(num_bins):
             max_num_points[i, j] = aps_chunks[j][i].shape[1]
     # print(f' bin_prob{bin_prob}-----------')
+    print()
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
