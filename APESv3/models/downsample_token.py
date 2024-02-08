@@ -8,6 +8,8 @@ from utils import ops
 def get_sparse_attention_map(x, K, attention_map):
     mask = ops.neighbor_mask(x, K)
     mask = mask.unsqueeze(1).expand(-1, attention_map.shape[1], -1, -1)
+    print(f'attention_map.shape{attention_map.shape}')
+    print(f'mask.shape{mask.shape}')
     sparse_attention_map = attention_map * mask
     return mask, sparse_attention_map
 
@@ -67,7 +69,7 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-    print(f'probability.shape:{probability.shape}')
+    # print(f'probability.shape:{probability.shape}')
     B, num_bins = probability.shape
     # print(f'probability{probability.shape}')
     # print(f'max_num_points{max_num_points.shape}')
@@ -255,7 +257,7 @@ class DownSampleToken(nn.Module):
 
             bin_prob, _ = torch.max(energy_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.unsqueeze(1)  # x_bins: (B,num_bins)
-            print(f'bin_prob.shape:{bin_prob.shape}')
+            # print(f'bin_prob.shape:{bin_prob.shape}')
         else:
             raise NotImplementedError
 
@@ -282,8 +284,6 @@ class DownSampleToken(nn.Module):
                                       index=idx_down.unsqueeze(3).expand(-1, -1, -1, self.attention_map.shape[-1]))
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
         # v_down.shape == (B, M, H, D)
-        # v_dropped = (attention_dropped @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
-        # v_dropped.shape == (B, N-M, H, D)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
         # v_down.shape == (B, C, M)
 
