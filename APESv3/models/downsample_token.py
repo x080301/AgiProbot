@@ -216,7 +216,6 @@ class DownSampleToken(nn.Module):
         v_out = config_ds.v_out[layer]
 
         self.bin_tokens = nn.Parameter(torch.randn(1, q_in, self.num_bins))
-        print(f'self.bin_tokens.device{self.bin_tokens.device}')
 
         self.q_conv = nn.Conv1d(q_in, q_out, 1, bias=False)
         self.k_conv = nn.Conv1d(k_in, k_out, 1, bias=False)
@@ -230,6 +229,7 @@ class DownSampleToken(nn.Module):
         self.attention_point_score = None
 
     def forward(self, x, x_xyz=None):
+        self.bin_tokens = self.bin_tokens.to(x.device)
         # x.shape == (B, C, N)
         B, C, N = x.shape
 
