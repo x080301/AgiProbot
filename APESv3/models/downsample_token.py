@@ -232,7 +232,7 @@ class DownSampleToken(nn.Module):
         #self.bin_tokens = self.bin_tokens.to(x.device)
         # x.shape == (B, C, N)
         B, C, N = x.shape
-
+        print(f'x.shape{self.bin_tokens.device}')
         bin_tokens = einops.repeat(self.bin_tokens, '1 c num_bins -> b c num_bins', b=B)
         # bin_tokens.shape ==(B,C,num_bins)
 
