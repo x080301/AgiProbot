@@ -229,14 +229,17 @@ class DownSampleToken(nn.Module):
         self.attention_point_score = None
 
     def forward(self, x, x_xyz=None):
-        self.bin_tokens = self.bin_tokens.to(x.device)
+        #self.bin_tokens = self.bin_tokens.to(x.device)
         # x.shape == (B, C, N)
         B, C, N = x.shape
 
         bin_tokens = einops.repeat(self.bin_tokens, '1 c num_bins -> b c num_bins', b=B)
         # bin_tokens.shape ==(B,C,num_bins)
 
+        print(f'x.shape{x.shape}')
+        print(f'bin_tokens.shape{bin_tokens.shape}')
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
+        print(f'x_and_token.shape{x_and_token.shape}')
 
         if self.num_heads == 1:
             q = self.q_conv(x).unsqueeze(dim=1)  # q.shape == (B, 1, C, N)
