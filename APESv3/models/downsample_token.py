@@ -254,6 +254,8 @@ class DownSampleToken(nn.Module):
         self.attention_point_score = None
 
     def forward(self, x, x_xyz=None):
+        t0 = time.time()
+
         # self.bin_tokens = self.bin_tokens.to(x.device)
         # x.shape == (B, C, N)
         B, C, N = x.shape
@@ -265,6 +267,8 @@ class DownSampleToken(nn.Module):
         # print(f'bin_tokens.shape{bin_tokens.device}')
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
         # print(f'x_and_token.shape{x_and_token.device}')
+
+        t1 = time.time()
 
         if self.num_heads == 1:
             q = self.q_conv(x).unsqueeze(dim=1)  # q.shape == (B, 1, C, N)
@@ -287,6 +291,8 @@ class DownSampleToken(nn.Module):
         else:
             raise NotImplementedError
 
+        t2 = time.time()
+
         mask, sparse_attention_map = get_sparse_attention_map(x, self.K, attention_points)
         sparse_num = torch.sum(mask, dim=-2) + 1e-8
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
@@ -305,6 +311,7 @@ class DownSampleToken(nn.Module):
         else:
             raise NotImplementedError
 
+        t3 = time.time()
         attention_down = torch.gather(attention_map, dim=2,
                                       index=idx_down.unsqueeze(3).expand(-1, -1, -1, attention_map.shape[-1]))
         # attention_map: (B,H,N,N+num_bins)
@@ -315,7 +322,7 @@ class DownSampleToken(nn.Module):
         # v_down.shape == (B, M, H, C)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
         # v_down.shape == (B, C, M)
-
+        t4 = time.time()
         if self.res:
             x_ds = self.res_block(x, x_ds, idx_down)
 
@@ -323,6 +330,14 @@ class DownSampleToken(nn.Module):
         self.idx_chunks = idx_chunks
         self.idx = idx_down
         self.attention_point_score = attention_point_score
+        t5 = time.time()
+
+        print(f'total:{t5 - t0}')
+        print(f't5:{t5 - t4}')
+        print(f't4:{t4 - t3}')
+        print(f't3:{t3 - t2}')
+        print(f't2:{t2 - t1}')
+        print(f't1:{t1 - t0}')
         return (x_ds, idx_down), (None, None)
 
     def output_variables(self, *args):
