@@ -151,10 +151,13 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
 
 def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
                                  bin_sample_mode):
+
+    tt0=time.time()
     bin_prob = bin_prob.clone().detach()
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
+    tt1 = time.time()
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
     num_bins = len(bin_boundaries) + 1
@@ -163,6 +166,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # chunk_size = aps_chunks[j][i].shape[1]
     assert H == 1, "Number of heads should be 1!"
 
+    tt2 = time.time()
     max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
     for i in range(B):
         for j in range(num_bins):
@@ -170,6 +174,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # print(f' bin_prob{bin_prob}-----------')
 
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+    tt3 = time.time()
 
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
@@ -216,6 +221,13 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
     # k_point_to_choose.shape == (B, num_bins)
     # print(f'idx.dtype2:{idx.dtype}')
+    tt4 = time.time()
+
+    print(f'0total:{tt4-tt0}')
+    print(f'0t4:{tt4 - tt3}')
+    print(f'0t3:{tt3 - tt2}')
+    print(f'0t2:{tt2 - tt1}')
+    print(f'0t1:{tt1 - tt0}')
     return idx_batch, k_point_to_choose, idx_chunks
 
 
@@ -268,8 +280,6 @@ class DownSampleToken(nn.Module):
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
         # print(f'x_and_token.shape{x_and_token.device}')
 
-        t1 = time.time()
-
         if self.num_heads == 1:
             q = self.q_conv(x).unsqueeze(dim=1)  # q.shape == (B, 1, C, N)
             k = self.k_conv(x_and_token).unsqueeze(dim=1)  # k.shape ==  (B, 1, C, N+num_bins)
@@ -291,12 +301,13 @@ class DownSampleToken(nn.Module):
         else:
             raise NotImplementedError
 
-        t2 = time.time()
+        t1 = time.time()
 
         mask, sparse_attention_map = get_sparse_attention_map(x, self.K, attention_points)
         sparse_num = torch.sum(mask, dim=-2) + 1e-8
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
 
+        t2 = time.time()
         if self.bin_mode == 'uniform_split_bin':
             idx_down, _, idx_chunks = bin_idx_selection(attention_point_score, self.num_bins,
                                                         bin_prob, self.M, self.bin_sample_mode)
@@ -322,7 +333,6 @@ class DownSampleToken(nn.Module):
         # v_down.shape == (B, M, H, C)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
         # v_down.shape == (B, C, M)
-        t4 = time.time()
         if self.res:
             x_ds = self.res_block(x, x_ds, idx_down)
 
@@ -330,10 +340,9 @@ class DownSampleToken(nn.Module):
         self.idx_chunks = idx_chunks
         self.idx = idx_down
         self.attention_point_score = attention_point_score
-        t5 = time.time()
+        t4 = time.time()
 
-        print(f'total:{t5 - t0}')
-        print(f't5:{t5 - t4}')
+        print(f'total:{t4 - t0}')
         print(f't4:{t4 - t3}')
         print(f't3:{t3 - t2}')
         print(f't2:{t2 - t1}')
