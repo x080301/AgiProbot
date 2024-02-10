@@ -240,12 +240,15 @@ class DownSampleToken(nn.Module):
         self.M = config_ds.M[layer]
         self.res = config_ds.res.enable[layer]
 
-        self.bin_boundaries = [
-            torch.asarray([float('inf')].extend(config_ds.bin.bin_boundaries[layer])).reshape(1, 1, 1, self.num_bins),
-            # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
-            torch.asarray(config_ds.bin.bin_boundaries[layer].append(float('-inf'))).reshape(1, 1, 1, self.num_bins)
-            # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
-        ]
+        bin_boundaries_upper = [float('inf')]
+        bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
+        bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
+        bin_boundaries_lower.append(float('-inf'))
+        self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
+                               # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                               torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
+                               # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                               ]
 
         q_in = config_ds.q_in[layer]
         q_out = config_ds.q_out[layer]
