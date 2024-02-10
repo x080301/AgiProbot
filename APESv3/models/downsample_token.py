@@ -70,36 +70,61 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-    # print(f'probability.shape:{probability.shape}')
+    # # print(f'probability.shape:{probability.shape}')
+    # B, num_bins = probability.shape
+    # # print(f'probability{probability.shape}')
+    # # print(f'max_num_points{max_num_points.shape}')
+    #
+    # num_points_to_choose = torch.zeros_like(probability, dtype=torch.long, device=probability.device)
+    # # num_undecided_points = torch.zeros((B,), dtype=torch.long, device=probability.device) + total_points_to_choose
+    #
+    # for _ in range(num_bins):
+    #     # print(f'max_num_points{max_num_points.shape}')
+    #     # print(f'num_points_to_choose{num_points_to_choose.shape}')
+    #     num_poins_to_drop = max_num_points - num_points_to_choose
+    #     probability[num_poins_to_drop == 0] = 0
+    #     num_undecided_points = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
+    #
+    #     num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
+    #                                                                          num_undecided_points, max_num_points)
+    #
+    #     # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
+    #
+    #     if torch.sum(torch.abs(torch.sum(num_points_to_choose, dim=1) - total_points_to_choose)) == 0:
+    #         break
+    # else:
+    #     error = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
+    #     max_point_drop_bin = torch.argmax(num_poins_to_drop, dim=1)
+    #     for i in range(B):
+    #         assert abs(error[i]) <= num_bins, 'correction_for_rouding seems to be too big.'
+    #         num_points_to_choose[i, max_point_drop_bin[i]] += error[i]
+    #
+    # return num_points_to_choose
+
     B, num_bins = probability.shape
-    # print(f'probability{probability.shape}')
-    # print(f'max_num_points{max_num_points.shape}')
 
-    num_points_to_choose = torch.zeros_like(probability, dtype=torch.long, device=probability.device)
-    # num_undecided_points = torch.zeros((B,), dtype=torch.long, device=probability.device) + total_points_to_choose
-
+    num_chosen_points_in_bin = torch.zeros_like(probability)
     for _ in range(num_bins):
-        # print(f'max_num_points{max_num_points.shape}')
-        # print(f'num_points_to_choose{num_points_to_choose.shape}')
-        num_poins_to_drop = max_num_points - num_points_to_choose
-        probability[num_poins_to_drop == 0] = 0
-        num_undecided_points = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
+        bin_prob = bin_prob / torch.sum(bin_prob, dim=1, keepdim=True)
+        num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
+        print(torch.max(num_to_choose))
 
-        num_points_to_choose += calculate_num_points_to_choose_one_iteration(probability, num_poins_to_drop,
-                                                                             num_undecided_points, max_num_points)
+        num_chosen_points_in_bin += bin_prob * num_to_choose
+        num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
+                                               num_chosen_points_in_bin)
+        bin_prob = bin_prob * torch.where(num_chosen_points_in_bin >= max_num_points, 0, 1)
 
-        # print(f'num_points_to_choose{torch.sum(num_points_to_choose, dim=1)}')
+    num_chosen_points_in_bin = num_chosen_points_in_bin.int()
+    # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
 
-        if torch.sum(torch.abs(torch.sum(num_points_to_choose, dim=1) - total_points_to_choose)) == 0:
-            break
-    else:
-        error = total_points_to_choose - torch.sum(num_points_to_choose, dim=1)
-        max_point_drop_bin = torch.argmax(num_poins_to_drop, dim=1)
-        for i in range(B):
-            assert abs(error[i]) <= num_bins, 'correction_for_rouding seems to be too big.'
-            num_points_to_choose[i, max_point_drop_bin[i]] += error[i]
+    num_chosen_points_in_bin[
+        torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
+                                         dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
 
-    return num_points_to_choose
+    # print(num_chosen_points_in_bin)
+    # print(torch.sum(num_chosen_points_in_bin, dim=1))
+    # print(max_num_points)
+    return num_chosen_points_in_bin
 
 
 def calculate_num_points_to_choose_one_iteration(probability, max_num_points, num_undecided_points,
@@ -229,7 +254,7 @@ class DownSampleToken(nn.Module):
         self.attention_point_score = None
 
     def forward(self, x, x_xyz=None):
-        #self.bin_tokens = self.bin_tokens.to(x.device)
+        # self.bin_tokens = self.bin_tokens.to(x.device)
         # x.shape == (B, C, N)
         B, C, N = x.shape
         print(f'x.shape{self.bin_tokens.device}')
