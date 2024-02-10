@@ -130,7 +130,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
     """
 
-    num_bins = len(bin_boundaries) + 1
+    num_bins = len(bin_boundaries[0])
     B, H, N = attention_point_score.shape
     # print(f'B{B},H{H},N{N}')
 
@@ -142,29 +142,36 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     elif normalization_mode == 'z_score_no_std':
         attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
 
-    x_chunks = []
-    idx_chunks = []
+    attention_point_score = attention_point_score.reshape(B, H, N, 1)
+    # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
+    index_batch, _, index_point, index_bin = (attention_point_score < bin_boundaries[0]) & (
+            attention_point_score >= bin_boundaries[1])
 
-    for i in range(num_bins):
-        x_chunks_one_bin = []
-        idx_chunks_one_bin = []
-        for j in range(B):
-            if i == 0:
-                index_in_bin = torch.where(attention_point_score[j, 0, :] > bin_boundaries[i])[0]
-            elif i < num_bins - 1:
-                index_in_bin = torch.where(
-                    (attention_point_score[j, 0, :] > bin_boundaries[i]) & (
-                            attention_point_score[j, 0, :] < bin_boundaries[i - 1]))[0]
-            else:
-                index_in_bin = torch.where(attention_point_score[j, 0, :] < bin_boundaries[i - 1])[0]
+    idx_chunks = [[index_point[(index_bin == i) & (index_batch == j)].reshape(1, -1)
+                   for j in range(B)]
+                  for i in range(num_bins)]
+    x_chunks = [[attention_point_score[j, 0, :][index_point[(index_bin == i) & (index_batch == j)]].reshape(1, -1)
+                 for j in range(B)]
+                for i in range(num_bins)]
 
-            x_chunks_one_bin.append(attention_point_score[j, 0, :][index_in_bin].reshape(1, -1))
-            idx_chunks_one_bin.append(index_in_bin.reshape(1, -1))
+    # for i in range(num_bins):
+    #     x_chunks_one_bin = []
+    #     idx_chunks_one_bin = []
+    #     for j in range(B):
+    #         if i == 0:
+    #             index_in_bin = torch.where(attention_point_score[j, 0, :] > bin_boundaries[i])[0]
+    #         elif i < num_bins - 1:
+    #             index_in_bin = torch.where(
+    #                 (attention_point_score[j, 0, :] > bin_boundaries[i]) & (
+    #                         attention_point_score[j, 0, :] < bin_boundaries[i - 1]))[0]
+    #         else:
+    #             index_in_bin = torch.where(attention_point_score[j, 0, :] < bin_boundaries[i - 1])[0]
+    #
+    #         x_chunks_one_bin.append(attention_point_score[j, 0, :][index_in_bin].reshape(1, -1))
+    #         idx_chunks_one_bin.append(index_in_bin.reshape(1, -1))
+    #
+    #         # print(f'idex_in_bin{j} == {len(index_in_bin)}')
 
-            # print(f'idex_in_bin{j} == {len(index_in_bin)}')
-
-        x_chunks.append(x_chunks_one_bin)
-        idx_chunks.append(idx_chunks_one_bin)
     # print(f'idx.dtype4:{index_in_bin.dtype}')
     # exit(-1)
     return x_chunks, idx_chunks
@@ -330,7 +337,7 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
             # print(f'variable_gather_list:{variable_gather_list[0].dtype}')
             torch.distributed.gather(variable_in_batches, gather_list=variable_gather_list, dst=0)
             # variable_gather_list: world_size * (B * num_bins * (n1+n2+n3+...))
-            if rank==0:
+            if rank == 0:
                 variable_to_return = []
                 for data_size, variable_in_batches in zip(data_size_gather_list, variable_gather_list):
                     # variable_in_batches: (B * num_bins * n),
