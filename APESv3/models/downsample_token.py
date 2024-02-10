@@ -62,11 +62,11 @@ def bin_idx_selection(attention_point_score, num_bins, bin_prob, M, bin_sample_m
     return idx_batch, k_batch, idx_chunks
 
 
-def calculate_num_points_to_choose(probability, max_num_points, total_points_to_choose):
+def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_choose):
     """
 
     :param total_points_to_choose: Int
-    :param probability: torch.Tensor(B,num_bins)
+    :param bin_prob: torch.Tensor(B,num_bins)
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
@@ -101,9 +101,9 @@ def calculate_num_points_to_choose(probability, max_num_points, total_points_to_
     #
     # return num_points_to_choose
 
-    B, num_bins = probability.shape
+    B, num_bins = bin_prob.shape
 
-    num_chosen_points_in_bin = torch.zeros_like(probability)
+    num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
     for _ in range(num_bins):
         bin_prob = bin_prob / torch.sum(bin_prob, dim=1, keepdim=True)
         num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
@@ -261,10 +261,10 @@ class DownSampleToken(nn.Module):
         bin_tokens = einops.repeat(self.bin_tokens, '1 c num_bins -> b c num_bins', b=B)
         # bin_tokens.shape ==(B,C,num_bins)
 
-        print(f'x.shape{x.device}')
-        print(f'bin_tokens.shape{bin_tokens.device}')
+        # print(f'x.shape{x.device}')
+        # print(f'bin_tokens.shape{bin_tokens.device}')
         x_and_token = torch.concat((x, bin_tokens), dim=2)  # x_and_token: (B,C,N+num_bins)
-        print(f'x_and_token.shape{x_and_token.device}')
+        # print(f'x_and_token.shape{x_and_token.device}')
 
         if self.num_heads == 1:
             q = self.q_conv(x).unsqueeze(dim=1)  # q.shape == (B, 1, C, N)
