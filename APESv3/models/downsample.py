@@ -12,9 +12,9 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
 
     # bin_prob.shape == (B, num_bins)
     bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
-    if direct_link_mode == 'no_link' or direct_link_mode == 'no_link_no_sigmoid':
+    if direct_link_mode == 'no_link':
         bin_probability = bin_probability / M + 1.0
-    elif direct_link_mode == 'no_link_higher_gradient':
+    elif direct_link_mode == 'no_link_higher_gradient' or direct_link_mode == 'no_link_no_sigmoid':
         bin_probability = bin_probability - bin_probability.clone().detach() * (M - 1) / M + 1.0
     else:
         raise NotImplementedError
