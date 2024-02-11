@@ -196,8 +196,6 @@ class DownSampleCarve(nn.Module):
         k_out = config_ds.k_out[layer]
         v_in = config_ds.v_in[layer]
         v_out = config_ds.v_out[layer]
-        gumble = config_ds.gumble.enable[layer]
-        tau = config_ds.gumble.tau[layer]
 
         self.q_depth = int(q_out / self.num_heads)
         self.k_depth = int(k_out / self.num_heads)
@@ -236,7 +234,17 @@ class DownSampleCarve(nn.Module):
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
 
-                self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+                # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+                bin_boundaries_upper = [float('inf')]
+                bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
+                bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
+                bin_boundaries_lower.append(float('-inf'))
+                self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
+                                       # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                                       torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
+                                       # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                                       ]
+
                 self.normalization_mode = config_ds.bin.normalization_mode[layer]
             else:
                 raise NotImplementedError
