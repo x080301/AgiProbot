@@ -130,7 +130,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
     """
 
-    num_bins = len(bin_boundaries[0])
+    num_bins = bin_boundaries[0].melement()
     B, H, N = attention_point_score.shape
     # print(f'B{B},H{H},N{N}')
     bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
