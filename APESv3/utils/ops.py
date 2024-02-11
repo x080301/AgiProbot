@@ -133,6 +133,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     num_bins = len(bin_boundaries[0])
     B, H, N = attention_point_score.shape
     # print(f'B{B},H{H},N{N}')
+    bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
 
     if normalization_mode == 'no_normalization':
         pass
@@ -144,8 +145,9 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
-    index_batch, _, index_point, index_bin = (attention_point_score < bin_boundaries[0]) & (
-            attention_point_score >= bin_boundaries[1])
+    index_batch, _, index_point, index_bin = torch.where(
+        (attention_point_score < bin_boundaries[0]) & (
+                attention_point_score >= bin_boundaries[1]))
 
     idx_chunks = [[index_point[(index_bin == i) & (index_batch == j)].reshape(1, -1)
                    for j in range(B)]
