@@ -102,6 +102,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # return num_points_to_choose
 
     B, num_bins = bin_prob.shape
+    bin_prob += 1e-8
 
     num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
     for _ in range(num_bins):

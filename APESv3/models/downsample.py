@@ -47,8 +47,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-    print(f'max_num_points:{max_num_points}')
-    print(f'bin_prob:{bin_prob}')
+    # print(f'max_num_points:{max_num_points}')
+    # print(f'bin_prob:{bin_prob}')
     B, num_bins = bin_prob.shape
     bin_prob += 1e-8
 
@@ -56,7 +56,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     for _ in range(num_bins):
         bin_prob = bin_prob / torch.sum(bin_prob, dim=1, keepdim=True)
         num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
-        print(torch.max(num_to_choose))
+        # print(torch.max(num_to_choose))
 
         num_chosen_points_in_bin += bin_prob * num_to_choose
         num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
@@ -73,7 +73,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # print(num_chosen_points_in_bin)
     # print(torch.sum(num_chosen_points_in_bin, dim=1))
     # print(max_num_points)
-    print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
+    # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
     return num_chosen_points_in_bin
 
 
@@ -113,9 +113,9 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
-    print(f'len(idx_chunks):{len(aps_chunks)}')
-    print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
-    print(f'len(idx_chunks[0]):{aps_chunks[0][0].shape}')
+    # print(f'len(idx_chunks):{len(aps_chunks)}')
+    # print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
+    # print(f'len(idx_chunks[0]):{aps_chunks[0][0].shape}')
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
     num_bins = bin_boundaries[0].nelement()
@@ -536,94 +536,94 @@ class DownSampleCarve(nn.Module):
         k_batch = torch.stack(k_batch_list, dim=0)  # k_batch.shape == (B, num_bins)
         return idx_batch, k_batch, idx_chunks
 
-    def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
-        # bin_prob.shape == (B, num_bins)
-        # self.attention_point_score.shape == (B, H, N)
-        aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
-        # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
-        # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
-        num_bins = len(bin_boundaries) + 1
-        B, H, N = attention_point_score.shape
-
-        # chunk_size = aps_chunks[j][i].shape[1]
-        assert H == 1, "Number of heads should be 1!"
-
-        # k_point_to_choose = torch.zeros(B, num_bins).to(bin_prob.device)
-        # for i in range(num_bins):
-        #     for j in range(B):
-        #         num_points_in_bin = aps_chunks[i][j].nelement()
-        #         k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
-        # k_point_to_choose = k_point_to_choose * self.M / torch.sum(k_point_to_choose, dim=1, keepdim=True)
-        # k_point_to_choose = k_point_to_choose.round().int()
-
-        # for _ in range(num_bins):
-        #     k_point_to_drop = torch.empty_like(k_point_to_choose)
-        #     for i in range(B):
-        #         for j in range(num_bins):
-        #             k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[j][i].nelement())
-        #             k_point_to_drop[i, j] = aps_chunks[j][i].nelement() - k_point_to_choose[i, j]
-        #     correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
-        #
-        #     if torch.max(torch.abs(correction_for_rouding)) == 0:
-        #         break
-        #     else:
-        #         # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
-        #         for i in range(B):
-        #             k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
-
-        max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
-        for i in range(B):
-            for j in range(num_bins):
-                max_num_points[i, j] = aps_chunks[j][i].shape[1]
-        # print(f'bin_prob{bin_prob}-----------')
-        k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
-        # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
-
-        idx_batch_list = []
-        for i in range(B):
-
-            idx_list = []
-            # print(f'sampling_scale:{sampling_scale}')
-            # print(f'self.M:{self.M}')
-            # print(f'chunk_size_list:{chunk_size_list}')
-
-            for j in range(num_bins):
-                # each bin has k samples
-                k = k_point_to_choose[i, j]
-
-                if self.bin_sample_mode == "topk":
-                    idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
-                elif self.bin_sample_mode == "uniform":
-                    idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
-                    idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
-                elif self.bin_sample_mode == "random":
-                    if k != 0:
-                        aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
-                        aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
-                        aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
-                        # print(f'k:{k}')
-                        # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
-                        if aps_chunks_tmp.nelement() < k:
-                            print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
-                            exit(-1)
-                        idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
-                else:
-                    raise ValueError(
-                        'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
-                # print(f'k:{k}')
-                # print(f'idx_tmp:{idx_tmp}')
-                # print(f'idx_tmp.shape:{idx_tmp.shape}')
-                # print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
-                if k != 0:
-                    idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
-                    # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
-                    idx_list.append(idx)
-            idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
-            idx_batch_list.append(idx_single)
-        idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
-        # k_point_to_choose.shape == (B, num_bins)
-        # print(f'idx.dtype2:{idx.dtype}')
-        return idx_batch, k_point_to_choose, idx_chunks
+    # def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
+    #     # bin_prob.shape == (B, num_bins)
+    #     # self.attention_point_score.shape == (B, H, N)
+    #     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
+    #     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
+    #     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+    #     num_bins = len(bin_boundaries) + 1
+    #     B, H, N = attention_point_score.shape
+    #
+    #     # chunk_size = aps_chunks[j][i].shape[1]
+    #     assert H == 1, "Number of heads should be 1!"
+    #
+    #     # k_point_to_choose = torch.zeros(B, num_bins).to(bin_prob.device)
+    #     # for i in range(num_bins):
+    #     #     for j in range(B):
+    #     #         num_points_in_bin = aps_chunks[i][j].nelement()
+    #     #         k_point_to_choose[j, i] = num_points_in_bin * bin_prob[j, i]
+    #     # k_point_to_choose = k_point_to_choose * self.M / torch.sum(k_point_to_choose, dim=1, keepdim=True)
+    #     # k_point_to_choose = k_point_to_choose.round().int()
+    #
+    #     # for _ in range(num_bins):
+    #     #     k_point_to_drop = torch.empty_like(k_point_to_choose)
+    #     #     for i in range(B):
+    #     #         for j in range(num_bins):
+    #     #             k_point_to_choose[i, j] = min(k_point_to_choose[i, j], aps_chunks[j][i].nelement())
+    #     #             k_point_to_drop[i, j] = aps_chunks[j][i].nelement() - k_point_to_choose[i, j]
+    #     #     correction_for_rouding = self.M - torch.sum(k_point_to_choose, dim=1)
+    #     #
+    #     #     if torch.max(torch.abs(correction_for_rouding)) == 0:
+    #     #         break
+    #     #     else:
+    #     #         # assert torch.max(torch.abs(correction_for_rouding)) < 3, 'correction_for_rouding seems to be too big.'
+    #     #         for i in range(B):
+    #     #             k_point_to_choose[i, torch.argmax(k_point_to_drop[i, :])] += int(correction_for_rouding[i])
+    #
+    #     max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
+    #     for i in range(B):
+    #         for j in range(num_bins):
+    #             max_num_points[i, j] = aps_chunks[j][i].shape[1]
+    #     # print(f'bin_prob{bin_prob}-----------')
+    #     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, self.M)
+    #     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
+    #
+    #     idx_batch_list = []
+    #     for i in range(B):
+    #
+    #         idx_list = []
+    #         # print(f'sampling_scale:{sampling_scale}')
+    #         # print(f'self.M:{self.M}')
+    #         # print(f'chunk_size_list:{chunk_size_list}')
+    #
+    #         for j in range(num_bins):
+    #             # each bin has k samples
+    #             k = k_point_to_choose[i, j]
+    #
+    #             if self.bin_sample_mode == "topk":
+    #                 idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
+    #             elif self.bin_sample_mode == "uniform":
+    #                 idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
+    #                 idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
+    #             elif self.bin_sample_mode == "random":
+    #                 if k != 0:
+    #                     aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
+    #                     aps_chunks_tmp = aps_chunks_tmp / (self.boltzmann_T + 1e-8)
+    #                     aps_chunks_tmp = F.softmax(aps_chunks_tmp, dim=-1)
+    #                     # print(f'k:{k}')
+    #                     # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
+    #                     if aps_chunks_tmp.nelement() < k:
+    #                         print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
+    #                         exit(-1)
+    #                     idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+    #             else:
+    #                 raise ValueError(
+    #                     'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+    #             # print(f'k:{k}')
+    #             # print(f'idx_tmp:{idx_tmp}')
+    #             # print(f'idx_tmp.shape:{idx_tmp.shape}')
+    #             # print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
+    #             if k != 0:
+    #                 idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
+    #                 # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+    #                 idx_list.append(idx)
+    #         idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
+    #         idx_batch_list.append(idx_single)
+    #     idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
+    #     # k_point_to_choose.shape == (B, num_bins)
+    #     # print(f'idx.dtype2:{idx.dtype}')
+    #     return idx_batch, k_point_to_choose, idx_chunks
 
     def bin2_idx_selection(self):
         # self.attention_point_score.shape == (B, H, N)
