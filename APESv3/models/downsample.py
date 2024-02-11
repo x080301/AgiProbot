@@ -234,16 +234,16 @@ class DownSampleCarve(nn.Module):
                     self.bin_conv1 = nn.Conv1d(q_in, int(self.num_bins), 1, bias=False)
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
 
-                self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
-                # bin_boundaries_upper = [float('inf')]
-                # bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
-                # bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
-                # bin_boundaries_lower.append(float('-inf'))
-                # self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
-                #                        # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
-                #                        torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
-                #                        # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
-                #                        ]
+                # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+                bin_boundaries_upper = [float('inf')]
+                bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
+                bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
+                bin_boundaries_lower.append(float('-inf'))
+                self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
+                                       # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                                       torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
+                                       # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                                       ]
 
                 self.normalization_mode = config_ds.bin.normalization_mode[layer]
             else:
@@ -309,10 +309,14 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == "mode2":
                 idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
-                idx, _, idx_chunks = self.nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                       self.bin_boundaries,
-                                                                       bin_prob,
-                                                                       self.normalization_mode)
+                idx, _, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
+                                                                  self.bin_boundaries,
+                                                                  bin_prob,
+                                                                  self.normalization_mode,
+                                                                  self.M,
+                                                                  self.bin_sample_mode)
+                print(f'len(idx_chunks):{len(idx_chunks)}')
+                print(f'len(idx_chunks[0]):{len(idx_chunks[0])}')
 
             else:
                 raise NotImplementedError
@@ -533,7 +537,6 @@ class DownSampleCarve(nn.Module):
         return idx_batch, k_batch, idx_chunks
 
     def nonuniform_bin_idx_selection(self, attention_point_score, bin_boundaries, bin_prob, normalization_mode):
-        bin_prob = bin_prob.clone().detach()
         # bin_prob.shape == (B, num_bins)
         # self.attention_point_score.shape == (B, H, N)
         aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
