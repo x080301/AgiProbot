@@ -73,7 +73,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # print(num_chosen_points_in_bin)
     # print(torch.sum(num_chosen_points_in_bin, dim=1))
     # print(max_num_points)
-    print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
+    # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
     return num_chosen_points_in_bin
 
 

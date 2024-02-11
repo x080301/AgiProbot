@@ -20,4 +20,3 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonuniform_bins_nostd_seg.yaml wandb.name='shapenet_token_nostd_nonuniform_newdownsampling'
 #---------------
-
