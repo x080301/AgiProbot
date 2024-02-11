@@ -47,7 +47,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-
+    print(f'max_num_points:{max_num_points}')
+    print(f'bin_prob:{bin_prob}')
     B, num_bins = bin_prob.shape
 
     num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
