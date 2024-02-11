@@ -341,8 +341,9 @@ class DownSampleCarve(nn.Module):
                                                                   self.normalization_mode,
                                                                   self.M,
                                                                   self.bin_sample_mode)
-                # print(f'len(idx_chunks):{len(idx_chunks)}')
-                # print(f'len(idx_chunks[0]):{len(idx_chunks[0])}')
+                print(f'len(idx_chunks):{len(idx_chunks)}')
+                print(f'len(idx_chunks[0]):{len(idx_chunks[0])}')
+                print(f'len(idx_chunks[0]):{idx_chunks[0][0].shape}')
 
             else:
                 raise NotImplementedError
