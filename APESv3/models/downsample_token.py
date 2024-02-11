@@ -159,7 +159,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     tt1 = time.time()
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
-    num_bins = len(bin_boundaries) + 1
+    num_bins = bin_boundaries[0].nelement()
     B, H, N = attention_point_score.shape
 
     # chunk_size = aps_chunks[j][i].shape[1]
