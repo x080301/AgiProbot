@@ -140,6 +140,9 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
+    print(f'len(idx_chunks):{len(aps_chunks)}')
+    print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
+    print(f'len(idx_chunks[0]):{aps_chunks[0][0].shape}')
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
     num_bins = bin_boundaries[0].nelement()
@@ -341,9 +344,6 @@ class DownSampleCarve(nn.Module):
                                                                   self.normalization_mode,
                                                                   self.M,
                                                                   self.bin_sample_mode)
-                print(f'len(idx_chunks):{len(idx_chunks)}')
-                print(f'len(idx_chunks[0]):{len(idx_chunks[0])}')
-                print(f'len(idx_chunks[0]):{idx_chunks[0][0].shape}')
 
             else:
                 raise NotImplementedError
