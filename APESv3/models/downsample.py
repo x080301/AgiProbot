@@ -12,7 +12,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
 
     # bin_prob.shape == (B, num_bins)
     bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
-    if direct_link_mode == 'no_link':
+    if direct_link_mode == 'no_link' or direct_link_mode == 'no_link_no_sigmoid':
         bin_probability = bin_probability / M + 1.0
     elif direct_link_mode == 'no_link_higher_gradient':
         bin_probability = bin_probability - bin_probability.clone().detach() * (M - 1) / M + 1.0
@@ -106,6 +106,77 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
     # print(f'num_points_to_choose:{num_points_to_choose}')
 
     return num_points_to_choose
+
+
+def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
+                                 bin_sample_mode):
+    bin_prob = bin_prob.clone().detach()
+    # bin_prob.shape == (B, num_bins)
+    # self.attention_point_score.shape == (B, H, N)
+    aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
+    # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
+    # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+    num_bins = bin_boundaries[0].nelement()
+    B, H, N = attention_point_score.shape
+
+    # chunk_size = aps_chunks[j][i].shape[1]
+    assert H == 1, "Number of heads should be 1!"
+
+    max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
+    for i in range(B):
+        for j in range(num_bins):
+            max_num_points[i, j] = aps_chunks[j][i].shape[1]
+    # print(f' bin_prob{bin_prob}-----------')
+
+    k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+
+    # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
+
+    idx_batch_list = []
+    for i in range(B):
+
+        idx_list = []
+        # print(f'sampling_scale:{sampling_scale}')
+        # print(f'self.M:{self.M}')
+        # print(f'chunk_size_list:{chunk_size_list}')
+
+        for j in range(num_bins):
+            # each bin has k samples
+            k = k_point_to_choose[i, j]
+
+            if bin_sample_mode == "topk":
+                idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
+            elif bin_sample_mode == "uniform":
+                idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
+                idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
+            elif bin_sample_mode == "random":
+                if k != 0:
+                    aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
+                    aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks_tmp, dim=-1)
+                    # print(f'k:{k}')
+                    # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
+                    if aps_chunks_tmp.nelement() < k:
+                        print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
+                        exit(-1)
+                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+            else:
+                raise ValueError(
+                    'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+            # print(f'k:{k}')
+            # print(f'idx_tmp:{idx_tmp}')
+            # print(f'idx_tmp.shape:{idx_tmp.shape}')
+            # print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
+            if k != 0:
+                idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
+                # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+                idx_list.append(idx)
+        idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
+        idx_batch_list.append(idx_single)
+    idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
+    # k_point_to_choose.shape == (B, num_bins)
+    # print(f'idx.dtype2:{idx.dtype}')
+
+    return idx_batch, k_point_to_choose, idx_chunks
 
 
 class DownSampleCarve(nn.Module):
@@ -230,10 +301,12 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == "mode2":
                 idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
-                idx, _, idx_chunks = self.nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                       self.bin_boundaries,
-                                                                       bin_prob.clone().detach(),
-                                                                       self.normalization_mode)
+                idx, _, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
+                                                                  self.bin_boundaries,
+                                                                  bin_prob,
+                                                                  self.normalization_mode,
+                                                                  self.M,
+                                                                  self.bin_sample_mode)
             else:
                 raise NotImplementedError
 
@@ -380,9 +453,10 @@ class DownSampleCarve(nn.Module):
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
                 # bin_prob_edge.shape == (B, num_bins, 1)
                 bin_prob = F.sigmoid(bin_prob_edge).squeeze(2)
-            elif self.direct_link_mode == 'no_link_no_sigmoid':  # TODO try avoid negative value
+            elif self.direct_link_mode == 'no_link_no_sigmoid':
                 bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
+                bin_prob_edge = F.relu(bin_prob_edge)
                 bin_prob = bin_prob_edge.squeeze(2)
             else:
                 raise NotImplementedError
