@@ -155,6 +155,10 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     x_chunks = [[attention_point_score[j, 0, :][index_point[(index_bin == i) & (index_batch == j)]].reshape(1, -1)
                  for j in range(B)]
                 for i in range(num_bins)]
+    print(f'len(x_chunks):{len(x_chunks)}')
+    print(f'len(x_chunks[0):{len(x_chunks[0])}')
+    # idx_chunks: num_bins * B *(H, n)
+    # x_chunks: num_bins * B *(H, n)
 
     # for i in range(num_bins):
     #     x_chunks_one_bin = []
