@@ -154,9 +154,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     bin_prob = bin_prob.clone().detach()
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
-    tt0 = time.time()
     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
-    tt1 = time.time()
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
     num_bins = bin_boundaries[0].nelement()
@@ -172,7 +170,6 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # print(f' bin_prob{bin_prob}-----------')
 
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
-    tt3 = time.time()
 
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
@@ -219,11 +216,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
     # k_point_to_choose.shape == (B, num_bins)
     # print(f'idx.dtype2:{idx.dtype}')
-    tt4 = time.time()
 
-    print(f'0total:{tt4 - tt0}')
-    print(f'0t4:{tt4 - tt3}')
-    print(f'0t1:{tt1 - tt0}')
     return idx_batch, k_point_to_choose, idx_chunks
 
 
