@@ -1536,7 +1536,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                         # fig, ax1 = plt.subplots()
 
-                        color = 'tab:royalblue'
+                        color = 'royalblue'
                         ax1.set_xlabel('Year')
                         ax1.set_ylabel('Number of Points in Bins', color=color)
                         ax1.bar(bins, num_points_in_bins, color=color)
@@ -1544,7 +1544,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                         ax2 = ax1.twinx()
 
-                        color = 'tab:darkred'
+                        color = 'darkred'
                         ax2.set_ylabel('Probabilities in Bins', color=color)
                         ax2.set_ylim([0, 100])
                         ax2.plot(bins, probabilities_in_bins * 100, color=color, marker='o')
