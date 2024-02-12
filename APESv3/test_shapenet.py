@@ -82,10 +82,10 @@ def test(local_rank, config):
     if 'iesservergpu' in hostname:
         save_dir = f'/data/users/fu/APES/test_results/{config.wandb.name}/'
     else:
-        save_dir = f'/home/team1/cwu/FuHaoWorkspace/APES/test_results/{config.wandb.name}/'
+        save_dir = f'/home/team1/cwu/FuHaoWorkspace/test_results/{config.wandb.name}/'
     if rank == 0:
         if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
+            os.makedirs(save_dir)
 
     # set files path
     if config.test.suffix.enable:
