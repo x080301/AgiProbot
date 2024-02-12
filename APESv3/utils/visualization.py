@@ -18,6 +18,7 @@ import torch
 
 def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     # make every category name start from 0
+    print(f'atten.shape:{atten.shape}')
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
     # print(f'sample.shape{sample.shape}')
     xyzRGB = []
@@ -1167,38 +1168,29 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
+    elif mode=='shapenet':
 
-        if data_dict is None:
-            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/heat_map'
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
+                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
+                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
+    else:
+        raise NotImplementedError
 
-            for i in tqdm(range(20)):
-                with open(
-                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
-                        'rb') as f:
-                    data_dict = pickle.load(f)
+    if data_dict is None:
+        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/heat_map'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-                sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
-                sample_batch = data_dict['samples']  # (B,N,3)
-                label_batch = data_dict['ground_truth']
-
-                B = sample_batch.shape[0]
-
-                for j in range(B):
-                    sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
-                    sample = sample_batch[j].cpu().numpy()  # (N,3)
-                    category = mapping[int(label_batch[j])]
-
-                    visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
-        else:
-            data_dict = deepcopy(data_dict)
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        for i in tqdm(range(20)):
+            with open(
+                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    'rb') as f:
+                data_dict = pickle.load(f)
 
             sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']
+
             B = sample_batch.shape[0]
 
             for j in range(B):
@@ -1206,9 +1198,24 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
-                visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
     else:
-        raise NotImplementedError
+        data_dict = deepcopy(data_dict)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+        sample_batch = data_dict['samples']  # (B,N,3)
+        label_batch = data_dict['ground_truth']
+        B = sample_batch.shape[0]
+
+        for j in range(B):
+            sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
+            sample = sample_batch[j].cpu().numpy()  # (N,3)
+            category = mapping[int(label_batch[j])]
+
+            visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+
 
 
 def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None):
