@@ -319,75 +319,75 @@ def test(local_rank, config):
                 #                                                      attention_map,
                 #                                                      save_dir)
 
-    if rank == 0:
-        preds = np.concatenate(pred_list, axis=0)
-        cls_labels = np.concatenate(cls_label_list, axis=0)
-        samples = np.concatenate(sample_list, axis=0)
-
-        vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
-                                          vis_test_gather_dict)
-
-        # calculate metrics
-        acc = metrics.calculate_accuracy(preds, cls_labels)
-        category_acc = metrics.calculate_category_accuracy(preds, cls_labels, config.datasets.mapping)
-        loss = sum(loss_list) / len(loss_list)
-        if config.test.print_results:
-            print(f'loss: {loss}')
-            print(f'accuracy: {acc}')
-            for category in list(category_acc.keys()):
-                print(f'{category}: {category_acc[category]}')
-        with open(f'{artifacts_path}/metrics.txt', 'w') as f:
-            f.write(f'loss: {loss}\n')
-            f.write(f'accuracy: {acc}\n')
-            for category in list(category_acc.keys()):
-                f.write(f'{category}: {category_acc[category]}\n')
-            f.close()
-
-        # generating visualized downsampled points files
-        if config.test.visualize_downsampled_points.enable:
-            ds_path = f'{artifacts_path}/vis_ds_points'
-            if os.path.exists(ds_path):
-                shutil.rmtree(ds_path)
-            for idx_mode in vis_test_gather_dict["ds_points"].keys():
-                if config.test.few_points.enable:
-                    visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
-                                                                     artifacts_path)
-                else:
-
-                    if len(vis_test_gather_dict["ds_points"].keys()) == 1:
-                        index = vis_concat_dict["trained"]["idx"]
-                    else:
-                        index = vis_concat_dict["ds_points"][idx_mode]
-
-                    if config.feature_learning_block.downsample.bin.enable[0]:
-                        visualize_modelnet_downsampled_points_bin(config, samples, index,
-                                                                  vis_concat_dict["trained"]["bin_prob"], cls_labels,
-                                                                  idx_mode, artifacts_path)
-                    else:
-                        visualize_modelnet_downsampled_points(config, samples, index, cls_labels, idx_mode,
-                                                              artifacts_path)
-        # generating visualized heatmap files
-        if config.test.visualize_attention_heatmap.enable:
-            hm_path = f'{artifacts_path}/vis_heatmap'
-            if os.path.exists(hm_path):
-                shutil.rmtree(hm_path)
-            for idx_mode in vis_test_gather_dict["heatmap"].keys():
-                if len(vis_test_gather_dict["heatmap"].keys()) == 1:
-                    attention_map = vis_concat_dict["trained"]["attention_point_score"]
-                else:
-                    attention_map = vis_concat_dict["heatmap"][idx_mode]
-                visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, idx_mode, artifacts_path)
-            if config.feature_learning_block.downsample.boltzmann.enable[0]:
-                aps_boltz = vis_concat_dict["trained"]["aps_boltz"]
-                visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann',
-                                                artifacts_path)
-        # if config.test.visualize_combine.enable:
-        #     assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
-        #     visualize_modelnet_combine(config, artifacts_path)
-
-        # storage and backup
-        # save_backup(artifacts_path, zip_file_path, backup_path)
+    # if rank == 0:
+    #     preds = np.concatenate(pred_list, axis=0)
+    #     cls_labels = np.concatenate(cls_label_list, axis=0)
+    #     samples = np.concatenate(sample_list, axis=0)
+    #
+    #     vis_concat_dict = vis_data_structure_init(config, based_config=True)
+    #     vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
+    #                                       vis_test_gather_dict)
+    #
+    #     # calculate metrics
+    #     acc = metrics.calculate_accuracy(preds, cls_labels)
+    #     category_acc = metrics.calculate_category_accuracy(preds, cls_labels, config.datasets.mapping)
+    #     loss = sum(loss_list) / len(loss_list)
+    #     if config.test.print_results:
+    #         print(f'loss: {loss}')
+    #         print(f'accuracy: {acc}')
+    #         for category in list(category_acc.keys()):
+    #             print(f'{category}: {category_acc[category]}')
+    #     with open(f'{artifacts_path}/metrics.txt', 'w') as f:
+    #         f.write(f'loss: {loss}\n')
+    #         f.write(f'accuracy: {acc}\n')
+    #         for category in list(category_acc.keys()):
+    #             f.write(f'{category}: {category_acc[category]}\n')
+    #         f.close()
+    #
+    #     # generating visualized downsampled points files
+    #     if config.test.visualize_downsampled_points.enable:
+    #         ds_path = f'{artifacts_path}/vis_ds_points'
+    #         if os.path.exists(ds_path):
+    #             shutil.rmtree(ds_path)
+    #         for idx_mode in vis_test_gather_dict["ds_points"].keys():
+    #             if config.test.few_points.enable:
+    #                 visualize_modelnet_downsampled_points_few_points(config, samples, index, cls_labels, idx_mode,
+    #                                                                  artifacts_path)
+    #             else:
+    #
+    #                 if len(vis_test_gather_dict["ds_points"].keys()) == 1:
+    #                     index = vis_concat_dict["trained"]["idx"]
+    #                 else:
+    #                     index = vis_concat_dict["ds_points"][idx_mode]
+    #
+    #                 if config.feature_learning_block.downsample.bin.enable[0]:
+    #                     visualize_modelnet_downsampled_points_bin(config, samples, index,
+    #                                                               vis_concat_dict["trained"]["bin_prob"], cls_labels,
+    #                                                               idx_mode, artifacts_path)
+    #                 else:
+    #                     visualize_modelnet_downsampled_points(config, samples, index, cls_labels, idx_mode,
+    #                                                           artifacts_path)
+    #     # generating visualized heatmap files
+    #     if config.test.visualize_attention_heatmap.enable:
+    #         hm_path = f'{artifacts_path}/vis_heatmap'
+    #         if os.path.exists(hm_path):
+    #             shutil.rmtree(hm_path)
+    #         for idx_mode in vis_test_gather_dict["heatmap"].keys():
+    #             if len(vis_test_gather_dict["heatmap"].keys()) == 1:
+    #                 attention_map = vis_concat_dict["trained"]["attention_point_score"]
+    #             else:
+    #                 attention_map = vis_concat_dict["heatmap"][idx_mode]
+    #             visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, idx_mode, artifacts_path)
+    #         if config.feature_learning_block.downsample.boltzmann.enable[0]:
+    #             aps_boltz = vis_concat_dict["trained"]["aps_boltz"]
+    #             visualize_modelnet_heatmap_mode(config, samples, aps_boltz, cls_labels, 'trained_boltzmann',
+    #                                             artifacts_path)
+    #     # if config.test.visualize_combine.enable:
+    #     #     assert config.test.visualize_downsampled_points.enable or config.test.visualize_attention_heatmap.enable, "At least one of visualize_downsampled_points or visualize_attention_heatmap must be enabled."
+    #     #     visualize_modelnet_combine(config, artifacts_path)
+    #
+    #     # storage and backup
+    #     # save_backup(artifacts_path, zip_file_path, backup_path)
 
 
 if __name__ == '__main__':

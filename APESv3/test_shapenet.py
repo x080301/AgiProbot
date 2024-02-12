@@ -340,71 +340,71 @@ def test(local_rank, config):
                 #                                                      attention_map,
                 #                                                      save_dir)
 
-    if rank == 0:
-        samples = np.concatenate(sample_list, axis=0)
-        preds = np.concatenate(pred_list, axis=0)
-        seg_labels = np.concatenate(seg_label_list, axis=0)
-        cls_label = np.concatenate(cls_label_list, axis=0)
-
-        if config.test.dataloader.vote.enable:
-            preds_novo = np.concatenate(pred_novo_list, axis=0)
-            shape_ious_novo = metrics.calculate_shape_IoU(preds_novo, seg_labels, cls_label, config.datasets.mapping)
-            category_iou_novo = metrics.calculate_category_IoU(shape_ious_novo, cls_label, config.datasets.mapping)
-            miou_novo = sum(shape_ious_novo) / len(shape_ious_novo)
-            category_miou_novo = sum(list(category_iou_novo.values())) / len(list(category_iou_novo.values()))
-            loss_novo = sum(loss_novo_list) / len(loss_novo_list)
-            with open(f'{artifacts_path}/results.txt', 'a') as f:
-                f.write(f'loss_novo: {loss_novo}\n')
-                f.write(f'mIoU_novo: {miou_novo}\n')
-                f.write(f'category_mIoU_novo: {category_miou_novo}\n\n')
-                for category in list(category_iou_novo.keys()):
-                    f.write(f'{category}_novo: {category_iou_novo[category]}\n')
-                f.write('\n\n\n\n')
-            if config.test.print_results:
-                print(f'loss_novo: {loss_novo}')
-                print(f'mIoU_novo: {miou_novo}')
-                print(f'category_mIoU_novo: {category_miou_novo}')
-                for category in list(category_iou_novo.keys()):
-                    print(f'{category}_novo: {category_iou_novo[category]}')
-
-        vis_concat_dict = vis_data_structure_init(config, based_config=True)
-        vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
-                                          vis_test_gather_dict)
-
-        # calculate metrics
-        shape_ious = metrics.calculate_shape_IoU(preds, seg_labels, cls_label, config.datasets.mapping)
-        category_iou = metrics.calculate_category_IoU(shape_ious, cls_label, config.datasets.mapping)
-        miou = sum(shape_ious) / len(shape_ious)
-        category_miou = sum(list(category_iou.values())) / len(list(category_iou.values()))
-        loss = sum(loss_list) / len(loss_list)
-        with open(f'{artifacts_path}/results.txt', 'a') as f:
-            f.write(f'loss: {loss}\n')
-            f.write(f'mIoU: {miou}\n')
-            f.write(f'category_mIoU: {category_miou}\n\n')
-            for category in list(category_iou.keys()):
-                f.write(f'{category}: {category_iou[category]}\n')
-        if config.test.print_results:
-            print(f'loss: {loss}')
-            print(f'mIoU: {miou}')
-            print(f'category_mIoU: {category_miou}')
-            for category in list(category_iou.keys()):
-                print(f'{category}: {category_iou[category]}')
-
-        # generating visualized downsampled points files
-        if config.test.visualize_downsampled_points.enable:
-            if config.feature_learning_block.downsample.bin.enable[0]:
-                visualize_shapenet_downsampled_points_bin(config, samples, vis_concat_dict["trained"]["idx"],
-                                                          vis_concat_dict["trained"]["bin_prob"], cls_label, shape_ious,
-                                                          artifacts_path)
-            else:
-                visualize_shapenet_downsampled_points(config, samples, vis_concat_dict["trained"]["idx"], cls_label,
-                                                      shape_ious, artifacts_path)
-        # generating visualized prediction files
-        if config.test.visualize_preds.enable:
-            visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious,
-                                           vis_concat_dict["trained"]["idx"], artifacts_path)
-
-        # save_backup(artifacts_path, zip_file_path, backup_path)
+    # if rank == 0:
+    #     samples = np.concatenate(sample_list, axis=0)
+    #     preds = np.concatenate(pred_list, axis=0)
+    #     seg_labels = np.concatenate(seg_label_list, axis=0)
+    #     cls_label = np.concatenate(cls_label_list, axis=0)
+    #
+    #     if config.test.dataloader.vote.enable:
+    #         preds_novo = np.concatenate(pred_novo_list, axis=0)
+    #         shape_ious_novo = metrics.calculate_shape_IoU(preds_novo, seg_labels, cls_label, config.datasets.mapping)
+    #         category_iou_novo = metrics.calculate_category_IoU(shape_ious_novo, cls_label, config.datasets.mapping)
+    #         miou_novo = sum(shape_ious_novo) / len(shape_ious_novo)
+    #         category_miou_novo = sum(list(category_iou_novo.values())) / len(list(category_iou_novo.values()))
+    #         loss_novo = sum(loss_novo_list) / len(loss_novo_list)
+    #         with open(f'{artifacts_path}/results.txt', 'a') as f:
+    #             f.write(f'loss_novo: {loss_novo}\n')
+    #             f.write(f'mIoU_novo: {miou_novo}\n')
+    #             f.write(f'category_mIoU_novo: {category_miou_novo}\n\n')
+    #             for category in list(category_iou_novo.keys()):
+    #                 f.write(f'{category}_novo: {category_iou_novo[category]}\n')
+    #             f.write('\n\n\n\n')
+    #         if config.test.print_results:
+    #             print(f'loss_novo: {loss_novo}')
+    #             print(f'mIoU_novo: {miou_novo}')
+    #             print(f'category_mIoU_novo: {category_miou_novo}')
+    #             for category in list(category_iou_novo.keys()):
+    #                 print(f'{category}_novo: {category_iou_novo[category]}')
+    #
+    #     vis_concat_dict = vis_data_structure_init(config, based_config=True)
+    #     vis_concat_dict = vis_data_concat(len(config.feature_learning_block.downsample.M), vis_concat_dict,
+    #                                       vis_test_gather_dict)
+    #
+    #     # calculate metrics
+    #     shape_ious = metrics.calculate_shape_IoU(preds, seg_labels, cls_label, config.datasets.mapping)
+    #     category_iou = metrics.calculate_category_IoU(shape_ious, cls_label, config.datasets.mapping)
+    #     miou = sum(shape_ious) / len(shape_ious)
+    #     category_miou = sum(list(category_iou.values())) / len(list(category_iou.values()))
+    #     loss = sum(loss_list) / len(loss_list)
+    #     with open(f'{artifacts_path}/results.txt', 'a') as f:
+    #         f.write(f'loss: {loss}\n')
+    #         f.write(f'mIoU: {miou}\n')
+    #         f.write(f'category_mIoU: {category_miou}\n\n')
+    #         for category in list(category_iou.keys()):
+    #             f.write(f'{category}: {category_iou[category]}\n')
+    #     if config.test.print_results:
+    #         print(f'loss: {loss}')
+    #         print(f'mIoU: {miou}')
+    #         print(f'category_mIoU: {category_miou}')
+    #         for category in list(category_iou.keys()):
+    #             print(f'{category}: {category_iou[category]}')
+    #
+    #     # generating visualized downsampled points files
+    #     if config.test.visualize_downsampled_points.enable:
+    #         if config.feature_learning_block.downsample.bin.enable[0]:
+    #             visualize_shapenet_downsampled_points_bin(config, samples, vis_concat_dict["trained"]["idx"],
+    #                                                       vis_concat_dict["trained"]["bin_prob"], cls_label, shape_ious,
+    #                                                       artifacts_path)
+    #         else:
+    #             visualize_shapenet_downsampled_points(config, samples, vis_concat_dict["trained"]["idx"], cls_label,
+    #                                                   shape_ious, artifacts_path)
+    #     # generating visualized prediction files
+    #     if config.test.visualize_preds.enable:
+    #         visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label, shape_ious,
+    #                                        vis_concat_dict["trained"]["idx"], artifacts_path)
+    #
+    #     # save_backup(artifacts_path, zip_file_path, backup_path)
 
 
 if __name__ == '__main__':
