@@ -288,6 +288,8 @@ def test(local_rank, config):
                                                      save_path=f'{save_dir}points_in_bins', index=i)
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
+                    if i == 10:
+                        break
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)

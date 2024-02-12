@@ -246,7 +246,6 @@ def test(local_rank, config):
             torch.distributed.all_reduce(loss)
 
             if config.test.visualize_combine.enable:
-
                 sampling_score_all_layers = []
                 idx_down_all_layers = []
                 idx_in_bins_all_layers = []
@@ -256,9 +255,11 @@ def test(local_rank, config):
                     sampling_score_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'attention_point_score',
                                                   rank, config.test.ddp.nproc_this_node, device))
+
                     idx_down_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'idx',
                                                   rank, config.test.ddp.nproc_this_node, device))
+
                     idx_in_bins_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'idx_chunks',
                                                   rank, config.test.ddp.nproc_this_node, device))
@@ -271,23 +272,43 @@ def test(local_rank, config):
                     sampling_score = reshape_gathered_variable(sampling_score_all_layers)
                     # idx_down_all_layers: num_layers * (B,H,M) -> (B, num_layers, H, N)
                     idx_down = reshape_gathered_variable(idx_down_all_layers)
-                    # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n)
-                    # -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+                    # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                     idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
                     # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
                     probability_of_bins = reshape_gathered_variable(probability_of_bins_all_layers)
 
-                    dict_to_dump = {'sampling_score': sampling_score,  # (B,n,3)
-                                    'idx_down': idx_down,  # B * num_layers * (H,N)
-                                    'idx_in_bins': idx_in_bins,
-                                    # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-                                    'probability_of_bins': probability_of_bins,
-                                    # (B, num_layers, num_bins)
-                                    'ground_truth': torch.concat(cls_label_gather_list, dim=0),  # (B,40,N)
-                                    'predictions': torch.concat(pred_gather_list, dim=0)  # (B,40,N)
-                                    }
-                    with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                        pickle.dump(dict_to_dump, f)
+                    # sampling_score_list.append(sampling_score)
+                    # idx_down_list.append(idx_down)
+                    # idx_in_bins_list.append(idx_in_bins)
+                    # probability_of_bins_list.append(probability_of_bins)
+
+                    data_dict = {'sampling_score': sampling_score,  # (B, num_layers, H, N)
+                                 'samples': torch.concat(sample_gather_list, dim=0),  # (B,N,3)
+                                 'idx_down': idx_down,  # B * num_layers * (H,N)
+                                 'idx_in_bins': idx_in_bins,
+                                 # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+                                 'probability_of_bins': probability_of_bins,
+                                 # B * num_layers * (num_bins)
+                                 'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1)
+                                 # (B,)
+                                 # 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
+                                 }
+                    if config.test.save_pkl:
+                        with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                            pickle.dump(data_dict, f)
+                        # print(f'save{i}')
+
+                    if i < 10:
+                        visualization_heatmap(mode='modelnet', data_dict=data_dict,
+                                              save_path=f'{save_dir}heat_map', index=i)
+                        visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
+                                                         save_path=f'{save_dir}downsampled_points', index=i)
+                        visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
+                                                     save_path=f'{save_dir}points_in_bins', index=i)
+                        visualization_histogram(mode='modelnet', data_dict=data_dict,
+                                                save_path=f'{save_dir}histogram', index=i)
+                    if i == 10:
+                        break
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
