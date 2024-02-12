@@ -293,12 +293,13 @@ def test(local_rank, config):
                                  # (B,)
                                  # 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
-                    if config.test.save_pkl:
-                        with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                            pickle.dump(data_dict, f)
-                        # print(f'save{i}')
 
                     if i < 10:
+                        if config.test.save_pkl:
+                            with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                                pickle.dump(data_dict, f)
+                            # print(f'save{i}')
+
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i)
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
@@ -307,8 +308,6 @@ def test(local_rank, config):
                                                      save_path=f'{save_dir}points_in_bins', index=i)
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
-                    if i == 10:
-                        break
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
