@@ -18,7 +18,6 @@ import torch
 
 def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     # make every category name start from 0
-    print(f'atten.shape:{atten.shape}')
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
     # print(f'sample.shape{sample.shape}')
     xyzRGB = []
@@ -42,6 +41,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
         # print(my_cmap)
         # print(np.asarray(my_cmap(rgb)))
         RGB = 255 * np.asarray(my_cmap(rgb))[:3]
+        print(f'RGB:{RGB}')
         xyzRGB_tmp.extend(list(RGB))
         xyzRGB.append(xyzRGB_tmp)
 
@@ -1168,7 +1168,7 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
-    elif mode=='shapenet':
+    elif mode == 'shapenet':
 
         mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
                    8: 'lamp', 9: 'laptop', 10: 'motorbike',
@@ -1217,7 +1217,6 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
             visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
 
 
-
 def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None):
     if mode == 'modelnet':
 
@@ -1230,67 +1229,24 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
+    elif mode == 'shapenet':
 
-        if data_dict is None:
-            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
+                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
+                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
+    else:
+        raise NotImplementedError
 
-            for i in tqdm(range(20)):
-                with open(
-                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
-                        'rb') as f:
-                    data_dict = pickle.load(f)
+    if data_dict is None:
+        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-                sample_batch = data_dict['samples']  # (B,N,3)
-                label_batch = data_dict['ground_truth']  # (B,)
-                idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
-
-                B = sample_batch.shape[0]
-                num_layers = len(idx_down_batch[0])
-
-                for j in range(B):
-                    sample = sample_batch[j].cpu().numpy()  # (N,3)
-                    category = mapping[int(label_batch[j])]
-
-                    idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
-                    for k in range(num_layers):
-                        if k != 0:
-                            idx_down[k] = idx_down[k - 1][idx_down[k]]
-
-                        xyzRGB = []
-
-                        for xyz in sample:
-                            xyzRGB_tmp = []
-                            xyzRGB_tmp.extend(list(xyz))
-                            # print(my_cmap)
-                            # print(np.asarray(my_cmap(rgb)))
-                            xyzRGB_tmp.extend([192, 192, 192])  # gray color
-                            xyzRGB.append(xyzRGB_tmp)
-
-                        vertex = np.array(xyzRGB)  # (N,3+3)
-                        vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
-
-                        saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
-
-                        fig = plt.figure()
-                        ax = fig.add_subplot(projection='3d')
-                        ax.set_xlim3d(-0.6, 0.6)
-                        ax.set_ylim3d(-0.6, 0.6)
-                        ax.set_zlim3d(-0.6, 0.6)
-                        ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
-                        plt.axis('off')
-                        plt.grid('off')
-                        plt.savefig(saved_path, bbox_inches='tight')
-                        plt.close(fig)
-
-                        # print(f'.png file is saved in {saved_path}')
-        else:
-            data_dict = deepcopy(data_dict)
-            # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
-
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        for i in tqdm(range(20)):
+            with open(
+                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    'rb') as f:
+                data_dict = pickle.load(f)
 
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']  # (B,)
@@ -1321,7 +1277,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     vertex = np.array(xyzRGB)  # (N,3+3)
                     vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-                    saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
 
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
@@ -1336,7 +1292,55 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
                     # print(f'.png file is saved in {saved_path}')
     else:
-        raise NotImplementedError
+        data_dict = deepcopy(data_dict)
+        # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        sample_batch = data_dict['samples']  # (B,N,3)
+        label_batch = data_dict['ground_truth']  # (B,)
+        idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+
+        B = sample_batch.shape[0]
+        num_layers = len(idx_down_batch[0])
+
+        for j in range(B):
+            sample = sample_batch[j].cpu().numpy()  # (N,3)
+            category = mapping[int(label_batch[j])]
+
+            idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+            for k in range(num_layers):
+                if k != 0:
+                    idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+                xyzRGB = []
+
+                for xyz in sample:
+                    xyzRGB_tmp = []
+                    xyzRGB_tmp.extend(list(xyz))
+                    # print(my_cmap)
+                    # print(np.asarray(my_cmap(rgb)))
+                    xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                    xyzRGB.append(xyzRGB_tmp)
+
+                vertex = np.array(xyzRGB)  # (N,3+3)
+                vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
+
+                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+
+                fig = plt.figure()
+                ax = fig.add_subplot(projection='3d')
+                ax.set_xlim3d(-0.6, 0.6)
+                ax.set_ylim3d(-0.6, 0.6)
+                ax.set_zlim3d(-0.6, 0.6)
+                ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+                plt.axis('off')
+                plt.grid('off')
+                plt.savefig(saved_path, bbox_inches='tight')
+                plt.close(fig)
+
+                # print(f'.png file is saved in {saved_path}')
 
 
 def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None):
@@ -1351,86 +1355,24 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
+    elif mode == 'shapenet':
 
-        if data_dict is None:
-            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/points_in_bins/'
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
+                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
+                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
+    else:
+        raise NotImplementedError
 
-            for i in tqdm(range(20)):
-                with open(
-                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
-                        'rb') as f:
-                    data_dict = pickle.load(f)
+    if data_dict is None:
+        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/points_in_bins/'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-                sample_batch = data_dict['samples']  # (B,N,3)
-                label_batch = data_dict['ground_truth']  # (B,)
-                idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
-                idx_in_bins_batch = data_dict['idx_in_bins']
-                # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-
-                B = sample_batch.shape[0]
-                num_layers = len(idx_in_bins_batch[0])
-                num_bins = len(idx_in_bins_batch[0][0])
-
-                for j in range(B):
-                    sample = sample_batch[j].cpu().numpy()  # (N,3)
-                    category = mapping[int(label_batch[j])]
-
-                    idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
-
-                    idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
-                    for k in range(num_layers):
-                        idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
-
-                    for k in range(num_layers):
-                        if k != 0:
-                            idx_down[k] = idx_down[k - 1][idx_down[k]]
-
-                            for l in range(num_bins):
-                                idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
-
-                        xyzRGB = []
-
-                        for xyz in sample:
-                            xyzRGB_tmp = []
-                            xyzRGB_tmp.extend(list(xyz))
-                            # print(my_cmap)
-                            # print(np.asarray(my_cmap(rgb)))
-                            xyzRGB_tmp.extend([192, 192, 192])  # gray color
-                            xyzRGB.append(xyzRGB_tmp)
-
-                        vertex = np.array(xyzRGB)  # (N,3+3)
-
-                        # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                        colors = ['blue', 'darkcyan', 'orange', 'lime', 'yellow', 'Red']
-                        colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
-                                  colors]
-
-                        for l in range(num_bins):
-                            vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
-                                colors[l]
-
-                        saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
-                        # blue, darkcyan, orange, lime, yellow, Red
-                        fig = plt.figure()
-                        ax = fig.add_subplot(projection='3d')
-                        ax.set_xlim3d(-0.6, 0.6)
-                        ax.set_ylim3d(-0.6, 0.6)
-                        ax.set_zlim3d(-0.6, 0.6)
-                        ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
-                        plt.axis('off')
-                        plt.grid('off')
-                        plt.savefig(saved_path, bbox_inches='tight')
-                        plt.close(fig)
-
-                        # print(f'.png file is saved in {saved_path}')
-        else:
-            data_dict = deepcopy(data_dict)
-            # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
-
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        for i in tqdm(range(20)):
+            with open(
+                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    'rb') as f:
+                data_dict = pickle.load(f)
 
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']  # (B,)
@@ -1471,14 +1413,17 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
 
                     vertex = np.array(xyzRGB)  # (N,3+3)
 
-                    colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                    # Red, Lime, Blue, Gold, Cyan, Purple
+                    # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
+                    colors = ['blue', 'darkcyan', 'orange', 'lime', 'yellow', 'Red']
+                    colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
+                              colors]
+
                     for l in range(num_bins):
                         vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                             colors[l]
 
-                    saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
-
+                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
+                    # blue, darkcyan, orange, lime, yellow, Red
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
                     ax.set_xlim3d(-0.6, 0.6)
@@ -1489,8 +1434,72 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     plt.grid('off')
                     plt.savefig(saved_path, bbox_inches='tight')
                     plt.close(fig)
+
+                    # print(f'.png file is saved in {saved_path}')
     else:
-        raise NotImplementedError
+        data_dict = deepcopy(data_dict)
+        # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        sample_batch = data_dict['samples']  # (B,N,3)
+        label_batch = data_dict['ground_truth']  # (B,)
+        idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+        idx_in_bins_batch = data_dict['idx_in_bins']
+        # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+
+        B = sample_batch.shape[0]
+        num_layers = len(idx_in_bins_batch[0])
+        num_bins = len(idx_in_bins_batch[0][0])
+
+        for j in range(B):
+            sample = sample_batch[j].cpu().numpy()  # (N,3)
+            category = mapping[int(label_batch[j])]
+
+            idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+
+            idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+            for k in range(num_layers):
+                idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+
+            for k in range(num_layers):
+                if k != 0:
+                    idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+                    for l in range(num_bins):
+                        idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
+
+                xyzRGB = []
+
+                for xyz in sample:
+                    xyzRGB_tmp = []
+                    xyzRGB_tmp.extend(list(xyz))
+                    # print(my_cmap)
+                    # print(np.asarray(my_cmap(rgb)))
+                    xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                    xyzRGB.append(xyzRGB_tmp)
+
+                vertex = np.array(xyzRGB)  # (N,3+3)
+
+                colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
+                # Red, Lime, Blue, Gold, Cyan, Purple
+                for l in range(num_bins):
+                    vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
+                        colors[l]
+
+                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+
+                fig = plt.figure()
+                ax = fig.add_subplot(projection='3d')
+                ax.set_xlim3d(-0.6, 0.6)
+                ax.set_ylim3d(-0.6, 0.6)
+                ax.set_zlim3d(-0.6, 0.6)
+                ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+                plt.axis('off')
+                plt.grid('off')
+                plt.savefig(saved_path, bbox_inches='tight')
+                plt.close(fig)
 
 
 def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, index=None):
@@ -1505,81 +1514,24 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
+    elif mode == 'shapenet':
 
-        if data_dict is None:
-            save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
+                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
+                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
+    else:
+        raise NotImplementedError
 
-            for i in tqdm(range(20)):
-                with open(
-                        f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
-                        'rb') as f:
-                    data_dict = pickle.load(f)
+    if data_dict is None:
+        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-                idx_in_bins_batch = data_dict['idx_in_bins']
-                # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-                label_batch = data_dict['ground_truth']  # (B,)
-                probability_of_bins_batch = data_dict['probability_of_bins']  # B * num_layers * (num_bins)
-                probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
-                probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0).cpu().numpy()
-
-                # (B, num_layers, num_bins)
-
-                B, num_layers, num_bins = probability_of_bins_batch.shape
-
-                for j in range(B):
-                    probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
-                    category = mapping[int(label_batch[j])]
-                    idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
-
-                    for k in range(num_layers):
-                        idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
-                        # num_layers * num_bins * (n,)
-
-                    for k in range(num_layers):
-                        bins = np.array(range(6))
-                        num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
-                        probabilities_in_bins = probability_of_bins[k, :]
-
-                        fig = plt.figure()
-                        ax1 = fig.add_subplot()
-
-                        # fig, ax1 = plt.subplots()
-
-                        color = 'royalblue'
-                        ax1.set_xlabel('Year')
-                        ax1.set_ylabel('Number of Points in Bins')  # , color=color)
-                        ax1.bar(bins, num_points_in_bins, color=color)
-                        ax1.tick_params(axis='y', labelcolor=color)
-
-                        ax2 = ax1.twinx()
-
-                        color = 'darkred'
-                        ax2.set_ylabel('Probabilities in Bins', color=color)
-                        # ax2.set_ylim([0, 100])
-                        # ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
-                        ax2.plot(bins, probabilities_in_bins, marker='o')
-                        ax2.tick_params(axis='y', labelcolor=color)
-
-                        plt.title('Number of Points and Probabilities over Bins')
-
-                        fig.tight_layout()
-
-                        saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
-
-                        # plt.axis('off')
-                        # plt.grid('off')
-                        plt.savefig(saved_path, bbox_inches='tight')
-                        plt.close(fig)
-
-                        # print(f'.png file is saved in {saved_path}')
-        else:
-            data_dict = deepcopy(data_dict)
-            # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
-
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
+        for i in tqdm(range(20)):
+            with open(
+                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    'rb') as f:
+                data_dict = pickle.load(f)
 
             idx_in_bins_batch = data_dict['idx_in_bins']
             # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
@@ -1611,29 +1563,92 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                     # fig, ax1 = plt.subplots()
 
-                    color = 'tab:green'
+                    color = 'royalblue'
                     ax1.set_xlabel('Year')
-                    ax1.set_ylabel('Number of Points in Bins', color=color)
+                    ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                     ax1.bar(bins, num_points_in_bins, color=color)
                     ax1.tick_params(axis='y', labelcolor=color)
 
                     ax2 = ax1.twinx()
 
-                    color = 'tab:blue'
+                    color = 'darkred'
                     ax2.set_ylabel('Probabilities in Bins', color=color)
-                    ax2.set_ylim([0, 100])
-                    ax2.plot(bins, probabilities_in_bins * 100, color=color, marker='o')
+                    # ax2.set_ylim([0, 100])
+                    # ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
+                    ax2.plot(bins, probabilities_in_bins, marker='o')
                     ax2.tick_params(axis='y', labelcolor=color)
 
                     plt.title('Number of Points and Probabilities over Bins')
 
                     fig.tight_layout()
 
-                    saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
 
                     # plt.axis('off')
                     # plt.grid('off')
                     plt.savefig(saved_path, bbox_inches='tight')
                     plt.close(fig)
+
+                    # print(f'.png file is saved in {saved_path}')
     else:
-        raise NotImplementedError
+        data_dict = deepcopy(data_dict)
+        # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        idx_in_bins_batch = data_dict['idx_in_bins']
+        # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+        label_batch = data_dict['ground_truth']  # (B,)
+        probability_of_bins_batch = data_dict['probability_of_bins']  # B * num_layers * (num_bins)
+        probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
+        probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0).cpu().numpy()
+
+        # (B, num_layers, num_bins)
+
+        B, num_layers, num_bins = probability_of_bins_batch.shape
+
+        for j in range(B):
+            probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
+            category = mapping[int(label_batch[j])]
+            idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+
+            for k in range(num_layers):
+                idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+                # num_layers * num_bins * (n,)
+
+            for k in range(num_layers):
+                bins = np.array(range(6))
+                num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
+                probabilities_in_bins = probability_of_bins[k, :]
+
+                fig = plt.figure()
+                ax1 = fig.add_subplot()
+
+                # fig, ax1 = plt.subplots()
+
+                color = 'royalblue'
+                ax1.set_xlabel('Year')
+                ax1.set_ylabel('Number of Points in Bins')  # , color=color)
+                ax1.bar(bins, num_points_in_bins, color=color)
+                ax1.tick_params(axis='y', labelcolor=color)
+
+                ax2 = ax1.twinx()
+
+                color = 'darkred'
+                ax2.set_ylabel('Probabilities in Bins', color=color)
+                # ax2.set_ylim([0, 100])
+                # ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
+                ax2.plot(bins, probabilities_in_bins, marker='o')
+                ax2.tick_params(axis='y', labelcolor=color)
+
+                plt.title('Number of Points and Probabilities over Bins')
+
+                fig.tight_layout()
+
+                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+
+                # plt.axis('off')
+                # plt.grid('off')
+                plt.savefig(saved_path, bbox_inches='tight')
+                plt.close(fig)
