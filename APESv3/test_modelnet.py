@@ -185,17 +185,17 @@ def test(local_rank, config):
     # idx_in_bins_list = []
     # probability_of_bins_list = []
 
-    vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
-    for idx_mode in vis_test_gather_dict["trained"].keys():
-        vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
-    if config.test.visualize_downsampled_points.enable:
-        for idx_mode in vis_test_gather_dict["ds_points"].keys():
-            vis_test_gather_dict["ds_points"][idx_mode] = [[] for _ in
-                                                           range(len(config.feature_learning_block.downsample.M))]
-    if config.test.visualize_attention_heatmap.enable:
-        for idx_mode in vis_test_gather_dict["heatmap"].keys():
-            vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
-                                                         range(len(config.feature_learning_block.downsample.M))]
+    # vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
+    # for idx_mode in vis_test_gather_dict["trained"].keys():
+    #     vis_test_gather_dict["trained"][idx_mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
+    # if config.test.visualize_downsampled_points.enable:
+    #     for idx_mode in vis_test_gather_dict["ds_points"].keys():
+    #         vis_test_gather_dict["ds_points"][idx_mode] = [[] for _ in
+    #                                                        range(len(config.feature_learning_block.downsample.M))]
+    # if config.test.visualize_attention_heatmap.enable:
+    #     for idx_mode in vis_test_gather_dict["heatmap"].keys():
+    #         vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
+    #                                                      range(len(config.feature_learning_block.downsample.M))]
 
     with torch.no_grad():
         if rank == 0:
@@ -220,7 +220,7 @@ def test(local_rank, config):
             samples = samples.permute(0, 2, 1).contiguous()  # samples: (B,3,N)->(B,N,3)
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
-            vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
+            # vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(cls_label_gather_list, cls_labels)
             torch.distributed.all_gather(sample_gather_list, samples)

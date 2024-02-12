@@ -193,9 +193,9 @@ def test(local_rank, config):
     sample_list = []
     pred_novo_list = []
     loss_novo_list = []
-    vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
-    for mode in vis_test_gather_dict["trained"].keys():
-        vis_test_gather_dict["trained"][mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
+    # vis_test_gather_dict = vis_data_structure_init(config, based_config=True)
+    # for mode in vis_test_gather_dict["trained"].keys():
+    #     vis_test_gather_dict["trained"][mode] = [[] for _ in range(len(config.feature_learning_block.downsample.M))]
 
     with torch.no_grad():
         if rank == 0:
@@ -237,7 +237,7 @@ def test(local_rank, config):
                                      range(config.test.ddp.nproc_this_node)]
             sample_gather_list = [torch.empty_like(samples).to(device) for _ in range(config.test.ddp.nproc_this_node)]
 
-            vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
+            # vis_test_gather_dict = vis_data_gather(config, my_model, device, rank, vis_test_gather_dict)
 
             torch.distributed.all_gather(pred_gather_list, preds)
             torch.distributed.all_gather(seg_label_gather_list, seg_labels)
