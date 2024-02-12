@@ -7,6 +7,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib.image as Image
 from matplotlib import cm
+import matplotlib
 from collections import OrderedDict
 import pickle
 import os
@@ -1394,14 +1395,17 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
 
                         vertex = np.array(xyzRGB)  # (N,3+3)
 
-                        colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                        # Red, Green, Blue, Gold, Cyan, Purple
+                        # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
+                        colors = ['blue', 'darkcyan', 'orange', 'lime', 'yellow', 'Red']
+                        colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
+                                  colors]
+
                         for l in range(num_bins):
                             vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                                 colors[l]
 
                         saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
-
+                        # blue, darkcyan, orange, lime, yellow, Red
                         fig = plt.figure()
                         ax = fig.add_subplot(projection='3d')
                         ax.set_xlim3d(-0.6, 0.6)
@@ -1538,7 +1542,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                         color = 'royalblue'
                         ax1.set_xlabel('Year')
-                        ax1.set_ylabel('Number of Points in Bins', color=color)
+                        ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                         ax1.bar(bins, num_points_in_bins, color=color)
                         ax1.tick_params(axis='y', labelcolor=color)
 
@@ -1547,7 +1551,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                         color = 'darkred'
                         ax2.set_ylabel('Probabilities in Bins', color=color)
                         ax2.set_ylim([0, 100])
-                        ax2.plot(bins, probabilities_in_bins * 100, color=color, marker='o')
+                        ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
                         ax2.tick_params(axis='y', labelcolor=color)
 
                         plt.title('Number of Points and Probabilities over Bins')
