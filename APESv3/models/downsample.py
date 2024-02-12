@@ -9,7 +9,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     B, C, N = input_x_shape
     _, _, M = x_ds.shape
     num_bins = len(bin_chunks_idx)
-
+    print(f'direct_link_mode:{direct_link_mode}')
     # bin_prob.shape == (B, num_bins)
     bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     if direct_link_mode == 'no_link':
