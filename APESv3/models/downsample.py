@@ -224,6 +224,7 @@ class DownSampleCarve(nn.Module):
         self.bin_mode = config_ds.bin.mode[layer]
         self.enable_multiply = config_ds.bin.multiply[layer]
         self.direct_link_mode = config_ds.bin.direct_link_mode[layer]
+        print(f'self.direct_link_mode:{self.direct_link_mode}')
 
         if self.bin_enable:
             if self.bin_mode == "mode1":
