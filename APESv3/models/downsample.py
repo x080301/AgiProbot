@@ -109,7 +109,7 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
 
 def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
                                  bin_sample_mode):
-    bin_prob = bin_prob.clone().detach()
+    bin_prob = F.relu(bin_prob)  # .clone().detach())
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
     aps_chunks, idx_chunks = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode)
@@ -467,7 +467,6 @@ class DownSampleCarve(nn.Module):
             elif self.direct_link_mode == 'no_link_no_sigmoid':
                 bin_prob_edge = self.bin_conv1(x)  # bin_prob_edge.shape == (B, num_bins, N)
                 bin_prob_edge = torch.max(bin_prob_edge, dim=-1, keepdim=True)[0]
-                bin_prob_edge = F.relu(bin_prob_edge)
                 bin_prob = bin_prob_edge.squeeze(2)
             else:
                 raise NotImplementedError
