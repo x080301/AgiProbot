@@ -41,7 +41,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
         # print(my_cmap)
         # print(np.asarray(my_cmap(rgb)))
         RGB = 255 * np.asarray(my_cmap(rgb))[:3]
-        print(f'RGB:{RGB}')
+        # print(f'RGB:{RGB}')
         xyzRGB_tmp.extend(list(RGB))
         xyzRGB.append(xyzRGB_tmp)
 
