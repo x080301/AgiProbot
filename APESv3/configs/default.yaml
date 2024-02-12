@@ -202,7 +202,7 @@ feature_learning_block:
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       multiply: [ false, false ]
-      direct_link_mode: [ 'raw', 'raw' ] # raw, no_link, no_link_higher_gradient
+      direct_link_mode: [ raw', raw' ] # raw, no_link, no_link_higher_gradient
       normalization_mode: [ z_score_no_std,z_score_no_std ] # no_normalization, z_score, z_score_no_std
     boltzmann:
       enable: [ false, false ]
