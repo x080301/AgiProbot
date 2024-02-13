@@ -19,7 +19,7 @@ import torch
 def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     # make every category name start from 0
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
-    print(f'sample.shape{sample.shape}')
+    # print(f'sample.shape{sample.shape}')
     xyzRGB = []
 
     # atten = np.log(atten)
@@ -36,21 +36,21 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     #     atten = (atten - np.mean(atten)) / np.std(atten) + 0.5
 
     for xyz, rgb in zip(sample, atten):
-        print(f'rgb:{rgb.shape}')
+        # print(f'rgb:{rgb.shape}')
         xyzRGB_tmp = []
         xyzRGB_tmp.extend(list(xyz))
         # print(my_cmap)
         # print(np.asarray(my_cmap(rgb)))
         RGB = 255 * np.asarray(my_cmap(rgb))[:3]
-        print(f'RGB:{RGB}')
-        print(f'xyz.shape:{xyz.shape}')
+        # print(f'RGB:{RGB}')
+        # print(f'xyz.shape:{xyz.shape}')
         xyzRGB_tmp.extend(list(RGB))
-        print(f'xyzRGB_tmp:{xyzRGB_tmp}')
+        # print(f'xyzRGB_tmp:{xyzRGB_tmp}')
         xyzRGB.append(xyzRGB_tmp)
 
     saved_path = f'{save_path}/sample{i}_{category}.png'
     vertex = np.array(xyzRGB)
-    print(f'vertex.shape:{vertex.shape}')
+    # print(f'vertex.shape:{vertex.shape}')
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     ax.set_xlim3d(-0.6, 0.6)
