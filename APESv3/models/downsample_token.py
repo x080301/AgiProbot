@@ -278,7 +278,7 @@ class DownSampleToken(nn.Module):
                                                         bin_prob, self.M, self.bin_sample_mode)
         elif self.bin_mode == 'nonuniform_split_bin':
 
-            idx_down, _, idx_chunks = nonuniform_bin_idx_selection(attention_point_score,
+            idx_down, k_point_to_choose, idx_chunks = nonuniform_bin_idx_selection(attention_point_score,
                                                                    self.bin_boundaries,
                                                                    bin_prob,
                                                                    self.normalization_mode,
@@ -304,6 +304,7 @@ class DownSampleToken(nn.Module):
         self.idx_chunks = idx_chunks
         self.idx = idx_down
         self.attention_point_score = attention_point_score
+        self.k_point_to_choose = k_point_to_choose
 
         return (x_ds, idx_down), (None, None)
 
