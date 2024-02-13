@@ -262,7 +262,6 @@ def test(local_rank, config):
                     num_layers = len(k_point_to_choose[0])
                     num_bins = len(k_point_to_choose[0][0])
                     probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
-                                                      device=k_point_to_choose.device,
                                                       dtype=torch.float)
                     for i in range(num_batches):
                         for j in range(num_layers):
