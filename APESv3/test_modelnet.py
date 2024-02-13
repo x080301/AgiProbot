@@ -296,6 +296,7 @@ def test(local_rank, config):
                         elif 'AnTao' in config.datasets.dataset_name:
                             view_range = 0.6
 
+                        print(f'i:----------------------{i}')
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
