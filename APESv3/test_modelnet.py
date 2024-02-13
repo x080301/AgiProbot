@@ -258,15 +258,17 @@ def test(local_rank, config):
                     # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
                     k_point_to_choose = reshape_gathered_variable(k_point_to_choose_all_layers)
 
-                    num_batches, num_layers, num_bins = k_point_to_choose.shape
+                    num_batches = len(k_point_to_choose)
+                    num_layers = len(k_point_to_choose[0])
+                    num_bins = len(k_point_to_choose[0][0])
                     probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
                                                       device=k_point_to_choose.device,
                                                       dtype=torch.float)
                     for i in range(num_batches):
                         for j in range(num_layers):
                             for k in range(num_bins):
-                                probability_of_bins[i, j, k] = k_point_to_choose[i, j, k] / idx_in_bins[i][j][
-                                    k].nelement()
+                                probability_of_bins[i, j, k] = \
+                                    k_point_to_choose[i][j][k] / idx_in_bins[i][j][k].nelement()
 
                     # sampling_score_list.append(sampling_score)
                     # idx_down_list.append(idx_down)
