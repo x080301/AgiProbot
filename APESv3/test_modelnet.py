@@ -230,7 +230,7 @@ def test(local_rank, config):
                 sampling_score_all_layers = []
                 idx_down_all_layers = []
                 idx_in_bins_all_layers = []
-                probability_of_bins_all_layers = []
+                k_point_to_choose_all_layers = []
 
                 for downsample_module in my_model.module.block.downsample_list:
                     sampling_score_all_layers.append(
@@ -244,8 +244,8 @@ def test(local_rank, config):
                     idx_in_bins_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'idx_chunks',
                                                   rank, config.test.ddp.nproc_this_node, device))
-                    probability_of_bins_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'probability_of_bins',
+                    k_point_to_choose_all_layers.append(
+                        gather_variable_from_gpus(downsample_module, 'k_point_to_choose',
                                                   rank, config.test.ddp.nproc_this_node, device))
 
                 if rank == 0:
@@ -256,7 +256,17 @@ def test(local_rank, config):
                     # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                     idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
                     # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
-                    probability_of_bins = reshape_gathered_variable(probability_of_bins_all_layers)
+                    k_point_to_choose = reshape_gathered_variable(k_point_to_choose_all_layers)
+
+                    num_batches, num_layers, num_bins = k_point_to_choose.shape
+                    probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
+                                                      device=k_point_to_choose.device,
+                                                      dtype=torch.float)
+                    for i in range(num_batches):
+                        for j in range(num_layers):
+                            for k in range(num_bins):
+                                probability_of_bins[i, j, k] = k_point_to_choose[i, j, k] / idx_in_bins[i][j][
+                                    k].nelement()
 
                     # sampling_score_list.append(sampling_score)
                     # idx_down_list.append(idx_down)
