@@ -116,7 +116,8 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
     # print(f'len(idx_chunks[0]):{aps_chunks[0][0].shape}')
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
-    # aps_chunks.shape == num_bins * (B, H, n), # idx_sorted.shape == num_bins * (B, H, N/num_bins)
+    # aps_chunks.shape == num_bins * (B, H, n)
+    # idx_chunks.shape == num_bins * (B, H, n)
     num_bins = bin_boundaries[0].nelement()
     B, H, N = attention_point_score.shape
 
@@ -130,6 +131,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # print(f' bin_prob{bin_prob}-----------')
 
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+    # k_point_to_choose.shape == (B, num_bins)
 
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
 
@@ -174,9 +176,9 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
         idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
         idx_batch_list.append(idx_single)
     idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
-    # k_point_to_choose.shape == (B, num_bins)
-    # print(f'idx.dtype2:{idx.dtype}')
 
+    # k_point_to_choose.shape == (B, num_bins)
+    # idx_chunks.shape == num_bins * (B, H, n)
     return idx_batch, k_point_to_choose, idx_chunks
 
 
@@ -310,12 +312,14 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == "mode2":
                 idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
-                idx, _, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                  self.bin_boundaries,
-                                                                  bin_prob,
-                                                                  self.normalization_mode,
-                                                                  self.M,
-                                                                  self.bin_sample_mode)
+                idx, k_point_to_choose, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
+                                                                                  self.bin_boundaries,
+                                                                                  bin_prob,
+                                                                                  self.normalization_mode,
+                                                                                  self.M,
+                                                                                  self.bin_sample_mode)
+                # k_point_to_choose.shape == (B, num_bins)
+                # idx_chunks.shape == num_bins * (B, H, n)
 
             else:
                 raise NotImplementedError
@@ -353,7 +357,10 @@ class DownSampleCarve(nn.Module):
 
         self.idx = idx
         self.idx_chunks = idx_chunks
+        # idx_chunks.shape == num_bins * (B, H, n)
         self.bin_prob = bin_prob
+        self.k_point_to_choose = k_point_to_choose
+        # k_point_to_choose.shape == (B, num_bins)
         return (x_ds, idx), (None, None)
 
     def output_variables(self, *args):

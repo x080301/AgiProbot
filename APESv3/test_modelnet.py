@@ -245,7 +245,7 @@ def test(local_rank, config):
                         gather_variable_from_gpus(downsample_module, 'idx_chunks',
                                                   rank, config.test.ddp.nproc_this_node, device))
                     probability_of_bins_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'bin_prob',
+                        gather_variable_from_gpus(downsample_module, 'probability_of_bins',
                                                   rank, config.test.ddp.nproc_this_node, device))
 
                 if rank == 0:
@@ -280,13 +280,19 @@ def test(local_rank, config):
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)
                             # print(f'save{i}')
+                        if 'Yi' in config.datasets.dataset_name:
+                            view_range = 0.3
+                        elif 'AnTao' in config.datasets.dataset_name:
+                            view_range = 0.6
 
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
-                                              save_path=f'{save_dir}heat_map', index=i)
+                                              save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
-                                                         save_path=f'{save_dir}downsampled_points', index=i)
+                                                         save_path=f'{save_dir}downsampled_points', index=i,
+                                                         view_range=view_range)
                         visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
-                                                     save_path=f'{save_dir}points_in_bins', index=i)
+                                                     save_path=f'{save_dir}points_in_bins', index=i,
+                                                     view_range=view_range)
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
 

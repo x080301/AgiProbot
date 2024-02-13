@@ -16,7 +16,7 @@ from .visualization_data_processing import *
 import torch
 
 
-def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
+def visualization_heatmap_one_shape(i, sample, category, atten, save_path, view_range):
     # make every category name start from 0
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
     # print(f'sample.shape{sample.shape}')
@@ -56,9 +56,9 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     # ax.set_xlim3d(-0.6, 0.6)
     # ax.set_ylim3d(-0.6, 0.6)
     # ax.set_zlim3d(-0.6, 0.6)
-    ax.set_xlim3d(-0.6 / 3 ** 0.5, 0.6 / 3 ** 0.5)
-    ax.set_ylim3d(-0.6 / 3 ** 0.5, 0.6 / 3 ** 0.5)
-    ax.set_zlim3d(-0.6 / 3 ** 0.5, 0.6 / 3 ** 0.5)
+    ax.set_xlim3d(-view_range, view_range)
+    ax.set_ylim3d(-view_range, view_range)
+    ax.set_zlim3d(-view_range, view_range)
     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
     plt.axis('off')
     plt.grid('off')
@@ -1163,7 +1163,7 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     print(f'Done! All files are saved in {base_path}')
 
 
-def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index=None):
+def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
     if mode == 'modelnet':
 
         mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
@@ -1205,7 +1205,7 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
-                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path)
+                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path, view_range)
     else:
         data_dict = deepcopy(data_dict)
         if not os.path.exists(save_path):
@@ -1221,10 +1221,10 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
             sample = sample_batch[j].cpu().numpy()  # (N,3)
             category = mapping[int(label_batch[j])]
 
-            visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path)
+            visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path, view_range)
 
 
-def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None):
+def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
     if mode == 'modelnet':
 
         mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
@@ -1288,9 +1288,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
-                    ax.set_xlim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
-                    ax.set_ylim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
-                    ax.set_zlim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
+                    ax.set_xlim3d(-view_range, view_range)
+                    ax.set_ylim3d(-view_range, view_range)
+                    ax.set_zlim3d(-view_range, view_range)
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
@@ -1338,9 +1338,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
-                ax.set_xlim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
-                ax.set_ylim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
-                ax.set_zlim3d(-0.6 / torch.sqrt(3), 0.6 / torch.sqrt(3))
+                ax.set_xlim3d(-view_range, view_range)
+                ax.set_ylim3d(-view_range, view_range)
+                ax.set_zlim3d(-view_range, view_range)
 
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
@@ -1351,7 +1351,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 # print(f'.png file is saved in {saved_path}')
 
 
-def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None):
+def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
     if mode == 'modelnet':
 
         mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
@@ -1422,7 +1422,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     vertex = np.array(xyzRGB)  # (N,3+3)
 
                     # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                    colors = ['blue', 'darkcyan', 'orange', 'lime', 'yellow', 'Red']
+                    colors = ['darkred', 'darkgoldenrod', 'Yellow', 'Green', 'dodgerblue', 'purple']
+
                     colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
                               colors]
 
@@ -1434,9 +1435,9 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     # blue, darkcyan, orange, lime, yellow, Red
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
-                    ax.set_xlim3d(-0.6, 0.6)
-                    ax.set_ylim3d(-0.6, 0.6)
-                    ax.set_zlim3d(-0.6, 0.6)
+                    ax.set_xlim3d(-view_range, view_range)
+                    ax.set_ylim3d(-view_range, view_range)
+                    ax.set_zlim3d(-view_range, view_range)
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
@@ -1500,9 +1501,9 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
-                ax.set_xlim3d(-0.6, 0.6)
-                ax.set_ylim3d(-0.6, 0.6)
-                ax.set_zlim3d(-0.6, 0.6)
+                ax.set_xlim3d(-view_range, view_range)
+                ax.set_ylim3d(-view_range, view_range)
+                ax.set_zlim3d(-view_range, view_range)
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
