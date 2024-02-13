@@ -1491,8 +1491,10 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
 
                 vertex = np.array(xyzRGB)  # (N,3+3)
 
-                colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                # Red, Lime, Blue, Gold, Cyan, Purple
+                colors = ['darkred', 'darkgoldenrod', 'Yellow', 'Green', 'dodgerblue', 'purple']
+                colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
+                          colors]
+
                 for l in range(num_bins):
                     vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                         colors[l]
