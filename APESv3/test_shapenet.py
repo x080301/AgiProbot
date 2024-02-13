@@ -303,12 +303,12 @@ def test(local_rank, config):
 
                         visualization_heatmap(mode='shapenet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i)
-                        visualization_downsampled_points(mode='shapenet', data_dict=data_dict,
-                                                         save_path=f'{save_dir}downsampled_points', index=i)
-                        visualization_points_in_bins(mode='shapenet', data_dict=data_dict,
-                                                     save_path=f'{save_dir}points_in_bins', index=i)
-                        visualization_histogram(mode='shapenet', data_dict=data_dict,
-                                                save_path=f'{save_dir}histogram', index=i)
+                        # visualization_downsampled_points(mode='shapenet', data_dict=data_dict,
+                        #                                  save_path=f'{save_dir}downsampled_points', index=i)
+                        # visualization_points_in_bins(mode='shapenet', data_dict=data_dict,
+                        #                              save_path=f'{save_dir}points_in_bins', index=i)
+                        # visualization_histogram(mode='shapenet', data_dict=data_dict,
+                        #                         save_path=f'{save_dir}histogram', index=i)
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)

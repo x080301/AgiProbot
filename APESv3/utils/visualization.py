@@ -1285,9 +1285,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
-                    ax.set_xlim3d(-0.6, 0.6)
-                    ax.set_ylim3d(-0.6, 0.6)
-                    ax.set_zlim3d(-0.6, 0.6)
+                    ax.set_xlim3d(-0.6/torch.sqrt(3), 0.6/torch.sqrt(3))
+                    ax.set_ylim3d(-0.6/torch.sqrt(3), 0.6/torch.sqrt(3))
+                    ax.set_zlim3d(-0.6/torch.sqrt(3), 0.6/torch.sqrt(3))
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
