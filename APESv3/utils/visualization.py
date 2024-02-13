@@ -48,6 +48,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
 
     saved_path = f'{save_path}/sample{i}_{category}.png'
     vertex = np.array(xyzRGB)
+    print(f'vertex.shape:{vertex.shape}')
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     ax.set_xlim3d(-0.6, 0.6)
