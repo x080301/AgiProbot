@@ -263,11 +263,11 @@ def test(local_rank, config):
                     num_bins = len(k_point_to_choose[0][0])
                     probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
                                                       dtype=torch.float)
-                    for i in range(num_batches):
-                        for j in range(num_layers):
-                            for k in range(num_bins):
-                                probability_of_bins[i, j, k] = \
-                                    k_point_to_choose[i][j][k] / idx_in_bins[i][j][k].nelement()
+                    for i0 in range(num_batches):
+                        for j0 in range(num_layers):
+                            for k0 in range(num_bins):
+                                probability_of_bins[i0, j0, k0] = \
+                                    k_point_to_choose[i0][j0][k0] / idx_in_bins[i0][j0][k0].nelement()
 
                     # sampling_score_list.append(sampling_score)
                     # idx_down_list.append(idx_down)
@@ -296,7 +296,6 @@ def test(local_rank, config):
                         elif 'AnTao' in config.datasets.dataset_name:
                             view_range = 0.6
 
-                        print(f'i:----------------------{i}')
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
