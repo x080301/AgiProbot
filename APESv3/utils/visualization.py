@@ -1571,16 +1571,16 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                     ax1.set_xlabel('Year')
                     ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                     ax1.bar(bins, num_points_in_bins, color=color)
-                    ax1.tick_params(axis='y', labelcolor=color)
+                    ax1.tick_params(axis='y')  # , labelcolor=color)
 
                     ax2 = ax1.twinx()
 
                     color = 'darkred'
-                    ax2.set_ylabel('Probabilities in Bins', color=color)
+                    ax2.set_ylabel('Probabilities in Bins')  # , color=color)
                     # ax2.set_ylim([0, 100])
-                    # ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
-                    ax2.plot(bins, probabilities_in_bins, marker='o')
-                    ax2.tick_params(axis='y', labelcolor=color)
+                    # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
+                    ax2.plot(bins, probabilities_in_bins, marker='o', color=color)
+                    ax2.tick_params(axis='y')  # , labelcolor=color)
 
                     plt.title('Number of Points and Probabilities over Bins')
 
@@ -1635,16 +1635,16 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 ax1.set_xlabel('Year')
                 ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                 ax1.bar(bins, num_points_in_bins, color=color)
-                ax1.tick_params(axis='y', labelcolor=color)
+                ax1.tick_params(axis='y')  # , labelcolor=color)
 
                 ax2 = ax1.twinx()
 
                 color = 'darkred'
-                ax2.set_ylabel('Probabilities in Bins', color=color)
+                ax2.set_ylabel('Probabilities in Bins')  # , color=color)
                 # ax2.set_ylim([0, 100])
-                # ax2.plot(bins, probabilities_in_bins * 100, marker='o')  # ,color=color)
-                ax2.plot(bins, probabilities_in_bins, marker='o')
-                ax2.tick_params(axis='y', labelcolor=color)
+                # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
+                ax2.plot(bins, probabilities_in_bins, marker='o', color=color)
+                ax2.tick_params(axis='y')  # , labelcolor=color)
 
                 plt.title('Number of Points and Probabilities over Bins')
 
