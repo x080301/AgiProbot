@@ -19,7 +19,7 @@ import torch
 def visualization_heatmap_one_shape(i, sample, category, atten, save_path):
     # make every category name start from 0
     my_cmap = cm.get_cmap('viridis_r', sample.shape[0])
-    # print(f'sample.shape{sample.shape}')
+    print(f'sample.shape{sample.shape}')
     xyzRGB = []
 
     # atten = np.log(atten)

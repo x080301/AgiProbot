@@ -293,6 +293,7 @@ def test(local_rank, config):
                                  # (B,)
                                  # 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
+                    print(f'samples.shape:{torch.concat(sample_gather_list, dim=0)}')
 
                     if i < 10:
                         if config.test.save_pkl:
