@@ -52,8 +52,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     bin_prob = bin_prob * max_num_points
     bin_prob += 1e-10
 
-    print(f'bin_prob:{bin_prob}')
-    print(f'max_num_points:{max_num_points}')
+    # print(f'bin_prob:{bin_prob}')
+    # print(f'max_num_points:{max_num_points}')
 
     num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
     for _ in range(num_bins):
@@ -61,7 +61,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
         num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
         # print(torch.max(num_to_choose))
 
-        print(f'add:{bin_prob * num_to_choose}')
+        # print(f'add:{bin_prob * num_to_choose}')
         num_chosen_points_in_bin += bin_prob * num_to_choose
         num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
                                                num_chosen_points_in_bin)
