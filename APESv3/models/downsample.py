@@ -49,7 +49,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # print(f'max_num_points:{max_num_points}')
     # print(f'bin_prob:{bin_prob}')
     B, num_bins = bin_prob.shape
-    bin_prob += 1e-12
+    bin_prob = bin_prob * max_num_points
+    bin_prob += 1e-10
 
     print(f'bin_prob:{bin_prob}')
     print(f'max_num_points:{max_num_points}')
