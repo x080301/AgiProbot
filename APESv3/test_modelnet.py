@@ -245,7 +245,7 @@ def test(local_rank, config):
                         gather_variable_from_gpus(downsample_module, 'idx_chunks',
                                                   rank, config.test.ddp.nproc_this_node, device))
                     k_point_to_choose_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'k_point_to_choose',
+                        gather_variable_from_gpus(downsample_module, 'bin_prob',  # 'k_point_to_choose',
                                                   rank, config.test.ddp.nproc_this_node, device))
 
                 if rank == 0:
@@ -267,7 +267,7 @@ def test(local_rank, config):
                         for j0 in range(num_layers):
                             for k0 in range(num_bins):
                                 probability_of_bins[i0, j0, k0] = \
-                                    k_point_to_choose[i0][j0][k0] #/ idx_in_bins[i0][j0][k0].nelement()
+                                    k_point_to_choose[i0][j0][k0]  # / idx_in_bins[i0][j0][k0].nelement()
 
                     # sampling_score_list.append(sampling_score)
                     # idx_down_list.append(idx_down)
