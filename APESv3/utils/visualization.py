@@ -1352,6 +1352,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
 
 def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
+    colors = ['darkred', 'darkcyan', 'Yellow', 'Green', 'dodgerblue', 'purple']
+    colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
     if mode == 'modelnet':
 
         mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
@@ -1422,10 +1424,6 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     vertex = np.array(xyzRGB)  # (N,3+3)
 
                     # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-                    colors = ['darkred', 'darkgoldenrod', 'Yellow', 'Green', 'dodgerblue', 'purple']
-
-                    colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
-                              colors]
 
                     for l in range(num_bins):
                         vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
@@ -1490,10 +1488,6 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     xyzRGB.append(xyzRGB_tmp)
 
                 vertex = np.array(xyzRGB)  # (N,3+3)
-
-                colors = ['darkred', 'darkgoldenrod', 'Yellow', 'Green', 'dodgerblue', 'purple']
-                colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in
-                          colors]
 
                 for l in range(num_bins):
                     vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
