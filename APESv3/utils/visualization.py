@@ -1352,8 +1352,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
 
 def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
-    colors = ['darkred', 'darkcyan', 'Yellow', 'Green', 'dodgerblue', 'purple']
+    colors = ['darkred', 'purple', 'Yellow', 'Green', 'dodgerblue', 'darkolivegreen']
     colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
+
     if mode == 'modelnet':
 
         mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
