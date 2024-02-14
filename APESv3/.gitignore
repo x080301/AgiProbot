@@ -166,3 +166,4 @@ wandb/
 artifacts/
 # don't ignore subfolder datasets
 !*/datasets/
+training_in_line_save.txt
