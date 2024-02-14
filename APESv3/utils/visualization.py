@@ -1520,8 +1520,8 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                    31: 'stairs',
                    32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
                    39: 'xbox'}
-    elif mode == 'shapenet':
 
+    elif mode == 'shapenet':
         mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
                    8: 'lamp', 9: 'laptop', 10: 'motorbike',
                    11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}

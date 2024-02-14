@@ -267,7 +267,7 @@ def test(local_rank, config):
                         for j0 in range(num_layers):
                             for k0 in range(num_bins):
                                 probability_of_bins[i0, j0, k0] = \
-                                    k_point_to_choose[i0][j0][k0] / idx_in_bins[i0][j0][k0].nelement()
+                                    k_point_to_choose[i0][j0][k0] #/ idx_in_bins[i0][j0][k0].nelement()
 
                     # sampling_score_list.append(sampling_score)
                     # idx_down_list.append(idx_down)
