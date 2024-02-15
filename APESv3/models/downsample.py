@@ -824,19 +824,14 @@ class DownSampleToken(nn.Module):
             raise NotImplementedError
 
         idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
-        if self.bin_mode == 'nonuniform_split_bin':
-            idx, k_point_to_choose, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                              self.bin_boundaries,
-                                                                              bin_prob,
-                                                                              self.normalization_mode,
-                                                                              self.M,
-                                                                              self.bin_sample_mode)
-            # k_point_to_choose.shape == (B, num_bins)
-            # idx_chunks.shape == num_bins * (B, H, n)
-
-
-        else:
-            raise NotImplementedError
+        idx, k_point_to_choose, idx_chunks = nonuniform_bin_idx_selection(self.attention_point_score,
+                                                                          self.bin_boundaries,
+                                                                          bin_prob,
+                                                                          self.normalization_mode,
+                                                                          self.M,
+                                                                          self.bin_sample_mode)
+        # k_point_to_choose.shape == (B, num_bins)
+        # idx_chunks.shape == num_bins * (B, H, n)
 
         attention_down = torch.gather(attention_map, dim=2,
                                       index=idx.unsqueeze(3).expand(-1, -1, -1, self.attention_points.shape[-1]))
