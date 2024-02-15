@@ -330,8 +330,9 @@ class DownSampleCarve(nn.Module):
             elif self.bin_mode == "mode2":
                 idx, _ = self.bin2_idx_selection()
             elif self.bin_mode == 'nonuniform_split_bin':
+                bin_boundaries = self.bin_boundaries.to(x.device)
                 idx, k_point_to_choose, idx_chunks, _ = nonuniform_bin_idx_selection(self.attention_point_score,
-                                                                                     self.bin_boundaries,
+                                                                                     bin_boundaries,
                                                                                      bin_prob,
                                                                                      self.normalization_mode,
                                                                                      self.M,
@@ -848,9 +849,10 @@ class DownSampleToken(nn.Module):
                 self.bin_sample_mode,
                 self.dynamic_boundaries)
         else:
+            bin_boundaries = self.bin_boundaries.to(x.device)
             idx, k_point_to_choose, idx_chunks, _ = nonuniform_bin_idx_selection(
                 self.attention_point_score,
-                self.bin_boundaries,
+                bin_boundaries,
                 bin_prob,
                 self.normalization_mode,
                 self.M,
