@@ -138,13 +138,13 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     bin_boundaries = bin_boundaries / torch.distributed.get_world_size()
 
     if old_bin_boundaries is not None:
-        new_bin_boundaries = old_bin_boundaries.detach()
+        new_bin_boundaries = [old_bin_boundaries[0].detach(), old_bin_boundaries[1].detach()]
 
         bin_boundaries = new_bin_boundaries[0][0, 0, 0, 1:] * 0.99 + 0.01 * bin_boundaries
 
         new_bin_boundaries[0][0, 0, 0, 1:] = bin_boundaries
         new_bin_boundaries[1][0, 0, 0, :-1] = bin_boundaries
-    else:
+        else:
         # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
         bin_boundaries_upper = torch.empty((num_bins,), device=attention_point_score.device)
         bin_boundaries_upper[0] = float('inf')
@@ -160,7 +160,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
                               # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
                               ]
 
-    # print(f'new_bin_boundaries:{new_bin_boundaries}')
+        # print(f'new_bin_boundaries:{new_bin_boundaries}')
     return new_bin_boundaries
 
 
