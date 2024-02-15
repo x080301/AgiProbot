@@ -134,7 +134,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
     bin_boundaries = sorted_scores[bin_boundaries_index]
 
-    torch.distributed.all_reduce(bin_boundaries, reduce_op=torch.distributed.ReduceOp.SUM)
+    torch.distributed.all_reduce(bin_boundaries)  # , reduce_op=torch.distributed.ReduceOp.SUM)
     bin_boundaries = bin_boundaries / torch.distributed.get_world_size()
 
     if old_bin_boundaries is not None:
