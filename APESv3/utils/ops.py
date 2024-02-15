@@ -164,7 +164,8 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     return new_bin_boundaries
 
 
-def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, normalization_mode='no_normalization'):
+def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, normalization_mode,
+                          dynamic_boundaries_enable):
     """
 
     :param attention_point_score: (B,1,N)
@@ -189,7 +190,9 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
 
-    bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins)
+    if dynamic_boundaries_enable:
+        bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins)
+
     index_batch, _, index_point, index_bin = torch.where(
         (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1]))
 

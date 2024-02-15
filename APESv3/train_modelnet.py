@@ -475,7 +475,15 @@ def train(local_rank, config, random_seed,
                 if config.wandb.enable:
                     # save model
                     if val_acc >= max(val_acc_list):
-                        state_dict = my_model.state_dict()
+
+                        if config.feature_learning_block.downsample.bin.dynamic_boundaries:
+
+                            state_dict = {'model_state_dict': my_model.state_dict(),
+                                          'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in
+                                                             my_model.module.block.downsample_list]}
+                        else:
+                            state_dict = my_model.state_dict()
+
                         torch.save(state_dict, f'{save_dir}{time_label}_{run.id}/checkpoint.pt')
                     val_acc_list.append(val_acc)
                     metric_dict = {'modelnet_val': {'loss': val_loss, 'acc': val_acc}}

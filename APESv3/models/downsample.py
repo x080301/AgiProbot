@@ -116,7 +116,7 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
 
 
 def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
-                                 bin_sample_mode):
+                                 bin_sample_mode, dynamic_boundaries_enable):
     B, H, N = attention_point_score.shape
     _, num_bins = bin_prob.shape
 
@@ -125,7 +125,8 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # self.attention_point_score.shape == (B, H, N)
 
     aps_chunks, idx_chunks, bin_boundaries = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries,
-                                                                       num_bins, normalization_mode)
+                                                                       num_bins, normalization_mode,
+                                                                       dynamic_boundaries_enable)
 
     # print(f'len(idx_chunks):{len(aps_chunks)}')
     # print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
@@ -251,15 +252,19 @@ class DownSampleCarve(nn.Module):
                     self.bin_conv2 = nn.Conv1d(q_in + int(self.num_bins), q_out, 1, bias=False)
 
                 # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
-                bin_boundaries_upper = [float('inf')]
-                bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
-                bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
-                bin_boundaries_lower.append(float('-inf'))
-                self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
-                                       # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
-                                       torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
-                                       # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
-                                       ]
+                self.dynamic_boundaries = config_ds.bin.dynamic_boundaries
+                if config_ds.bin.dynamic_boundaries:
+                    self.bin_boundaries = None
+                else:
+                    bin_boundaries_upper = [float('inf')]
+                    bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
+                    bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
+                    bin_boundaries_lower.append(float('-inf'))
+                    self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
+                                           # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                                           torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
+                                           # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                                           ]
 
                 self.normalization_mode = config_ds.bin.normalization_mode[layer]
             else:
@@ -330,7 +335,8 @@ class DownSampleCarve(nn.Module):
                                                                                      bin_prob,
                                                                                      self.normalization_mode,
                                                                                      self.M,
-                                                                                     self.bin_sample_mode)
+                                                                                     self.bin_sample_mode,
+                                                                                     self.dynamic_boundaries)
                 # k_point_to_choose.shape == (B, num_bins)
                 # idx_chunks.shape == num_bins * (B, H, n)
 
@@ -777,17 +783,20 @@ class DownSampleToken(nn.Module):
         self.enable_multiply = config_ds.bin.multiply[layer]
         self.direct_link_mode = config_ds.bin.direct_link_mode[layer]
 
-        # # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
-        # bin_boundaries_upper = [float('inf')]
-        # bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
-        # bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
-        # bin_boundaries_lower.append(float('-inf'))
-        # self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
-        #                        # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
-        #                        torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
-        #                        # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
-        #                        ]
-        self.bin_boundaries = None
+        self.dynamic_boundaries = config_ds.bin.dynamic_boundaries
+        if config_ds.bin.dynamic_boundaries:
+            self.bin_boundaries = None
+        else:
+            # # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+            bin_boundaries_upper = [float('inf')]
+            bin_boundaries_upper.extend(config_ds.bin.bin_boundaries[layer])
+            bin_boundaries_lower = config_ds.bin.bin_boundaries[layer]
+            bin_boundaries_lower.append(float('-inf'))
+            self.bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, self.num_bins),
+                                   # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                                   torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, self.num_bins)
+                                   # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                                   ]
 
         self.normalization_mode = config_ds.bin.normalization_mode[layer]
 
@@ -829,13 +838,24 @@ class DownSampleToken(nn.Module):
             raise NotImplementedError
 
         idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
-        idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
-            self.attention_point_score,
-            self.bin_boundaries,
-            bin_prob,
-            self.normalization_mode,
-            self.M,
-            self.bin_sample_mode)
+        if self.dynamic_boundaries:
+            idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
+                self.attention_point_score,
+                self.bin_boundaries,
+                bin_prob,
+                self.normalization_mode,
+                self.M,
+                self.bin_sample_mode,
+                self.dynamic_boundaries)
+        else:
+            idx, k_point_to_choose, idx_chunks, _ = nonuniform_bin_idx_selection(
+                self.attention_point_score,
+                self.bin_boundaries,
+                bin_prob,
+                self.normalization_mode,
+                self.M,
+                self.bin_sample_mode,
+                self.dynamic_boundaries)
         # k_point_to_choose.shape == (B, num_bins)
         # idx_chunks.shape == num_bins * (B, H, n)
 

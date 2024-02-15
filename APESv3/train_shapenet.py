@@ -21,6 +21,7 @@ import socket
 
 from utils.check_config import set_config_run
 
+
 # os.environ['TORCH_USE_CUDA_DSA'] = '1'
 # os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
 # os.environ["HYDRA_FULL_ERROR"] = '1'
@@ -548,7 +549,15 @@ def train(local_rank, config, random_seed,
                 if config.wandb.enable:
                     # save model
                     if val_miou >= max(val_miou_list):
-                        state_dict = my_model.state_dict()
+
+                        if config.feature_learning_block.downsample.bin.dynamic_boundaries:
+
+                            state_dict = {'model_state_dict': my_model.state_dict(),
+                                          'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in
+                                                             my_model.module.block.downsample_list]}
+                        else:
+                            state_dict = my_model.state_dict()
+
                         torch.save(state_dict, f'{save_dir}{time_label}_{run.id}/checkpoint.pt')
                     val_miou_list.append(val_miou)
                     val_category_miou_list.append(val_category_miou)
