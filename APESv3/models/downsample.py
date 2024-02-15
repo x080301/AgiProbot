@@ -722,7 +722,7 @@ class DownSampleCarve(nn.Module):
 
 class DownSampleToken(nn.Module):
     def __init__(self, config_ds, layer):
-        super(DownSampleCarve, self).__init__()
+        super(DownSampleToken, self).__init__()
 
         self.M = config_ds.M[layer]
         self.K = 32
