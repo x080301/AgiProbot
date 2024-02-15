@@ -159,6 +159,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
                               # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
                               ]
 
+    print(f'new_bin_boundaries:{new_bin_boundaries}')
     return new_bin_boundaries
 
 
