@@ -805,18 +805,21 @@ class DownSampleToken(nn.Module):
             q = self.split_heads(q, self.num_heads, self.q_depth)
             # q.shape == (B, H, D, N)
             k = self.k_conv(x_and_token)
-            # k.shape ==  (B, C, N)
+            # k.shape ==  (B, C, N+num_bins)
             k = self.split_heads(k, self.num_heads, self.k_depth)
-            # k.shape == (B, H, D, N)
+            # k.shape == (B, H, D, N+num_bins)
             v = self.v_conv(x_and_token)
-            # v.shape ==  (B, C, N)
+            # v.shape ==  (B, C, N+num_bins)
             v = self.split_heads(v, self.num_heads, self.v_depth)
-            # v.shape == (B, H, D, N)
+            # v.shape == (B, H, D, N+num_bins)
             q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
 
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
+            print(f'attention_map.shape{attention_map.shape}')
 
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
+            print(f'self.attention_points.shape{self.attention_points.shape}')
+            print(f'attention_bins.shape{attention_bins.shape}')
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
@@ -835,8 +838,12 @@ class DownSampleToken(nn.Module):
 
         attention_down = torch.gather(attention_map, dim=2,
                                       index=idx.unsqueeze(3).expand(-1, -1, -1, self.attention_points.shape[-1]))
+        print(f'attention_down.shape{attention_down.shape}')
+        print(f'v.shape{v.shape}')
         # attention_down.shape == (B, H, M, N+num_bins)
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
+        # attention_down: (B, H, M, N+num_bins)
+        # v.shape == (B, H, D, N+num_bins)
         # v_down.shape == (B, M, H, D)
         x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
 
