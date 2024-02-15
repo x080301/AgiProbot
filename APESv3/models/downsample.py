@@ -35,6 +35,7 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     # print(f'x_ds.shape=={x_ds.shape}')
     # print(f'tensor_to_multiply:{tensor_to_multiply.shape}')
     x_ds = x_ds * tensor_to_multiply
+    print('get here')
 
     return x_ds
 
