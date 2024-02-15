@@ -118,7 +118,7 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
 def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
                                  bin_sample_mode):
     B, H, N = attention_point_score.shape
-    num_bins, _ = bin_prob.shape
+    _, num_bins = bin_prob.shape
 
     bin_prob = F.relu(bin_prob)  # .clone().detach())
     # bin_prob.shape == (B, num_bins)
