@@ -98,7 +98,7 @@ def vis_data_extract(config, model):
     if config.datasets.dataset_name == "shapenet_AnTao350M" or config.datasets.dataset_name == "shapenet_Yi650M" or config.datasets.dataset_name == "shapenet_Normal":
         for i in range(len(config.feature_learning_block.downsample.M)):
             # trained model
-            attention_map = model.module.block.downsample_list[i].attention_map
+            attention_map = model.module.block.downsample_list[i].attention_points
             mask = model.module.block.downsample_list[i].mask
             sparse_attention_map = model.module.block.downsample_list[i].sparse_attention_map
 
@@ -115,7 +115,7 @@ def vis_data_extract(config, model):
         if config.feature_learning_block.downsample.ds_which == "global_carve":
             for i in range(len(config.feature_learning_block.downsample.M)):
                 # trained model
-                attention_map = model.module.block.downsample_list[i].attention_map
+                attention_map = model.module.block.downsample_list[i].attention_points
                 mask = model.module.block.downsample_list[i].mask
                 sparse_attention_map = model.module.block.downsample_list[i].sparse_attention_map
 
@@ -164,7 +164,7 @@ def vis_data_extract(config, model):
             vis_dict = vis_data_structure_init(config, based_config=True)
             for i in range(len(config.feature_learning_block.downsample.M)):
                 # trained model
-                attention_map = model.module.block.downsample_list[i].attention_map
+                attention_map = model.module.block.downsample_list[i].attention_points
                 vis_dict["trained"]["idx"].append(model.module.block.downsample_list[i].idx)
                 vis_dict["trained"]["attention_point_score"].append(
                     model.module.block.downsample_list[i].attention_point_score)
@@ -182,7 +182,7 @@ def vis_data_extract(config, model):
         elif config.feature_learning_block.downsample.ds_which == "local_insert":
             for i in range(len(config.feature_learning_block.downsample.M)):
                 # trained model
-                attention_map = model.module.block.downsample_list[i].attention_map
+                attention_map = model.module.block.downsample_list[i].attention_points
                 mask = model.module.block.downsample_list[i].mask
                 sparse_attention_map = model.module.block.downsample_list[i].sparse_attention_map
 
