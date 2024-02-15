@@ -21,10 +21,10 @@ import socket
 
 from utils.check_config import set_config_run
 
-os.environ['TORCH_USE_CUDA_DSA'] = '1'
-os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
-os.environ["HYDRA_FULL_ERROR"] = '1'
-torch.autograd.set_detect_anomaly(True)
+# os.environ['TORCH_USE_CUDA_DSA'] = '1'
+# os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
+# os.environ["HYDRA_FULL_ERROR"] = '1'
+# torch.autograd.set_detect_anomaly(True)
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):

@@ -122,6 +122,46 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
+def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score, num_bins):
+    # old_bin_boundaries:2 * (1,1,1,num_bins)
+    # attention_point_score: (B, H, N)
+
+    num_sampling_scores = attention_point_score.nelement()
+
+    bin_boundaries_index = torch.arange(1, num_bins) / num_bins * num_sampling_scores
+    bin_boundaries_index = bin_boundaries_index.to(attention_point_score.device).int()
+
+    sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
+    bin_boundaries = sorted_scores[bin_boundaries_index]
+
+    torch.distributed.all_reduce(bin_boundaries, reduce_op=torch.distributed.ReduceOp.SUM)
+    bin_boundaries = bin_boundaries / torch.distributed.get_world_size()
+
+    if old_bin_boundaries is not None:
+        bin_boundaries = old_bin_boundaries[0][1, 1, 1, 1:] * 0.99 + 0.01 * bin_boundaries
+
+        new_bin_boundaries = old_bin_boundaries
+        new_bin_boundaries[0][1, 1, 1, 1:] = bin_boundaries
+        new_bin_boundaries[1][1, 1, 1, :-1] = bin_boundaries
+    else:
+        # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+        bin_boundaries_upper = torch.empty((num_bins,))
+        bin_boundaries_upper[0] = float('inf')
+        bin_boundaries_upper[1:] = bin_boundaries
+
+        bin_boundaries_lower = torch.empty((num_bins,))
+        bin_boundaries_upper[-1] = float('inf')
+        bin_boundaries_upper[:-1] = bin_boundaries
+
+        new_bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, num_bins),
+                              # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                              torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, num_bins)
+                              # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                              ]
+
+    return new_bin_boundaries
+
+
 def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode='no_normalization'):
     """
 
@@ -129,6 +169,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     :param bin_boundaries: list with size num_bins-1
     :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
     """
+    print(f'bin_boundaries:{bin_boundaries}')
 
     num_bins = bin_boundaries[0].nelement()
     B, H, N = attention_point_score.shape
@@ -146,6 +187,8 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
+
+    bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins)
     index_batch, _, index_point, index_bin = torch.where(
         (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1]))
 
@@ -155,6 +198,12 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     x_chunks = [[attention_point_score[j, 0, :][index_point[(index_bin == i) & (index_batch == j)]].reshape(1, -1)
                  for j in range(B)]
                 for i in range(num_bins)]
+
+    num_points_in_bins = torch.zeros(B, num_bins)
+    for i in range(num_bins):
+        for j in range(B):
+            num_points_in_bins[j, i] = idx_chunks[i][j].nelement()
+    print(f'num_points_in_bins:{num_points_in_bins}')
 
     # idx_chunks: num_bins * B *(H, n)
     # x_chunks: num_bins * B *(H, n)
@@ -179,7 +228,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
 
     # print(f'idx.dtype4:{index_in_bin.dtype}')
     # exit(-1)
-    return x_chunks, idx_chunks
+    return x_chunks, idx_chunks, bin_boundaries
 
     # z_normalized_x = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
     # # z_normalized_x.shape = (B,1,N)
