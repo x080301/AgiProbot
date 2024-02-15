@@ -6,3 +6,5 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_Token_Std'
 #---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_multiple_nonaveragebins_nostd_cls.yaml wandb.name='Modelnet_Token_Multiple_NoStdLog'
+#---------------
