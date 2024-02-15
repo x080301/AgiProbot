@@ -150,8 +150,8 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
         bin_boundaries_upper[1:] = bin_boundaries
 
         bin_boundaries_lower = torch.empty((num_bins,), device=attention_point_score.device)
-        bin_boundaries_upper[-1] = float('inf')
-        bin_boundaries_upper[:-1] = bin_boundaries
+        bin_boundaries_lower[-1] = float('-inf')
+        bin_boundaries_lower[:-1] = bin_boundaries
 
         new_bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, num_bins),
                               # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
