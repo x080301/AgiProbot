@@ -105,7 +105,7 @@ feature_learning_block:
     asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
     bin:
       enable: [ true, true ]
-      mode: [ nonuniform_split_bin, nonuniform_split_bin ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
+      mode: [ token, token ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
       num_bins: [ 6, 6 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
