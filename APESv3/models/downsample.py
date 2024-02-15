@@ -734,7 +734,7 @@ class DownSampleToken(nn.Module):
         self.bin_mode = config_ds.bin.mode[layer]
 
         self.num_bins = config_ds.bin.num_bins[layer]
-        
+
         q_in = config_ds.q_in[layer]
         q_out = config_ds.q_out[layer]
         k_in = config_ds.k_in[layer]
@@ -892,11 +892,7 @@ class DownSampleToken(nn.Module):
             energy = ops.l2_global(q, k)  # (Q-K)^2 energy.shape == (B, H, N, N)
         else:
             raise ValueError('Please check the setting of asm!')
-        if self.pe:
-            if self.pe_mode == "III":
-                energy = energy + self.q_pe  # energy.shape == (B, H, N, N)
-            elif self.pe_mode == "IV":
-                energy = energy + self.q_pe + self.k_pe  # energy.shape == (B, H, N, N)
+
         scale_factor = math.sqrt(q.shape[-1])
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
         return attention
