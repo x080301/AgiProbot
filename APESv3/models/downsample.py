@@ -837,7 +837,7 @@ class DownSampleToken(nn.Module):
         # idx_chunks.shape == num_bins * (B, H, n)
 
         attention_down = torch.gather(attention_map, dim=2,
-                                      index=idx.unsqueeze(3).expand(-1, -1, -1, self.attention_points.shape[-1]))
+                                      index=idx.unsqueeze(3).expand(-1, -1, -1, attention_map.shape[-1]))
         print(f'attention_down.shape{attention_down.shape}')
         print(f'v.shape{v.shape}')
         # attention_down.shape == (B, H, M, N+num_bins)
