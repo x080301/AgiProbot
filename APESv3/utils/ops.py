@@ -141,7 +141,8 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
         attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
                                 / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
     elif normalization_mode == 'z_score_no_std':
-        attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
+        attention_point_score = torch.log(attention_point_score)
+        attention_point_score = attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
