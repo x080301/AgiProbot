@@ -732,6 +732,7 @@ class DownSampleToken(nn.Module):
         self.num_heads = config_ds.num_heads[layer]
         self.idx_mode = config_ds.idx_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
+        self.num_heads = config_ds.num_heads[layer]
         q_in = config_ds.q_in[layer]
         q_out = config_ds.q_out[layer]
         k_in = config_ds.k_in[layer]
