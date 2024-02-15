@@ -815,11 +815,8 @@ class DownSampleToken(nn.Module):
             q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
 
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
-            print(f'attention_map.shape{attention_map.shape}')
 
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
-            print(f'self.attention_points.shape{self.attention_points.shape}')
-            print(f'attention_bins.shape{attention_bins.shape}')
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
@@ -838,8 +835,6 @@ class DownSampleToken(nn.Module):
 
         attention_down = torch.gather(attention_map, dim=2,
                                       index=idx.unsqueeze(3).expand(-1, -1, -1, attention_map.shape[-1]))
-        print(f'attention_down.shape{attention_down.shape}')
-        print(f'v.shape{v.shape}')
         # attention_down.shape == (B, H, M, N+num_bins)
         v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
         # attention_down: (B, H, M, N+num_bins)
