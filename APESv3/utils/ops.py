@@ -170,7 +170,6 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
     :param bin_boundaries: list with size num_bins-1
     :return: x_chunks, idx_chunks, list[list[torch.Tensor(n,)]],with descending order, num_bins*B*(n,)
     """
-    print(f'bin_boundaries:{bin_boundaries}')
 
     # num_bins = bin_boundaries[0].nelement()
     B, H, N = attention_point_score.shape
@@ -200,11 +199,10 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
                  for j in range(B)]
                 for i in range(num_bins)]
 
-    num_points_in_bins = torch.zeros(B, num_bins)
-    for i in range(num_bins):
-        for j in range(B):
-            num_points_in_bins[j, i] = idx_chunks[i][j].nelement()
-    print(f'num_points_in_bins:{num_points_in_bins}')
+    # num_points_in_bins = torch.zeros(B, num_bins)
+    # for i in range(num_bins):
+    #     for j in range(B):
+    #         num_points_in_bins[j, i] = idx_chunks[i][j].nelement()
 
     # idx_chunks: num_bins * B *(H, n)
     # x_chunks: num_bins * B *(H, n)
