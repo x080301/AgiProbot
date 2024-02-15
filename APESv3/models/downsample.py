@@ -117,12 +117,15 @@ def calculate_num_points_to_choose_one_iteration(probability, max_num_points, nu
 
 def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob, normalization_mode, M,
                                  bin_sample_mode):
+    B, H, N = attention_point_score.shape
+    num_bins, _ = bin_prob.shape
+
     bin_prob = F.relu(bin_prob)  # .clone().detach())
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
 
     aps_chunks, idx_chunks, bin_boundaries = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries,
-                                                                       normalization_mode)
+                                                                       num_bins, normalization_mode)
 
     # print(f'len(idx_chunks):{len(aps_chunks)}')
     # print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
@@ -130,8 +133,6 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # print(f'idx.dtype3:{idx_chunks[0][0].dtype}')
     # aps_chunks.shape == num_bins * (B, H, n)
     # idx_chunks.shape == num_bins * (B, H, n)
-    num_bins = bin_boundaries[0].nelement()
-    B, H, N = attention_point_score.shape
 
     # chunk_size = aps_chunks[j][i].shape[1]
     assert H == 1, "Number of heads should be 1!"

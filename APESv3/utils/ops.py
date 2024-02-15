@@ -145,11 +145,11 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
         new_bin_boundaries[1][1, 1, 1, :-1] = bin_boundaries
     else:
         # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
-        bin_boundaries_upper = torch.empty((num_bins,))
+        bin_boundaries_upper = torch.empty((num_bins,), device=attention_point_score.device)
         bin_boundaries_upper[0] = float('inf')
         bin_boundaries_upper[1:] = bin_boundaries
 
-        bin_boundaries_lower = torch.empty((num_bins,))
+        bin_boundaries_lower = torch.empty((num_bins,), device=attention_point_score.device)
         bin_boundaries_upper[-1] = float('inf')
         bin_boundaries_upper[:-1] = bin_boundaries
 
@@ -162,7 +162,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     return new_bin_boundaries
 
 
-def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_mode='no_normalization'):
+def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, normalization_mode='no_normalization'):
     """
 
     :param attention_point_score: (B,1,N)
@@ -171,10 +171,10 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, normalization_m
     """
     print(f'bin_boundaries:{bin_boundaries}')
 
-    num_bins = bin_boundaries[0].nelement()
+    # num_bins = bin_boundaries[0].nelement()
     B, H, N = attention_point_score.shape
     # print(f'B{B},H{H},N{N}')
-    bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
+    # bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
 
     if normalization_mode == 'no_normalization':
         pass
