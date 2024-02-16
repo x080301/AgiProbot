@@ -884,6 +884,7 @@ class DownSampleToken(nn.Module):
         self.bin_prob = bin_prob
         self.k_point_to_choose = k_point_to_choose
         # k_point_to_choose.shape == (B, num_bins)
+        print(f'self.bin_prob:{self.bin_prob}')
         return (x_ds, idx), (None, None)
 
     def output_variables(self, *args):
