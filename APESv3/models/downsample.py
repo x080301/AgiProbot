@@ -921,10 +921,11 @@ class DownSampleToken(nn.Module):
 
         scale_factor = math.sqrt(q.shape[-1])
 
-        attention_bins, _ = torch.split(energy, [ self.num_bins+4,energy.shape[-2]-4], dim=-1)
-        print(f'attention_bins:{attention_bins}')
-
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
+
+        attention_bins, _ = torch.split(attention, [self.num_bins + 4, attention.shape[-2] - 4], dim=-1)
+        print(f'attention_bins_before:{attention_bins}')
+
         return attention
 
     def res_block(self, x, x_ds, idx):  # x.shape == (B, C, N), x_ds.shape == (B, C, M)
