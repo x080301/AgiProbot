@@ -834,6 +834,7 @@ class DownSampleToken(nn.Module):
 
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
+            print(f'attention_bins:{attention_bins}')
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
         else:
@@ -884,7 +885,6 @@ class DownSampleToken(nn.Module):
         self.bin_prob = bin_prob
         self.k_point_to_choose = k_point_to_choose
         # k_point_to_choose.shape == (B, num_bins)
-        print(f'self.bin_prob:{self.bin_prob}')
         return (x_ds, idx), (None, None)
 
     def output_variables(self, *args):
