@@ -921,7 +921,7 @@ class DownSampleToken(nn.Module):
 
         scale_factor = math.sqrt(q.shape[-1])
 
-        _, attention_bins = torch.split(energy, [energy.shape[-2], self.num_bins], dim=-1)
+        attention_bins, _ = torch.split(energy, [ self.num_bins+4,energy.shape[-2]-4], dim=-1)
         print(f'attention_bins:{attention_bins}')
 
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
