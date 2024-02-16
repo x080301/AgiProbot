@@ -838,12 +838,14 @@ class DownSampleToken(nn.Module):
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
 
             a = torch.log(bin_prob)
+            print(f'std:{torch.std(a, dim=-1)}')
             a = torch.nn.functional.softmax(
                 (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
 
             print(f'with log:{a}')
 
             a = bin_prob
+            print(f'std:{torch.std(a, dim=-1)}')
             a = torch.nn.functional.softmax(
                 (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
 
