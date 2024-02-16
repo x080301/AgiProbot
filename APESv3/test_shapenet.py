@@ -184,7 +184,7 @@ def test(local_rank, config):
 
         config.feature_learning_block.downsample.bin.dynamic_boundaries = False
         config.feature_learning_block.downsample.bin.bin_boundaries = [
-            bin_boundaries[0, 0, 0, 1:]
+            list(bin_boundaries[0][0, 0, 0, 1:])
             for bin_boundaries in state_dict['bin_boundaries']]
     else:
         my_model.load_state_dict(torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location))
