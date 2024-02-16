@@ -832,6 +832,8 @@ class DownSampleToken(nn.Module):
 
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
 
+            print(f'attention_map:{attention_map}')
+
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
@@ -923,8 +925,6 @@ class DownSampleToken(nn.Module):
 
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
 
-        attention_bins, _ = torch.split(attention, [self.num_bins + 4, attention.shape[-2] - 4], dim=-1)
-        print(f'attention_bins_before:{attention_bins}')
 
         return attention
 
