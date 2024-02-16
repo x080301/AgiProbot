@@ -834,7 +834,6 @@ class DownSampleToken(nn.Module):
 
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
-            print(f'attention_bins:{attention_bins}')
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
         else:
@@ -921,6 +920,10 @@ class DownSampleToken(nn.Module):
             raise ValueError('Please check the setting of asm!')
 
         scale_factor = math.sqrt(q.shape[-1])
+
+        _, attention_bins = torch.split(energy, [energy.shape[-2], self.num_bins], dim=-1)
+        print(f'attention_bins:{attention_bins}')
+
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
         return attention
 
