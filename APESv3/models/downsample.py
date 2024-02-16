@@ -832,12 +832,22 @@ class DownSampleToken(nn.Module):
 
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
 
-            print(f'attention_map:{attention_map}')
-
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
+
+            a = torch.log(bin_prob)
+            a = torch.nn.functional.softmax((a - torch.mean(a, dim=-1)) / torch.std(a, dim=-1), dim=-1)
+
+            print(f'with log:{a}')
+
+            a = bin_prob
+            a = torch.nn.functional.softmax((a - torch.mean(a, dim=-1)) / torch.std(a, dim=-1), dim=-1)
+
+            print(f'no log:{a}')
+
+
         else:
             raise NotImplementedError
 
@@ -924,7 +934,6 @@ class DownSampleToken(nn.Module):
         scale_factor = math.sqrt(q.shape[-1])
 
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
-
 
         return attention
 
