@@ -831,27 +831,26 @@ class DownSampleToken(nn.Module):
             q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
 
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
-            print(f'attention_map:{attention_map}')
+            # print(f'attention_map:{attention_map}')
 
             self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
 
+            # a = torch.log(bin_prob)
+            # print(f'std:{torch.std(a, dim=-1)}')
+            # a = torch.nn.functional.softmax(
+            #     (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
 
-            a = torch.log(bin_prob)
-            print(f'std:{torch.std(a, dim=-1)}')
-            a = torch.nn.functional.softmax(
-                (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
+            # print(f'with log:{a}')
 
-            print(f'with log:{a}')
+            # a = bin_prob
+            # print(f'std:{torch.std(a, dim=-1)}')
+            # a = torch.nn.functional.softmax(
+            #     (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
 
-            a = bin_prob
-            print(f'std:{torch.std(a, dim=-1)}')
-            a = torch.nn.functional.softmax(
-                (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
-
-            print(f'no log:{a}')
+            # print(f'no log:{a}')
 
 
         else:
