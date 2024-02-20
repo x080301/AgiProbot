@@ -184,7 +184,13 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
         attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
                                 / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
     elif normalization_mode == 'z_score_no_std':
-        attention_point_score = torch.log(attention_point_score)
+        try:
+            attention_point_score = torch.log(attention_point_score)
+        except:
+            print(f'----------Error in log-----------------')
+            print(f'zero or negative value exists = {torch.min(attention_point_score).item() <= 0}')
+            print(f'minimun is {torch.min(attention_point_score).item()}')
+            print(f'attention_point_score:\n{attention_point_score}')
         attention_point_score = attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
