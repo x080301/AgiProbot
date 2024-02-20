@@ -833,7 +833,7 @@ class DownSampleToken(nn.Module):
             attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
             # print(f'attention_map:{attention_map}')
 
-            self.attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
+            attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
 
             bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
@@ -856,7 +856,9 @@ class DownSampleToken(nn.Module):
         else:
             raise NotImplementedError
 
-        idx, self.attention_point_score, self.sparse_attention_map, self.mask = self.idx_selection(x)
+        self.attention_point_score, self.sparse_attention_map, self.mask = \
+            self.calculate_attention_score(x, attention_points)
+
         if self.dynamic_boundaries:
             idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
                 self.attention_point_score,
@@ -950,25 +952,25 @@ class DownSampleToken(nn.Module):
             x_res = self.bn2(x_ds + x_tmp)
         return x_res  # x_res.shape == (B, C, M)
 
-    def get_sparse_attention_map(self, x):
+    def get_sparse_attention_map(self, x, attention_points):
         mask = ops.neighbor_mask(x, self.K)
-        mask = mask.unsqueeze(1).expand(-1, self.attention_points.shape[1], -1, -1)
+        mask = mask.unsqueeze(1).expand(-1, attention_points.shape[1], -1, -1)
         # print(f'attention_map.shape{self.attention_map.shape}')
         # print(f'mask.shape{mask.shape}')
         # exit(-1)
-        sparse_attention_map = self.attention_points * mask
+        sparse_attention_map = attention_points * mask
         return mask, sparse_attention_map
 
-    def idx_selection(self, x):
-        mask, sparse_attention_map = self.get_sparse_attention_map(x)
+    def calculate_attention_score(self, x, attention_points):
+        mask, sparse_attention_map = self.get_sparse_attention_map(x, attention_points)
         sparse_num = torch.sum(mask, dim=-2) + 1e-8
 
         # full attention map based
         if self.idx_mode == "col_sum":
-            attention_point_score = torch.sum(self.attention_points,
+            attention_point_score = torch.sum(attention_points,
                                               dim=-2)  # self.attention_point_score.shape == (B, H, N)
         elif self.idx_mode == "row_std":
-            attention_point_score = torch.std(self.attention_points, dim=-1)
+            attention_point_score = torch.std(attention_points, dim=-1)
 
         # sparse attention map based
 
@@ -986,5 +988,5 @@ class DownSampleToken(nn.Module):
             attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
         else:
             raise ValueError('Please check the setting of idx mode!')
-        idx = attention_point_score.topk(self.M, dim=-1)[1]
-        return idx, attention_point_score, sparse_attention_map, mask
+
+        return attention_point_score, sparse_attention_map, mask
