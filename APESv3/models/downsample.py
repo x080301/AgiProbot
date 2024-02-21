@@ -215,8 +215,9 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # bin_points_mask: (B,H,N,num_bins)
 
     masked_attention_map = attention_bins_beforesoftmax * bin_points_mask
-    bin_prob = torch.sum(masked_attention_map, dim=2) / torch.count_nonzero(masked_attention_map, dim=2)
-    bin_prob = F.relu(bin_prob).squeeze(1)
+    bin_prob_with_negative_value = torch.sum(masked_attention_map, dim=2) / torch.count_nonzero(masked_attention_map,
+                                                                                                dim=2)
+    bin_prob = F.relu(bin_prob_with_negative_value).squeeze(1)
     print('I am here!!!')
     # bin_prob.shape == (B, num_bins)
 
@@ -278,7 +279,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
     # k_point_to_choose.shape == (B, num_bins)
     # idx_chunks.shape == num_bins * (B, H, n)
-    return idx_batch, k_point_to_choose, idx_chunks, bin_boundaries
+    return idx_batch, k_point_to_choose, idx_chunks, bin_boundaries, bin_prob_with_negative_value
 
 
 class DownSampleCarve(nn.Module):
@@ -928,14 +929,16 @@ class DownSampleToken(nn.Module):
             self.calculate_attention_score(x, attention_points)
 
         if self.dynamic_boundaries:
-            nonuniform_bin_idx_selection_beforesoftmaxbinprob(self.attention_point_score,
-                                                              self.bin_boundaries,
-                                                              attention_bins_beforesoftmax,
-                                                              self.normalization_mode,
-                                                              self.M,
-                                                              self.bin_sample_mode,
-                                                              self.dynamic_boundaries
-                                                              )
+            idx, k_point_to_choose, idx_chunks, self.bin_boundaries, bin_prob = \
+                nonuniform_bin_idx_selection_beforesoftmaxbinprob(
+                    self.attention_point_score,
+                    self.bin_boundaries,
+                    attention_bins_beforesoftmax,
+                    self.normalization_mode,
+                    self.M,
+                    self.bin_sample_mode,
+                    self.dynamic_boundaries
+                )
             # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
             # idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
