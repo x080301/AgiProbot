@@ -264,7 +264,9 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
                         print(f'aps_chunks_tmp:{aps_chunks_tmp.nelement()},k:{k}')
                         exit(-1)
-                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+                    idx_tmp = torch.multinomial(
+                        aps_chunks_tmp * (aps_chunks_tmp != float('-inf')),
+                        num_samples=k, replacement=False)
             else:
                 raise ValueError(
                     'Please check the setting of bin sample mode. It must be topk, multinomial or random!')

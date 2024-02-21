@@ -1570,7 +1570,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                     # fig, ax1 = plt.subplots()
 
                     color = 'royalblue'
-                    ax1.set_xlabel('Year')
+                    ax1.set_xlabel('Bin')
                     ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                     ax1.bar(bins, num_points_in_bins, color=color)
                     ax1.tick_params(axis='y')  # , labelcolor=color)
