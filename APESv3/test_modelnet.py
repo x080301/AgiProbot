@@ -19,7 +19,6 @@ import pickle
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
-
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -74,7 +73,6 @@ def main(config):
 
 
 def test(local_rank, config):
-
     rank = config.test.ddp.rank_starts_from + local_rank
 
     hostname = socket.gethostname()
@@ -210,7 +208,6 @@ def test(local_rank, config):
     #         vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
     #                                                      range(len(config.feature_learning_block.downsample.M))]
 
-
     with torch.no_grad():
         if rank == 0:
             print(
@@ -245,7 +242,6 @@ def test(local_rank, config):
                 idx_down_all_layers = []
                 idx_in_bins_all_layers = []
                 k_point_to_choose_all_layers = []
-
 
                 for downsample_module in my_model.module.block.downsample_list:
                     sampling_score_all_layers.append(
@@ -301,7 +297,7 @@ def test(local_rank, config):
                                  'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
 
-                    if i < 10:
+                    if i < 10 and False:
                         if config.test.save_pkl:
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)

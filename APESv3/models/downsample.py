@@ -214,9 +214,12 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # idx_chunks.shape == num_bins * (B, H, n)
     # bin_points_mask: (B,H,N,num_bins)
 
-    masked_attention_map = attention_bins_beforesoftmax * bin_points_mask
-    bin_prob_with_negative_value = torch.sum(masked_attention_map, dim=2) / (torch.count_nonzero(masked_attention_map,
-                                                                                                 dim=2) + 1e-8)
+    masked_attention_map_token = attention_bins_beforesoftmax * bin_points_mask
+    negative_num = torch.count_nonzero(masked_attention_map_token < 0, dim=2).squeeze(1)
+    print(f'negative numbers in bin token:\n{negative_num}')
+    bin_prob_with_negative_value = torch.sum(masked_attention_map_token, dim=2) / (
+                torch.count_nonzero(masked_attention_map_token,
+                                    dim=2) + 1e-8)
     bin_prob = F.relu(bin_prob_with_negative_value).squeeze(1)
     # bin_prob.shape == (B, num_bins)
 
@@ -258,7 +261,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                     # print(f'k:{k}')
                     # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                     if aps_chunks_tmp.nelement() < k:
-                        print(f'bin_num:{torch.count_nonzero(masked_attention_map, dim=2).squeeze(1)}')
+                        print(f'bin_num:{torch.count_nonzero(masked_attention_map_token, dim=2).squeeze(1)}')
                         print(f'k_point_to_choose:{k_point_to_choose}')
                         print(f'bin_prob:{bin_prob}')
 
