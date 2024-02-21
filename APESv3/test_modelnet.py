@@ -217,7 +217,6 @@ def test(local_rank, config):
                 f'Print Results: {config.test.print_results} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable} - Visualize Heatmap: {config.test.visualize_attention_heatmap.enable}')
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
         for i, (samples, cls_labels) in enumerate(test_loader):
-            print('get here 0')
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
 
@@ -311,21 +310,16 @@ def test(local_rank, config):
                             view_range = 0.3
                         elif 'AnTao' in config.datasets.dataset_name:
                             view_range = 0.6
-                        print('get here 5')
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
-                        print('get here 6')
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
                                                          save_path=f'{save_dir}downsampled_points', index=i,
                                                          view_range=view_range)
-                        print('get here 7')
                         visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
                                                      save_path=f'{save_dir}points_in_bins', index=i,
                                                      view_range=view_range)
-                        print('get here 8')
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
-                        print('get here 9')
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
