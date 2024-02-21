@@ -232,6 +232,8 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # k_point_to_choose.shape == (B, num_bins)
 
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
+    print(f'bin_num:{torch.count_nonzero(masked_attention_map, dim=2).squeeze(1)}')
+    print(f'k_point_to_choose:{k_point_to_choose}')
 
     idx_batch_list = []
     for i in range(B):
@@ -258,7 +260,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                     # print(f'k:{k}')
                     # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                     if aps_chunks_tmp.nelement() < k:
-                        print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
+                        print(f'aps_chunks_tmp:{aps_chunks_tmp.nelement()},k:{k}')
                         exit(-1)
                     idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
             else:
