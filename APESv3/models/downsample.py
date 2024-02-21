@@ -215,9 +215,6 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # bin_points_mask: (B,H,N,num_bins)
 
     masked_attention_map_token = attention_bins_beforesoftmax * bin_points_mask
-    print(f'shape:{attention_bins_beforesoftmax.shape}')
-    negative_num = torch.count_nonzero(masked_attention_map_token < 0, dim=2).squeeze(1)
-    print(f'\nnegative numbers in bin tokens of layer {int(M/512)}:\n{negative_num}')
     bin_prob_with_negative_value = torch.sum(masked_attention_map_token, dim=2) / (
                 torch.count_nonzero(masked_attention_map_token,
                                     dim=2) + 1e-8)
@@ -235,7 +232,12 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
     # k_point_to_choose.shape == (B, num_bins)
 
+    print('-------------------------')
+    print(f'shape:{masked_attention_map_token.shape}')
+    negative_num = torch.count_nonzero(masked_attention_map_token < 0, dim=2).squeeze(1)
+    print(f'\nnegative numbers in bin tokens of layer {int(M / 512)}:\n{negative_num}')
     # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
+    print(f'k_point_to_choose:{k_point_to_choose}')
 
     idx_batch_list = []
     for i in range(B):
