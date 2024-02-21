@@ -19,7 +19,7 @@ import pickle
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
-    print('get here 0\n\n')
+
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -63,7 +63,7 @@ def main(config):
 
     time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     # multiprocessing for ddp
-    print('get here 1\n\n')
+
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
         os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
@@ -74,7 +74,7 @@ def main(config):
 
 
 def test(local_rank, config):
-    print('get here 2')
+
     rank = config.test.ddp.rank_starts_from + local_rank
 
     hostname = socket.gethostname()
@@ -210,13 +210,14 @@ def test(local_rank, config):
     #         vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
     #                                                      range(len(config.feature_learning_block.downsample.M))]
 
-    print('get here 3')
+
     with torch.no_grad():
         if rank == 0:
             print(
                 f'Print Results: {config.test.print_results} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable} - Visualize Heatmap: {config.test.visualize_attention_heatmap.enable}')
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
         for i, (samples, cls_labels) in enumerate(test_loader):
+            print('get here 0')
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
 
@@ -246,7 +247,7 @@ def test(local_rank, config):
                 idx_in_bins_all_layers = []
                 k_point_to_choose_all_layers = []
 
-                print('get here 4')
+
                 for downsample_module in my_model.module.block.downsample_list:
                     sampling_score_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'attention_point_score',
