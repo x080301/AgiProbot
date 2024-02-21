@@ -232,16 +232,6 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
     # k_point_to_choose.shape == (B, num_bins)
 
-    # print(f'torch.sum(bin_points_mask,dim=2):{torch.sum(bin_points_mask,dim=2)}')
-    # # print('-------------------------')
-    # # print(f'shape:{masked_attention_map_token.shape}')
-    # # print(f'masked_attention_map_token[0,0,:,0]:{masked_attention_map_token[0,0,:,0]}')
-    # negative_num = torch.sum(masked_attention_map_token < 0, dim=2).squeeze(1)
-    # print(f'\nnegative numbers in bin tokens of layer {int(2/(M / 512))}:\n{negative_num}')
-    # # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
-    # print(f'k_point_to_choose:{k_point_to_choose}')
-    # print(f'masked_attention_map_token < 0:{masked_attention_map_token < 0}')
-
     idx_batch_list = []
     for i in range(B):
 
@@ -273,9 +263,12 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
                         print(f'aps_chunks_tmp:{aps_chunks_tmp.nelement()},k:{k}')
                         exit(-1)
-                    idx_tmp = torch.multinomial(
-                        aps_chunks_tmp * (aps_chunks_tmp != float('-inf')),
-                        num_samples=k, replacement=False)
+                    nan_inf_negative_mask = ((aps_chunks_tmp == float('inf'))
+                                             or torch.isnan(aps_chunks_tmp)
+                                             or (aps_chunks_tmp < 0))
+                    aps_chunks_tmp = torch.where(nan_inf_negative_mask, 0, aps_chunks_tmp)
+
+                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
             else:
                 raise ValueError(
                     'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
