@@ -19,6 +19,7 @@ import pickle
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
+    print('get here 0\n\n')
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -62,6 +63,7 @@ def main(config):
 
     time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     # multiprocessing for ddp
+    print('get here 1\n\n')
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
         os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
@@ -72,6 +74,7 @@ def main(config):
 
 
 def test(local_rank, config):
+    print('get here 2')
     rank = config.test.ddp.rank_starts_from + local_rank
 
     hostname = socket.gethostname()
@@ -207,6 +210,7 @@ def test(local_rank, config):
     #         vis_test_gather_dict["heatmap"][idx_mode] = [[] for _ in
     #                                                      range(len(config.feature_learning_block.downsample.M))]
 
+    print('get here 3')
     with torch.no_grad():
         if rank == 0:
             print(
@@ -242,6 +246,7 @@ def test(local_rank, config):
                 idx_in_bins_all_layers = []
                 k_point_to_choose_all_layers = []
 
+                print('get here 4')
                 for downsample_module in my_model.module.block.downsample_list:
                     sampling_score_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'attention_point_score',
@@ -305,17 +310,21 @@ def test(local_rank, config):
                             view_range = 0.3
                         elif 'AnTao' in config.datasets.dataset_name:
                             view_range = 0.6
-
+                        print('get here 5')
                         visualization_heatmap(mode='modelnet', data_dict=data_dict,
                                               save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
+                        print('get here 6')
                         visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
                                                          save_path=f'{save_dir}downsampled_points', index=i,
                                                          view_range=view_range)
+                        print('get here 7')
                         visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
                                                      save_path=f'{save_dir}points_in_bins', index=i,
                                                      view_range=view_range)
+                        print('get here 8')
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
+                        print('get here 9')
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
