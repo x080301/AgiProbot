@@ -297,7 +297,7 @@ def test(local_rank, config):
                                  'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
 
-                    if i < 10 and False:
+                    if i < 10:
                         if config.test.save_pkl:
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)
