@@ -124,9 +124,9 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
     # bin_prob.shape == (B, num_bins)
     # self.attention_point_score.shape == (B, H, N)
 
-    aps_chunks, idx_chunks, bin_boundaries = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries,
-                                                                       num_bins, normalization_mode,
-                                                                       dynamic_boundaries_enable)
+    aps_chunks, idx_chunks, bin_boundaries, _ = ops.sort_chunk_nonuniform(attention_point_score, bin_boundaries,
+                                                                          num_bins, normalization_mode,
+                                                                          dynamic_boundaries_enable)
 
     # print(f'len(idx_chunks):{len(aps_chunks)}')
     # print(f'len(idx_chunks[0]):{len(aps_chunks[0])}')
@@ -137,6 +137,89 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
 
     # chunk_size = aps_chunks[j][i].shape[1]
     assert H == 1, "Number of heads should be 1!"
+
+    max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
+    for i in range(B):
+        for j in range(num_bins):
+            max_num_points[i, j] = aps_chunks[j][i].shape[1]
+    # print(f' bin_prob{bin_prob}-----------')
+
+    k_point_to_choose = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+    # k_point_to_choose.shape == (B, num_bins)
+
+    # print(f'k_point_to_choose{torch.sum(k_point_to_choose,dim=1)}')
+
+    idx_batch_list = []
+    for i in range(B):
+
+        idx_list = []
+        # print(f'sampling_scale:{sampling_scale}')
+        # print(f'self.M:{self.M}')
+        # print(f'chunk_size_list:{chunk_size_list}')
+
+        for j in range(num_bins):
+            # each bin has k samples
+            k = k_point_to_choose[i, j]
+
+            if bin_sample_mode == "topk":
+                idx_tmp = aps_chunks[j][i].topk(k, dim=-1)[1]  # idx.shape == (H, k)
+            elif bin_sample_mode == "uniform":
+                idx_tmp = torch.randperm(aps_chunks[j][i].shape[1])[:k]
+                idx_tmp = idx_tmp.unsqueeze(0).expand(H, -1).to(attention_point_score.device)
+            elif bin_sample_mode == "random":
+                if k != 0:
+                    # aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
+                    # aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks_tmp, dim=-1)
+                    aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks[j][i], dim=-1)
+                    # print(f'k:{k}')
+                    # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
+                    if aps_chunks_tmp.nelement() < k:
+                        print(f'aps_chunks_tmp{aps_chunks_tmp.nelement()},k{k}')
+                        exit(-1)
+                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+            else:
+                raise ValueError(
+                    'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+            # print(f'k:{k}')
+            # print(f'idx_tmp:{idx_tmp}')
+            # print(f'idx_tmp.shape:{idx_tmp.shape}')
+            # print(f'idx_chunks[j][i].shape:{idx_chunks[j][i].shape}')
+            if k != 0:
+                idx = idx_chunks[j][i][0, idx_tmp[0]].reshape(1, -1)
+                # torch.gather(idx_chunks[j][i], dim=-1, index=idx_tmp)  # idx.shape == (H, k)
+                idx_list.append(idx)
+        idx_single = torch.cat(idx_list, dim=-1)  # idx_list.shape == (H, M)
+        idx_batch_list.append(idx_single)
+    idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
+
+    # k_point_to_choose.shape == (B, num_bins)
+    # idx_chunks.shape == num_bins * (B, H, n)
+    return idx_batch, k_point_to_choose, idx_chunks, bin_boundaries
+
+
+def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin_boundaries,
+                                                      attention_bins_beforesoftmax,
+                                                      normalization_mode, M,
+                                                      bin_sample_mode, dynamic_boundaries_enable
+                                                      ):
+    # attention_bins_beforesoftmax: (B,1,N,num_bins)
+    B, H, N, num_bins = attention_bins_beforesoftmax.shape
+    assert H == 1, "Number of heads should be 1!"
+
+    aps_chunks, idx_chunks, bin_boundaries, bin_points_mask = ops.sort_chunk_nonuniform(attention_point_score,
+                                                                                        bin_boundaries,
+                                                                                        num_bins, normalization_mode,
+                                                                                        dynamic_boundaries_enable)
+    # aps_chunks.shape == num_bins * (B, H, n)
+    # idx_chunks.shape == num_bins * (B, H, n)
+    # bin_points_mask: (B,H,N,num_bins)
+
+    masked_attention_map = attention_bins_beforesoftmax * bin_points_mask
+    bin_prob = torch.sum(masked_attention_map, dim=2) / torch.count_nonzero(masked_attention_map, dim=2)
+    bin_prob = F.relu(bin_prob).squeeze(1)
+    # bin_prob.shape == (B, num_bins)
+
+    # chunk_size = aps_chunks[j][i].shape[1]
 
     max_num_points = torch.zeros((B, num_bins), dtype=torch.long, device=bin_prob.device)
     for i in range(B):
@@ -830,28 +913,12 @@ class DownSampleToken(nn.Module):
             # v.shape == (B, H, D, N+num_bins)
             q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
 
-            attention_map = self.attention_scoring(q, k)  # attention_map: (B,1,N,N+num_bins)
-            # print(f'attention_map:{attention_map}')
+            attention_map, attention_map_beforesoftmax = self.attention_scoring(q,
+                                                                                k)  # attention_map: (B,1,N,N+num_bins)
 
             attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
-
-            bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
-            bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
-
-            # a = torch.log(bin_prob)
-            # print(f'std:{torch.std(a, dim=-1)}')
-            # a = torch.nn.functional.softmax(
-            #     (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
-
-            # print(f'with log:{a}')
-
-            # a = bin_prob
-            # print(f'std:{torch.std(a, dim=-1)}')
-            # a = torch.nn.functional.softmax(
-            #     (a - torch.mean(a, dim=-1, keepdim=True)) / torch.std(a, dim=-1, keepdim=True), dim=-1)
-
-            # print(f'no log:{a}')
-
+            _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, [N, self.num_bins], dim=-1)
+            # attention_bins_beforesoftmax: (B,1,N,num_bins)
 
         else:
             raise NotImplementedError
@@ -860,15 +927,27 @@ class DownSampleToken(nn.Module):
             self.calculate_attention_score(x, attention_points)
 
         if self.dynamic_boundaries:
-            idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
-                self.attention_point_score,
-                self.bin_boundaries,
-                bin_prob,
-                self.normalization_mode,
-                self.M,
-                self.bin_sample_mode,
-                self.dynamic_boundaries)
+            nonuniform_bin_idx_selection_beforesoftmaxbinprob(self.attention_point_score,
+                                                              self.bin_boundaries,
+                                                              attention_bins_beforesoftmax,
+                                                              self.normalization_mode,
+                                                              self.M,
+                                                              self.bin_sample_mode,
+                                                              self.dynamic_boundaries
+                                                              )
+            # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
+            # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
+            # idx, k_point_to_choose, idx_chunks, self.bin_boundaries = nonuniform_bin_idx_selection(
+            #     self.attention_point_score,
+            #     self.bin_boundaries,
+            #     bin_prob,
+            #     self.normalization_mode,
+            #     self.M,
+            #     self.bin_sample_mode,
+            #     self.dynamic_boundaries)
         else:
+            bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
+            bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
             bin_boundaries = [item.to(x.device) for item in self.bin_boundaries]
             idx, k_point_to_choose, idx_chunks, _ = nonuniform_bin_idx_selection(
                 self.attention_point_score,
@@ -942,7 +1021,7 @@ class DownSampleToken(nn.Module):
 
         attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
 
-        return attention
+        return attention, energy / scale_factor
 
     def res_block(self, x, x_ds, idx):  # x.shape == (B, C, N), x_ds.shape == (B, C, M)
         x_tmp = torch.gather(x, dim=-1, index=idx)  # x_res.shape == (B, 1, M)

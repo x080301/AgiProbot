@@ -203,8 +203,9 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
     if dynamic_boundaries_enable:
         bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins)
 
-    index_batch, _, index_point, index_bin = torch.where(
-        (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1]))
+    bin_points_mask = (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1])
+    # bin_points_mask: (B,H,N,num_bins)
+    index_batch, _, index_point, index_bin = torch.where(bin_points_mask)
 
     idx_chunks = [[index_point[(index_bin == i) & (index_batch == j)].reshape(1, -1)
                    for j in range(B)]
@@ -241,7 +242,7 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
 
     # print(f'idx.dtype4:{index_in_bin.dtype}')
     # exit(-1)
-    return x_chunks, idx_chunks, bin_boundaries
+    return x_chunks, idx_chunks, bin_boundaries,bin_points_mask
 
     # z_normalized_x = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True))
     # # z_normalized_x.shape = (B,1,N)
