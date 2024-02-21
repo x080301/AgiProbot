@@ -263,9 +263,9 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
                         print(f'aps_chunks_tmp:{aps_chunks_tmp.nelement()},k:{k}')
                         exit(-1)
-                    nan_inf_negative_mask = ((aps_chunks_tmp == float('inf'))
+                    nan_inf_negative_mask = (aps_chunks_tmp == float('inf')
                                              or torch.isnan(aps_chunks_tmp)
-                                             or (aps_chunks_tmp < 0))
+                                             or aps_chunks_tmp < 0)
                     aps_chunks_tmp = torch.where(nan_inf_negative_mask, 0, aps_chunks_tmp)
 
                     idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
