@@ -215,8 +215,8 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # bin_points_mask: (B,H,N,num_bins)
 
     masked_attention_map = attention_bins_beforesoftmax * bin_points_mask
-    bin_prob_with_negative_value = torch.sum(masked_attention_map, dim=2) / torch.count_nonzero(masked_attention_map,
-                                                                                                dim=2)
+    bin_prob_with_negative_value = torch.sum(masked_attention_map, dim=2) / (torch.count_nonzero(masked_attention_map,
+                                                                                                 dim=2) + 1e-8)
     bin_prob = F.relu(bin_prob_with_negative_value).squeeze(1)
     # bin_prob.shape == (B, num_bins)
 
