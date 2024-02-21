@@ -1352,7 +1352,14 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
 
 
 def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
-    colors = ['darkred', 'purple', 'Yellow', 'Green', 'dodgerblue', 'olive']
+    colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
+    # ['red', 'orange', 'yellow', 'palegreen', 'paleturquoise', 'orchid']
+    # ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'orchid']
+    # ['red', 'orange', 'yellow', 'palegreen', 'lightcyan', 'orchid']
+    # ['red', 'orange', 'yellow', 'lime', 'cyan', 'orchid']
+    # ['firebrick', 'orange', 'yellow', 'lime', 'cyan', 'orchid']
+    # ['red', 'orange', 'yellow', 'lime', 'lightskyblue', 'purple']
+    # ['red', 'purple', 'Yellow', 'Green', 'dodgerblue', 'olive']
     colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
 
     if mode == 'modelnet':
@@ -1375,13 +1382,14 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
         raise NotImplementedError
 
     if data_dict is None:
-        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/points_in_bins/'
+        view_range = 0.6
+        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/points_in_bins_2'
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        for i in tqdm(range(20)):
+        for i in tqdm(range(10)):
             with open(
-                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1529,13 +1537,14 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
         raise NotImplementedError
 
     if data_dict is None:
-        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
+        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/histogram_2'
+        # f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        for i in tqdm(range(20)):
+        for i in tqdm(range(10)):
             with open(
-                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1569,7 +1578,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                     # fig, ax1 = plt.subplots()
 
-                    color = 'royalblue'
+                    color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
                     ax1.set_xlabel('Bin')
                     ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                     ax1.bar(bins, num_points_in_bins, color=color)
@@ -1577,14 +1586,14 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                     ax2 = ax1.twinx()
 
-                    color = 'darkred'
-                    ax2.set_ylabel('Probabilities in Bins')  # , color=color)
+                    color = 'red'  # 'darkred'
+                    ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
                     # ax2.set_ylim([0, 100])
                     # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
-                    ax2.plot(bins, probabilities_in_bins, marker='o', color=color)
+                    ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
                     ax2.tick_params(axis='y')  # , labelcolor=color)
 
-                    plt.title('Number of Points and Probabilities over Bins')
+                    plt.title('Number of Points and Sampling Ratio over Bins')
 
                     fig.tight_layout()
 
@@ -1631,19 +1640,19 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                 # fig, ax1 = plt.subplots()
 
-                color = 'royalblue'
-                ax1.set_xlabel('Year')
+                color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
+                ax1.set_xlabel('Bin')
                 ax1.set_ylabel('Number of Points in Bins')  # , color=color)
                 ax1.bar(bins, num_points_in_bins, color=color)
                 ax1.tick_params(axis='y')  # , labelcolor=color)
 
                 ax2 = ax1.twinx()
 
-                color = 'darkred'
-                ax2.set_ylabel('Probabilities in Bins')  # , color=color)
+                color = 'red'  # 'darkred'
+                ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
                 # ax2.set_ylim([0, 100])
                 # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
-                ax2.plot(bins, probabilities_in_bins, marker='o', color=color)
+                ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
                 ax2.tick_params(axis='y')  # , labelcolor=color)
 
                 plt.title('Number of Points and Probabilities over Bins')

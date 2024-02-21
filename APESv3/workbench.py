@@ -113,4 +113,4 @@ def visualization_histogram():
 # visualization_downsampled_points()
 # visualization_points_in_bins()
 visualization_points_in_bins()
-visualization_histogram()
+# visualization_histogram()
