@@ -200,10 +200,15 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
 def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin_boundaries,
                                                       attention_bins_beforesoftmax,
                                                       normalization_mode, M,
-                                                      bin_sample_mode, dynamic_boundaries_enable, relu_mean_order
+                                                      bin_sample_mode, dynamic_boundaries_enable, relu_mean_order,
+                                                      num_bins
                                                       ):
-    # attention_bins_beforesoftmax: (B,1,N,num_bins)
-    B, H, N, num_bins = attention_bins_beforesoftmax.shape
+    # attention_bins_beforesoftmax: (B,1,N,num_bins) or (B,1,N,1)
+    B, H, N, _ = attention_bins_beforesoftmax.shape
+
+    if attention_bins_beforesoftmax.shape[3] == 1:
+        attention_bins_beforesoftmax = einops.repeat(attention_bins_beforesoftmax, 'b 1 n 1 -> b 1 n d', d=num_bins)
+
     assert H == 1, "Number of heads should be 1!"
 
     aps_chunks, idx_chunks, bin_boundaries, bin_points_mask = ops.sort_chunk_nonuniform(attention_point_score,
@@ -870,7 +875,14 @@ class DownSampleToken(nn.Module):
         self.v_conv = nn.Conv1d(v_in, v_out, 1, bias=False)
 
         if self.bin_mode == 'token':
-            self.bin_tokens = nn.Parameter(torch.randn(1, q_in, self.num_bins))
+            self.token_mode = config_ds.bin.token_mode[layer]
+
+            if self.token_mode == 'multi_token':
+                self.bin_tokens = nn.Parameter(torch.randn(1, q_in, self.num_bins))
+            elif self.token_mode == 'one_token':
+                self.bin_tokens = nn.Parameter(torch.randn(1, q_in, 1))
+
+
         else:
             raise NotImplementedError
 
@@ -941,8 +953,8 @@ class DownSampleToken(nn.Module):
             attention_map, attention_map_beforesoftmax = self.attention_scoring(q,
                                                                                 k)  # attention_map: (B,1,N,N+num_bins)
 
-            attention_points, attention_bins = torch.split(attention_map, [N, self.num_bins], dim=-1)
-            _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, [N, self.num_bins], dim=-1)
+            attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+            _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
             # attention_bins_beforesoftmax: (B,1,N,num_bins)
 
         else:
@@ -961,7 +973,8 @@ class DownSampleToken(nn.Module):
                     self.M,
                     self.bin_sample_mode,
                     self.dynamic_boundaries,
-                    self.relu_mean_order
+                    self.relu_mean_order,
+                    self.num_bins
                 )
             # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
