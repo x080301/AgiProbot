@@ -196,9 +196,12 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
         #     print(f'minimun is {torch.min(attention_point_score).item()}')
 
         # attention_point_score = attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)
-        attention_point_score_no_infnan = torch.where(
-            (attention_point_score == float('-inf')) | torch.isnan(attention_point_score), 0, attention_point_score)
+        attention_point_score_no_infnan = torch.where((attention_point_score == float('-inf')) |
+                                                      (attention_point_score == float('inf')) |
+                                                      torch.isnan(attention_point_score), 0, attention_point_score)
         attention_point_score = attention_point_score - torch.mean(attention_point_score_no_infnan, dim=2, keepdim=True)
+        attention_point_score = torch.where((attention_point_score == float('inf')), 100, attention_point_score)
+        attention_point_score = torch.where(torch.isnan(attention_point_score), 0, attention_point_score)
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
