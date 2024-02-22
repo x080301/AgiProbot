@@ -200,7 +200,7 @@ def nonuniform_bin_idx_selection(attention_point_score, bin_boundaries, bin_prob
 def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin_boundaries,
                                                       attention_bins_beforesoftmax,
                                                       normalization_mode, M,
-                                                      bin_sample_mode, dynamic_boundaries_enable
+                                                      bin_sample_mode, dynamic_boundaries_enable, relu_mean_order
                                                       ):
     # attention_bins_beforesoftmax: (B,1,N,num_bins)
     B, H, N, num_bins = attention_bins_beforesoftmax.shape
@@ -215,10 +215,22 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     # bin_points_mask: (B,H,N,num_bins)
 
     masked_attention_map_token = attention_bins_beforesoftmax * bin_points_mask
-    bin_prob_with_negative_value = torch.sum(masked_attention_map_token, dim=2) / (
-            torch.count_nonzero(masked_attention_map_token,
-                                dim=2) + 1e-8)
-    bin_prob = F.relu(bin_prob_with_negative_value).squeeze(1)
+    if relu_mean_order == 'mean_relu':
+
+        bin_prob_return = torch.sum(masked_attention_map_token, dim=2) / (
+                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8)
+        # torch.count_nonzero(masked_attention_map_token, dim=2) + 1e-8)
+        bin_prob_return = bin_prob_return.squeeze(1)
+        bin_prob = F.relu(bin_prob_return)
+    elif relu_mean_order == 'relu_mean':
+        masked_attention_map_token = F.relu(masked_attention_map_token)
+        bin_prob_return = torch.sum(masked_attention_map_token, dim=2) / (
+                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8)
+        bin_prob_return = bin_prob_return.squeeze(1)
+        bin_prob = bin_prob_return
+    else:
+        raise NotImplementedError
+
     # bin_prob.shape == (B, num_bins)
 
     # chunk_size = aps_chunks[j][i].shape[1]
@@ -286,7 +298,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
     # k_point_to_choose.shape == (B, num_bins)
     # idx_chunks.shape == num_bins * (B, H, n)
-    return idx_batch, k_point_to_choose, idx_chunks, bin_boundaries, bin_prob_with_negative_value
+    return idx_batch, k_point_to_choose, idx_chunks, bin_boundaries, bin_prob_return
 
 
 class DownSampleCarve(nn.Module):
@@ -836,6 +848,7 @@ class DownSampleToken(nn.Module):
         self.num_heads = config_ds.num_heads[layer]
         self.idx_mode = config_ds.idx_mode[layer]
         self.bin_mode = config_ds.bin.mode[layer]
+        self.relu_mean_order = config_ds.bin.relu_mean_order[layer]
 
         self.num_bins = config_ds.bin.num_bins[layer]
 
@@ -944,7 +957,8 @@ class DownSampleToken(nn.Module):
                     self.normalization_mode,
                     self.M,
                     self.bin_sample_mode,
-                    self.dynamic_boundaries
+                    self.dynamic_boundaries,
+                    self.relu_mean_order
                 )
             # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
