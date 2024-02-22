@@ -208,6 +208,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
 
     if attention_bins_beforesoftmax.shape[3] == 1:
         attention_bins_beforesoftmax = einops.repeat(attention_bins_beforesoftmax, 'b 1 n 1 -> b 1 n d', d=num_bins)
+        print('Get Here!')
 
     assert H == 1, "Number of heads should be 1!"
 
