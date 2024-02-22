@@ -265,7 +265,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                 if k != 0:
                     # aps_chunks_tmp = ops.norm_range(aps_chunks[j][i], dim=-1, n_min=0, n_max=1, mode="minmax")
                     # aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks_tmp, dim=-1)
-                    aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks_tmp, dim=-1)
+                    aps_chunks_tmp = torch.nn.functional.softmax(aps_chunks[j][i], dim=-1)
                     # print(f'k:{k}')
                     # print(f'aps_chunks_tmp.shape:{aps_chunks_tmp.shape}')
                     if aps_chunks_tmp.nelement() < k:
