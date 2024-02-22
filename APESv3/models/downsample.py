@@ -283,12 +283,15 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                     # nan_inf_negative_mask = ((aps_chunks_tmp == float('inf'))
                     #                          | torch.isnan(aps_chunks_tmp))
                     # aps_chunks_tmp = torch.where(nan_inf_negative_mask, 0, aps_chunks_tmp)
-                    try:
-                        idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
-                    except Exception:
+
+                    if torch.count_nonzero(aps_chunks_tmp == float("inf")) + torch.count_nonzero(
+                            aps_chunks_tmp < 0) + torch.count_nonzero(torch.isnan(aps_chunks_tmp)) != 0:
                         print(f'\nnum inf elements:{torch.count_nonzero(aps_chunks_tmp == float("inf"))}\n')
                         print(f'\nnum negative elements:{torch.count_nonzero(aps_chunks_tmp < 0)}\n')
                         print(f'\nnum nan elements:{torch.count_nonzero(torch.isnan(aps_chunks_tmp))}\n')
+
+                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+
             else:
                 raise ValueError(
                     'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
