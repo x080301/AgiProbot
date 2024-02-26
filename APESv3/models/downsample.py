@@ -885,7 +885,6 @@ class DownSampleToken(nn.Module):
             elif self.token_mode == 'one_token':
                 self.bin_tokens = nn.Parameter(torch.randn(1, q_in, 1))
 
-
         else:
             raise NotImplementedError
 
