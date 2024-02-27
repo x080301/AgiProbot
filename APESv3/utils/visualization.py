@@ -48,7 +48,10 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path, view_
         # print(f'xyzRGB_tmp:{xyzRGB_tmp}')
         xyzRGB.append(xyzRGB_tmp)
 
-    saved_path = f'{save_path}/sample{i}_{category}.png'
+    if not os.path.exists(f'{save_path}/{category}/'):
+        os.makedirs(f'{save_path}/{category}/')
+    save_path = f'{save_path}/{category}/sample{i}.png'
+
     vertex = np.array(xyzRGB)
     # print(f'vertex.shape:{vertex.shape}')
     fig = plt.figure()
@@ -62,7 +65,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path, view_
     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
     plt.axis('off')
     plt.grid('off')
-    plt.savefig(saved_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight')
     plt.close(fig)
 
     # print(f'.png file is saved in {saved_path}')
@@ -1284,7 +1287,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     vertex = np.array(xyzRGB)  # (N,3+3)
                     vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/{category}/'):
+                        os.makedirs(f'{save_path}/{category}/')
+                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
 
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
@@ -1294,7 +1299,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
-                    plt.savefig(saved_path, bbox_inches='tight')
+                    plt.savefig(save_path, bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1334,7 +1339,9 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 vertex = np.array(xyzRGB)  # (N,3+3)
                 vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/{category}/'):
+                    os.makedirs(f'{save_path}/{category}/')
+                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -1345,7 +1352,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
-                plt.savefig(saved_path, bbox_inches='tight')
+                plt.savefig(save_path, bbox_inches='tight')
                 plt.close(fig)
 
                 # print(f'.png file is saved in {saved_path}')
@@ -1438,8 +1445,11 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                         vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                             colors[l]
 
-                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/{category}/'):
+                        os.makedirs(f'{save_path}/{category}/')
+                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
                     # blue, darkcyan, orange, lime, yellow, Red
+
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
                     ax.set_xlim3d(-view_range, view_range)
@@ -1448,7 +1458,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
-                    plt.savefig(saved_path, bbox_inches='tight')
+                    plt.savefig(save_path, bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1502,7 +1512,9 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                         colors[l]
 
-                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/{category}/'):
+                    os.makedirs(f'{save_path}/{category}/')
+                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -1512,7 +1524,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
-                plt.savefig(saved_path, bbox_inches='tight')
+                plt.savefig(save_path, bbox_inches='tight')
                 plt.close(fig)
 
 
@@ -1597,11 +1609,13 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                     fig.tight_layout()
 
-                    saved_path = f'{save_path}/sample{i * B + j}_{category}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/{category}/'):
+                        os.makedirs(f'{save_path}/{category}/')
+                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
 
                     # plt.axis('off')
                     # plt.grid('off')
-                    plt.savefig(saved_path, bbox_inches='tight')
+                    plt.savefig(save_path, bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1659,9 +1673,151 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                 fig.tight_layout()
 
-                saved_path = f'{save_path}/sample{index * B + j}_{category}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/{category}/'):
+                    os.makedirs(f'{save_path}/{category}/')
+                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
 
                 # plt.axis('off')
                 # plt.grid('off')
-                plt.savefig(saved_path, bbox_inches='tight')
+                plt.savefig(save_path, bbox_inches='tight')
                 plt.close(fig)
+
+
+def get_statistic_data_all_samples(mode='modelnet', data_dict=None, save_path=None,
+                                   statistic_data_all_samples=None):
+    if mode == 'modelnet':
+
+        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl',
+                   7: 'car',
+                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
+                   15: 'flower_pot',
+                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel',
+                   22: 'monitor',
+                   23: 'night_stand',
+                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
+                   31: 'stairs',
+                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
+                   39: 'xbox'}
+
+    elif mode == 'shapenet':
+        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
+                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
+                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
+    else:
+        raise NotImplementedError
+
+    if data_dict is None:
+        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/'
+        # f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        for i in tqdm(range(10)):
+            with open(
+                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
+                    'rb') as f:
+                data_dict = pickle.load(f)
+
+            statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict, save_path,
+                                                                                   statistic_data_all_samples)
+
+
+    else:
+        data_dict = deepcopy(data_dict)
+        # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict, save_path,
+                                                                               statistic_data_all_samples)
+
+    return statistic_data_all_samples
+
+
+def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_data_all_samples):
+    idx_in_bins_batch = data_dict['idx_in_bins']
+    # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+    label_batch = data_dict['ground_truth']  # (B,)
+    probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
+    # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
+    # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
+    # (B, num_layers, num_bins)
+    B, num_layers, num_bins = probability_of_bins_batch.shape
+
+    if statistic_data_all_samples is None:
+        num_points_in_bins_allsamples = np.zeros((num_layers, num_bins), dtype=np.int32)
+        num_selected_points_in_bins_allsamples = np.zeros((num_layers, num_bins), dtype=np.int32)
+        num_zeros = np.zeros((num_layers, num_bins), dtype=np.int32)
+        num_ones = np.zeros((num_layers, num_bins), dtype=np.int32)
+    else:
+        num_points_in_bins_allsamples = statistic_data_all_samples['num_points_in_bins']
+        num_selected_points_in_bins_allsamples = statistic_data_all_samples['num_selected_points_in_bins']
+        num_zeros = statistic_data_all_samples['num_zeros']
+        num_ones = statistic_data_all_samples['num_ones']
+
+    for j in range(B):
+        probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
+        idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+        for k in range(num_layers):
+            idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+
+        for k in range(num_layers):
+            num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
+            probabilities_in_bins = probability_of_bins[k, :]
+
+            num_points_in_bins_allsamples[k, :] += num_points_in_bins
+            num_selected_points_in_bins_allsamples[k, :] += np.around(
+                probabilities_in_bins * num_points_in_bins).astype(np.int32)
+            num_zeros[k, :] += (probabilities_in_bins == 0)
+            num_ones[k, :] += (probabilities_in_bins == 1)
+
+    statistic_data_all_samples['num_points_in_bins'] = num_points_in_bins_allsamples
+    statistic_data_all_samples['num_selected_points_in_bins'] = num_selected_points_in_bins_allsamples
+    statistic_data_all_samples['num_zeros'] = num_zeros
+    statistic_data_all_samples['num_ones'] = num_ones
+
+    lines_to_save = []
+    for k in range(num_layers):
+        lines_to_save.append(f'layer{k}:')
+        lines_to_save.append(f'\tnum relu:{num_zeros}')
+        lines_to_save.append(f'\tnum saturation:{num_ones}')
+    with open(f'{save_path}/relu_and_saturation.txt', 'w') as file:
+        file.writelines(lines_to_save)
+
+    for k in range(num_layers):
+        bins = np.array(range(6))
+        probabilities_in_bins = num_selected_points_in_bins_allsamples[k, :] / num_points_in_bins_allsamples[k, :]
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot()
+
+        # fig, ax1 = plt.subplots()
+
+        color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
+        ax1.set_xlabel('Bin')
+        ax1.set_ylabel('Number of Points in Bins')  # , color=color)
+        ax1.bar(bins, num_points_in_bins_allsamples[k, :], color=color)
+        ax1.tick_params(axis='y')  # , labelcolor=color)
+
+        ax2 = ax1.twinx()
+
+        color = 'red'  # 'darkred'
+        ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
+        # ax2.set_ylim([0, 100])
+        # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
+        ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
+        ax2.tick_params(axis='y')  # , labelcolor=color)
+
+        plt.title('Number of Points and Sampling Ratio over Bins')
+
+        fig.tight_layout()
+
+        save_path = f'{save_path}/histogram_all_samples_layer{k}.png'
+
+        # plt.axis('off')
+        # plt.grid('off')
+        plt.savefig(save_path, bbox_inches='tight')
+        plt.close(fig)
+
+    return statistic_data_all_samples

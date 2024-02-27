@@ -317,6 +317,14 @@ def test(local_rank, config):
                         visualization_histogram(mode='modelnet', data_dict=data_dict,
                                                 save_path=f'{save_dir}histogram', index=i)
 
+                        if i == 0:
+                            statistic_data_all_samples = None
+                        statistic_data_all_samples = get_statistic_data_all_samples(
+                            mode='modelnet',
+                            data_dict=data_dict,
+                            save_path=save_dir,
+                            statistic_data_all_samples=statistic_data_all_samples)
+
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
                 pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
