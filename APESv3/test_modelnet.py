@@ -108,7 +108,8 @@ def test(local_rank, config):
 
     # get datasets
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
-        _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
+        # _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
+        test_set, _ = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
                                                                 config.train.dataloader.selected_points,
                                                                 config.train.dataloader.fps,
                                                                 config.train.dataloader.data_augmentation.enable,
