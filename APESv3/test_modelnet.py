@@ -336,7 +336,7 @@ def test(local_rank, config):
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
-            if i == 10:
+            if i == 20:
                 break
                 # if config.test.sampling_score_histogram.enable:
                 #     if i == 0:
