@@ -297,33 +297,34 @@ def test(local_rank, config):
                                  'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
 
-                    if i < 10:
+                    if i < 20:
                         if config.test.save_pkl:
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)
                             # print(f'save{i}')
-                        if 'Yi' in config.datasets.dataset_name:
-                            view_range = 0.3
-                        elif 'AnTao' in config.datasets.dataset_name:
-                            view_range = 0.6
-                        visualization_heatmap(mode='modelnet', data_dict=data_dict,
-                                              save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
-                        visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
-                                                         save_path=f'{save_dir}downsampled_points', index=i,
-                                                         view_range=view_range)
-                        visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
-                                                     save_path=f'{save_dir}points_in_bins', index=i,
-                                                     view_range=view_range)
-                        visualization_histogram(mode='modelnet', data_dict=data_dict,
-                                                save_path=f'{save_dir}histogram', index=i)
 
-                        if i == 0:
-                            statistic_data_all_samples = None
-                        statistic_data_all_samples = get_statistic_data_all_samples(
-                            mode='modelnet',
-                            data_dict=data_dict,
-                            save_path=save_dir,
-                            statistic_data_all_samples=statistic_data_all_samples)
+                        # if 'Yi' in config.datasets.dataset_name:
+                        #     view_range = 0.3
+                        # elif 'AnTao' in config.datasets.dataset_name:
+                        #     view_range = 0.6
+                        # visualization_heatmap(mode='modelnet', data_dict=data_dict,
+                        #                       save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
+                        # visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
+                        #                                  save_path=f'{save_dir}downsampled_points', index=i,
+                        #                                  view_range=view_range)
+                        # visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
+                        #                              save_path=f'{save_dir}points_in_bins', index=i,
+                        #                              view_range=view_range)
+                        # visualization_histogram(mode='modelnet', data_dict=data_dict,
+                        #                         save_path=f'{save_dir}histogram', index=i)
+                        #
+                        # if i == 0:
+                        #     statistic_data_all_samples = None
+                        # statistic_data_all_samples = get_statistic_data_all_samples(
+                        #     mode='modelnet',
+                        #     data_dict=data_dict,
+                        #     save_path=save_dir,
+                        #     statistic_data_all_samples=statistic_data_all_samples)
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
