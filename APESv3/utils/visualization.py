@@ -1191,7 +1191,7 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
         if not os.path.exists(f'{save_path}/heat_map'):
             os.makedirs(f'{save_path}/heat_map')
 
-        for i in tqdm(range(20)):
+        for i in tqdm(range(100)):
             with open(
                     f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
@@ -1208,7 +1208,8 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
-                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, f'{save_path}/heat_map', view_range)
+                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, f'{save_path}/heat_map',
+                                                view_range)
     else:
         data_dict = deepcopy(data_dict)
         if not os.path.exists(f'{save_path}/heat_map'):
@@ -1253,7 +1254,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
         if not os.path.exists(f'{save_path}/downsampled_points/'):
             os.makedirs(f'{save_path}/downsampled_points/')
 
-        for i in tqdm(range(20)):
+        for i in tqdm(range(100)):
             with open(
                     f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
@@ -1394,7 +1395,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
         if not os.path.exists(f'{save_path}/points_in_bins'):
             os.makedirs(f'{save_path}/points_in_bins')
 
-        for i in tqdm(range(10)):
+        for i in tqdm(range(100)):
             with open(
                     f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
@@ -1409,6 +1410,19 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
             B = sample_batch.shape[0]
             num_layers = len(idx_in_bins_batch[0])
             num_bins = len(idx_in_bins_batch[0][0])
+
+            if num_bins == 6:
+                colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
+            elif num_bins == 8:
+                colors = ['red', 'orange', 'yellow', 'lime', 'cyan', 'lightgreen', 'paleturquoise', 'violet']
+            elif num_bins == 10:
+                colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'cyan', 'lightgreen',
+                          'paleturquoise', 'violet']
+            elif num_bins == 12:
+                colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'palegreen', 'lightcyan', 'cyan',
+                          'lightgreen', 'paleturquoise', 'violet']
+            else:
+                raise NotImplementedError
 
             for j in range(B):
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
@@ -1554,7 +1568,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
         if not os.path.exists(f'{save_path}/histogram'):
             os.makedirs(f'{save_path}/histogram')
 
-        for i in tqdm(range(10)):
+        for i in tqdm(range(100)):
             with open(
                     f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
@@ -1689,7 +1703,7 @@ def get_statistic_data_all_samples(mode='modelnet', data_dict=None, save_path=No
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        for i in tqdm(range(20)):
+        for i in tqdm(range(100)):
             with open(
                     f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
@@ -1758,8 +1772,8 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
     lines_to_save = []
     for k in range(num_layers):
         lines_to_save.append(f'\nlayer{k}:')
-        lines_to_save.append(f'\n\tnum relu:{num_zeros[k,:]}')
-        lines_to_save.append(f'\n\tnum saturation:{num_ones[k,:]}')
+        lines_to_save.append(f'\n\tnum relu:{num_zeros[k, :]}')
+        lines_to_save.append(f'\n\tnum saturation:{num_ones[k, :]}')
     with open(f'{save_path}/relu_and_saturation.txt', 'w') as file:
         file.writelines(lines_to_save)
 

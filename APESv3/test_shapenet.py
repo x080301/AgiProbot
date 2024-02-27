@@ -316,27 +316,27 @@ def test(local_rank, config):
                                  }
                     # print(f'samples.shape:{torch.concat(sample_gather_list, dim=0).shape}')
 
-                    if i < 10:
+                    if i < 100:
                         if config.test.save_pkl:
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)
                             # print(f'save{i}')
 
-                        if 'Yi' in config.datasets.dataset_name:
-                            view_range = 0.3
-                        elif 'AnTao' in config.datasets.dataset_name:
-                            view_range = 0.6
-
-                        visualization_heatmap(mode='shapenet', data_dict=data_dict,
-                                              save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
-                        visualization_downsampled_points(mode='shapenet', data_dict=data_dict,
-                                                         save_path=f'{save_dir}downsampled_points', index=i,
-                                                         view_range=view_range)
-                        visualization_points_in_bins(mode='shapenet', data_dict=data_dict,
-                                                     save_path=f'{save_dir}points_in_bins', index=i,
-                                                     view_range=view_range)
-                        visualization_histogram(mode='shapenet', data_dict=data_dict,
-                                                save_path=f'{save_dir}histogram', index=i)
+                        # if 'Yi' in config.datasets.dataset_name:
+                        #     view_range = 0.3
+                        # elif 'AnTao' in config.datasets.dataset_name:
+                        #     view_range = 0.6
+                        #
+                        # visualization_heatmap(mode='shapenet', data_dict=data_dict,
+                        #                       save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
+                        # visualization_downsampled_points(mode='shapenet', data_dict=data_dict,
+                        #                                  save_path=f'{save_dir}downsampled_points', index=i,
+                        #                                  view_range=view_range)
+                        # visualization_points_in_bins(mode='shapenet', data_dict=data_dict,
+                        #                              save_path=f'{save_dir}points_in_bins', index=i,
+                        #                              view_range=view_range)
+                        # visualization_histogram(mode='shapenet', data_dict=data_dict,
+                        #                         save_path=f'{save_dir}histogram', index=i)
 
                         if i == 0:
                             statistic_data_all_samples = None
@@ -359,7 +359,7 @@ def test(local_rank, config):
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
 
-            if i == 10:
+            if i == 100:
                 break
                 # if config.test.sampling_score_histogram.enable:
                 #     if i == 0:
