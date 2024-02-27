@@ -94,6 +94,28 @@ def visualization_histogram():
     visualization_histogram()
 
 
+def visualization_all():
+    from utils.visualization import visualization_heatmap, visualization_downsampled_points, \
+        visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples
+
+    view_range = 0.6
+    save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_49_Modelnet_Token_Std_4bin'
+
+    visualization_heatmap(mode='modelnet',
+                          save_path=f'{save_dir}', view_range=view_range)
+    visualization_downsampled_points(mode='modelnet',
+                                     save_path=f'{save_dir}',
+                                     view_range=view_range)
+    visualization_points_in_bins(mode='modelnet',
+                                 save_path=f'{save_dir}',
+                                 view_range=view_range)
+    visualization_histogram(mode='modelnet',
+                            save_path=f'{save_dir}')
+    get_statistic_data_all_samples(
+                            mode='modelnet',
+                            save_path=save_dir)
+
+
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 
@@ -112,5 +134,6 @@ def visualization_histogram():
 # num_points_in_bins()
 # visualization_downsampled_points()
 # visualization_points_in_bins()
-visualization_points_in_bins()
+# visualization_points_in_bins()
 # visualization_histogram()
+visualization_all()

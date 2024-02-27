@@ -297,7 +297,7 @@ def test(local_rank, config):
                                  'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
                                  }
 
-                    if i < 20:
+                    if i < 100:
                         if config.test.save_pkl:
                             with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                                 pickle.dump(data_dict, f)
@@ -336,7 +336,7 @@ def test(local_rank, config):
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
-            if i == 20:
+            if i == 100:
                 break
                 # if config.test.sampling_score_histogram.enable:
                 #     if i == 0:

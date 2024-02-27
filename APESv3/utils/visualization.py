@@ -1187,13 +1187,13 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
         raise NotImplementedError
 
     if data_dict is None:
-        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/heat_map'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+
+        if not os.path.exists(f'{save_path}/heat_map'):
+            os.makedirs(f'{save_path}/heat_map')
 
         for i in tqdm(range(20)):
             with open(
-                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1208,11 +1208,11 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
-                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, save_path, view_range)
+                visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, f'{save_path}/heat_map', view_range)
     else:
         data_dict = deepcopy(data_dict)
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(f'{save_path}/heat_map'):
+            os.makedirs(f'{save_path}/heat_map')
 
         sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
         sample_batch = data_dict['samples']  # (B,N,3)
@@ -1224,7 +1224,8 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
             sample = sample_batch[j].cpu().numpy()  # (N,3)
             category = mapping[int(label_batch[j])]
 
-            visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, save_path, view_range)
+            visualization_heatmap_one_shape(index * B + j, sample, category, sampling_score, f'{save_path}/heat_map',
+                                            view_range)
 
 
 def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
@@ -1248,13 +1249,13 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
         raise NotImplementedError
 
     if data_dict is None:
-        save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+
+        if not os.path.exists(f'{save_path}/downsampled_points/'):
+            os.makedirs(f'{save_path}/downsampled_points/')
 
         for i in tqdm(range(20)):
             with open(
-                    f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/intermediate_result_{i}.pkl',
+                    f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1287,9 +1288,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     vertex = np.array(xyzRGB)  # (N,3+3)
                     vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-                    if not os.path.exists(f'{save_path}/{category}/'):
-                        os.makedirs(f'{save_path}/{category}/')
-                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/downsampled_points/{category}/'):
+                        os.makedirs(f'{save_path}/downsampled_points/{category}/')
 
                     fig = plt.figure()
                     ax = fig.add_subplot(projection='3d')
@@ -1299,7 +1299,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
-                    plt.savefig(save_path, bbox_inches='tight')
+                    plt.savefig(f'{save_path}/downsampled_points/{category}/sample{i * B + j}_layer{k}.png',
+                                bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1307,8 +1308,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(f'{save_path}/downsampled_points/'):
+            os.makedirs(f'{save_path}/downsampled_points/')
 
         sample_batch = data_dict['samples']  # (B,N,3)
         label_batch = data_dict['ground_truth']  # (B,)
@@ -1339,9 +1340,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 vertex = np.array(xyzRGB)  # (N,3+3)
                 vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
 
-                if not os.path.exists(f'{save_path}/{category}/'):
-                    os.makedirs(f'{save_path}/{category}/')
-                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/downsampled_points/{category}/'):
+                    os.makedirs(f'{save_path}/downsampled_points/{category}/')
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -1352,7 +1352,8 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
-                plt.savefig(save_path, bbox_inches='tight')
+                plt.savefig(f'{save_path}/downsampled_points/{category}/sample{index * B + j}_layer{k}.png',
+                            bbox_inches='tight')
                 plt.close(fig)
 
                 # print(f'.png file is saved in {saved_path}')
@@ -1389,14 +1390,13 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
         raise NotImplementedError
 
     if data_dict is None:
-        view_range = 0.6
-        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/points_in_bins_2'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+
+        if not os.path.exists(f'{save_path}/points_in_bins'):
+            os.makedirs(f'{save_path}/points_in_bins')
 
         for i in tqdm(range(10)):
             with open(
-                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
+                    f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1445,9 +1445,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                         vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                             colors[l]
 
-                    if not os.path.exists(f'{save_path}/{category}/'):
-                        os.makedirs(f'{save_path}/{category}/')
-                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/points_in_bins/{category}/'):
+                        os.makedirs(f'{save_path}/points_in_bins/{category}/')
                     # blue, darkcyan, orange, lime, yellow, Red
 
                     fig = plt.figure()
@@ -1458,7 +1457,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                     plt.axis('off')
                     plt.grid('off')
-                    plt.savefig(save_path, bbox_inches='tight')
+                    plt.savefig(f'{save_path}/points_in_bins/{category}/sample{i * B + j}_layer{k}.png',
+                                bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1466,8 +1466,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(f'{save_path}/points_in_bins/'):
+            os.makedirs(f'{save_path}/points_in_bins/')
 
         sample_batch = data_dict['samples']  # (B,N,3)
         label_batch = data_dict['ground_truth']  # (B,)
@@ -1512,9 +1512,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                     vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
                         colors[l]
 
-                if not os.path.exists(f'{save_path}/{category}/'):
-                    os.makedirs(f'{save_path}/{category}/')
-                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/points_in_bins/{category}/'):
+                    os.makedirs(f'{save_path}/points_in_bins/{category}/')
 
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -1524,7 +1523,8 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                 ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
                 plt.axis('off')
                 plt.grid('off')
-                plt.savefig(save_path, bbox_inches='tight')
+                plt.savefig(f'{save_path}/points_in_bins/{category}/sample{index * B + j}_layer{k}.png',
+                            bbox_inches='tight')
                 plt.close(fig)
 
 
@@ -1549,14 +1549,14 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
         raise NotImplementedError
 
     if data_dict is None:
-        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/histogram_2'
+
         # f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(f'{save_path}/histogram'):
+            os.makedirs(f'{save_path}/histogram')
 
         for i in tqdm(range(10)):
             with open(
-                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
+                    f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1581,7 +1581,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                     # num_layers * num_bins * (n,)
 
                 for k in range(num_layers):
-                    bins = np.array(range(6))
+                    bins = np.array(range(num_bins))
                     num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
                     probabilities_in_bins = probability_of_bins[k, :]
 
@@ -1609,13 +1609,12 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                     fig.tight_layout()
 
-                    if not os.path.exists(f'{save_path}/{category}/'):
-                        os.makedirs(f'{save_path}/{category}/')
-                    save_path = f'{save_path}/{category}/sample{i * B + j}_layer{k}.png'
+                    if not os.path.exists(f'{save_path}/histogram/{category}/'):
+                        os.makedirs(f'{save_path}/histogram/{category}/')
 
                     # plt.axis('off')
                     # plt.grid('off')
-                    plt.savefig(save_path, bbox_inches='tight')
+                    plt.savefig(f'{save_path}/histogram/{category}/sample{i * B + j}_layer{k}.png', bbox_inches='tight')
                     plt.close(fig)
 
                     # print(f'.png file is saved in {saved_path}')
@@ -1623,8 +1622,8 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(f'{save_path}/histogram'):
+            os.makedirs(f'{save_path}/histogram')
 
         idx_in_bins_batch = data_dict['idx_in_bins']
         # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
@@ -1645,7 +1644,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 # num_layers * num_bins * (n,)
 
             for k in range(num_layers):
-                bins = np.array(range(6))
+                bins = np.array(range(num_bins))
                 num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
                 probabilities_in_bins = probability_of_bins[k, :]
 
@@ -1673,48 +1672,26 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
                 fig.tight_layout()
 
-                if not os.path.exists(f'{save_path}/{category}/'):
-                    os.makedirs(f'{save_path}/{category}/')
-                save_path = f'{save_path}/{category}/sample{index * B + j}_layer{k}.png'
+                if not os.path.exists(f'{save_path}/histogram/{category}/'):
+                    os.makedirs(f'{save_path}/histogram/{category}/')
 
                 # plt.axis('off')
                 # plt.grid('off')
-                plt.savefig(save_path, bbox_inches='tight')
+                plt.savefig(f'{save_path}/histogram/{category}/sample{index * B + j}_layer{k}.png', bbox_inches='tight')
                 plt.close(fig)
 
 
 def get_statistic_data_all_samples(mode='modelnet', data_dict=None, save_path=None,
                                    statistic_data_all_samples=None):
-    if mode == 'modelnet':
-
-        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl',
-                   7: 'car',
-                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
-                   15: 'flower_pot',
-                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel',
-                   22: 'monitor',
-                   23: 'night_stand',
-                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
-                   31: 'stairs',
-                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
-                   39: 'xbox'}
-
-    elif mode == 'shapenet':
-        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
-                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
-                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
-    else:
-        raise NotImplementedError
-
     if data_dict is None:
-        save_path = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/'
+
         # f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        for i in tqdm(range(10)):
+        for i in tqdm(range(20)):
             with open(
-                    f'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_{i}.pkl',
+                    f'{save_path}/intermediate_result_{i}.pkl',
                     'rb') as f:
                 data_dict = pickle.load(f)
 
@@ -1750,6 +1727,7 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
         num_selected_points_in_bins_allsamples = np.zeros((num_layers, num_bins), dtype=np.int32)
         num_zeros = np.zeros((num_layers, num_bins), dtype=np.int32)
         num_ones = np.zeros((num_layers, num_bins), dtype=np.int32)
+        statistic_data_all_samples = {}
     else:
         num_points_in_bins_allsamples = statistic_data_all_samples['num_points_in_bins']
         num_selected_points_in_bins_allsamples = statistic_data_all_samples['num_selected_points_in_bins']
@@ -1779,14 +1757,14 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
 
     lines_to_save = []
     for k in range(num_layers):
-        lines_to_save.append(f'layer{k}:')
-        lines_to_save.append(f'\tnum relu:{num_zeros}')
-        lines_to_save.append(f'\tnum saturation:{num_ones}')
+        lines_to_save.append(f'\nlayer{k}:')
+        lines_to_save.append(f'\n\tnum relu:{num_zeros[k,:]}')
+        lines_to_save.append(f'\n\tnum saturation:{num_ones[k,:]}')
     with open(f'{save_path}/relu_and_saturation.txt', 'w') as file:
         file.writelines(lines_to_save)
 
     for k in range(num_layers):
-        bins = np.array(range(6))
+        bins = np.array(range(num_bins))
         probabilities_in_bins = num_selected_points_in_bins_allsamples[k, :] / num_points_in_bins_allsamples[k, :]
 
         fig = plt.figure()
@@ -1813,11 +1791,9 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
 
         fig.tight_layout()
 
-        save_path = f'{save_path}/histogram_all_samples_layer{k}.png'
-
         # plt.axis('off')
         # plt.grid('off')
-        plt.savefig(save_path, bbox_inches='tight')
+        plt.savefig(f'{save_path}/histogram_all_samples_layer{k}.png', bbox_inches='tight')
         plt.close(fig)
 
     return statistic_data_all_samples
