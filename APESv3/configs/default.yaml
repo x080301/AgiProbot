@@ -119,6 +119,7 @@ train: # only valid when running the training script
     check_gradient_parameter_range: true  # gradient w.r.t layer parameters
 
 test: # only valid when running the test script
+  vis_which: [ 0, 4, 7, 8, 15, 17, 19, 26 ]
   suffix:
     enable: false
     remark: ???

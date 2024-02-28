@@ -50,7 +50,7 @@ def visualization_heatmap_one_shape(i, sample, category, atten, save_path, view_
 
     if not os.path.exists(f'{save_path}/{category}/'):
         os.makedirs(f'{save_path}/{category}/')
-    save_path = f'{save_path}/{category}/sample{i}.png'
+    save_path = f'{save_path}/{category}/sample{i}_layer_0.png'
 
     vertex = np.array(xyzRGB)
     # print(f'vertex.shape:{vertex.shape}')
@@ -1166,26 +1166,7 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     print(f'Done! All files are saved in {base_path}')
 
 
-def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
-    if mode == 'modelnet':
-
-        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
-                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
-                   15: 'flower_pot',
-                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
-                   23: 'night_stand',
-                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
-                   31: 'stairs',
-                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
-                   39: 'xbox'}
-    elif mode == 'shapenet':
-
-        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
-                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
-                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
-    else:
-        raise NotImplementedError
-
+def visualization_heatmap(data_dict=None, save_path=None, index=None, view_range=0.6):
     if data_dict is None:
 
         if not os.path.exists(f'{save_path}/heat_map'):
@@ -1197,6 +1178,14 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                     'rb') as f:
                 data_dict = pickle.load(f)
 
+            config = data_dict['config']
+            if config.datasets.dataset_name == "modelnet_AnTao420M":
+                mapping = config.datasets.mapping
+            elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+                mapping = [value['category'] for value in config.datasets.mapping.values()]
+            else:
+                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
             sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
             sample_batch = data_dict['samples']  # (B,N,3)
             label_batch = data_dict['ground_truth']
@@ -1204,8 +1193,12 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
             B = sample_batch.shape[0]
 
             for j in range(B):
+                if int(label_batch[j]) not in config.test.vis_which:
+                    continue
+
                 sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
+
                 category = mapping[int(label_batch[j])]
 
                 visualization_heatmap_one_shape(i * B + j, sample, category, sampling_score, f'{save_path}/heat_map',
@@ -1220,7 +1213,18 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
         label_batch = data_dict['ground_truth']
         B = sample_batch.shape[0]
 
+        config = data_dict['config']
+        if config.datasets.dataset_name == "modelnet_AnTao420M":
+            mapping = config.datasets.mapping
+        elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+            mapping = [value['category'] for value in config.datasets.mapping.values()]
+        else:
+            raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
         for j in range(B):
+            if int(label_batch[j]) not in config.test.vis_which:
+                continue
+
             sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
             sample = sample_batch[j].cpu().numpy()  # (N,3)
             category = mapping[int(label_batch[j])]
@@ -1229,26 +1233,7 @@ def visualization_heatmap(mode='modelnet', data_dict=None, save_path=None, index
                                             view_range)
 
 
-def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
-    if mode == 'modelnet':
-
-        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
-                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
-                   15: 'flower_pot',
-                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
-                   23: 'night_stand',
-                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
-                   31: 'stairs',
-                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
-                   39: 'xbox'}
-    elif mode == 'shapenet':
-
-        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
-                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
-                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
-    else:
-        raise NotImplementedError
-
+def visualization_downsampled_points(data_dict=None, save_path=None, index=None, view_range=None):
     if data_dict is None:
 
         if not os.path.exists(f'{save_path}/downsampled_points/'):
@@ -1264,10 +1249,21 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
             label_batch = data_dict['ground_truth']  # (B,)
             idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
 
+            config = data_dict['config']
+            if config.datasets.dataset_name == "modelnet_AnTao420M":
+                mapping = config.datasets.mapping
+            elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+                mapping = [value['category'] for value in config.datasets.mapping.values()]
+            else:
+                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
             B = sample_batch.shape[0]
             num_layers = len(idx_down_batch[0])
 
             for j in range(B):
+                if int(label_batch[j]) not in config.test.vis_which:
+                    continue
+
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
@@ -1319,7 +1315,18 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
         B = sample_batch.shape[0]
         num_layers = len(idx_down_batch[0])
 
+        config = data_dict['config']
+        if config.datasets.dataset_name == "modelnet_AnTao420M":
+            mapping = config.datasets.mapping
+        elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+            mapping = [value['category'] for value in config.datasets.mapping.values()]
+        else:
+            raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
         for j in range(B):
+            if int(label_batch[j]) not in config.test.vis_which:
+                continue
+
             sample = sample_batch[j].cpu().numpy()  # (N,3)
             category = mapping[int(label_batch[j])]
 
@@ -1360,7 +1367,7 @@ def visualization_downsampled_points(mode='modelnet', data_dict=None, save_path=
                 # print(f'.png file is saved in {saved_path}')
 
 
-def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None, index=None, view_range=None):
+def visualization_points_in_bins(data_dict=None, save_path=None, index=None, view_range=None):
     colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
     # ['red', 'orange', 'yellow', 'palegreen', 'paleturquoise', 'orchid']
     # ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'orchid']
@@ -1370,25 +1377,6 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
     # ['red', 'orange', 'yellow', 'lime', 'lightskyblue', 'purple']
     # ['red', 'purple', 'Yellow', 'Green', 'dodgerblue', 'olive']
     colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
-
-    if mode == 'modelnet':
-
-        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
-                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
-                   15: 'flower_pot',
-                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
-                   23: 'night_stand',
-                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
-                   31: 'stairs',
-                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
-                   39: 'xbox'}
-    elif mode == 'shapenet':
-
-        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
-                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
-                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
-    else:
-        raise NotImplementedError
 
     if data_dict is None:
 
@@ -1411,6 +1399,14 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
             num_layers = len(idx_in_bins_batch[0])
             num_bins = len(idx_in_bins_batch[0][0])
 
+            config = data_dict['config']
+            if config.datasets.dataset_name == "modelnet_AnTao420M":
+                mapping = config.datasets.mapping
+            elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+                mapping = [value['category'] for value in config.datasets.mapping.values()]
+            else:
+                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
             if num_bins == 6:
                 colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
             elif num_bins == 8:
@@ -1424,7 +1420,12 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
             else:
                 raise NotImplementedError
 
+            colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
+
             for j in range(B):
+                if int(label_batch[j]) not in config.test.vis_which:
+                    continue
+
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
                 category = mapping[int(label_batch[j])]
 
@@ -1493,7 +1494,18 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
         num_layers = len(idx_in_bins_batch[0])
         num_bins = len(idx_in_bins_batch[0][0])
 
+        config = data_dict['config']
+        if config.datasets.dataset_name == "modelnet_AnTao420M":
+            mapping = config.datasets.mapping
+        elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+            mapping = [value['category'] for value in config.datasets.mapping.values()]
+        else:
+            raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
         for j in range(B):
+            if int(label_batch[j]) not in config.test.vis_which:
+                continue
+
             sample = sample_batch[j].cpu().numpy()  # (N,3)
             category = mapping[int(label_batch[j])]
 
@@ -1542,26 +1554,7 @@ def visualization_points_in_bins(mode='modelnet', data_dict=None, save_path=None
                 plt.close(fig)
 
 
-def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, index=None):
-    if mode == 'modelnet':
-
-        mapping = {0: 'airplane', 1: 'bathtub', 2: 'bed', 3: 'bench', 4: 'bookshelf', 5: 'bottle', 6: 'bowl', 7: 'car',
-                   8: 'chair', 9: 'cone', 10: 'cup', 11: 'curtain', 12: 'desk', 13: 'door', 14: 'dresser',
-                   15: 'flower_pot',
-                   16: 'glass_box', 17: 'guitar', 18: 'keyboard', 19: 'lamp', 20: 'laptop', 21: 'mantel', 22: 'monitor',
-                   23: 'night_stand',
-                   24: 'person', 25: 'piano', 26: 'plant', 27: 'radio', 28: 'range_hood', 29: 'sink', 30: 'sofa',
-                   31: 'stairs',
-                   32: 'stool', 33: 'table', 34: 'tent', 35: 'toilet', 36: 'tv_stand', 37: 'vase', 38: 'wardrobe',
-                   39: 'xbox'}
-
-    elif mode == 'shapenet':
-        mapping = {0: 'airplane', 1: 'bag', 2: 'cap', 3: 'car', 4: 'chair', 5: 'earphone', 6: 'guitar', 7: 'knife',
-                   8: 'lamp', 9: 'laptop', 10: 'motorbike',
-                   11: 'mug', 12: 'pistol', 13: 'rocket', 14: 'skateboard', 15: 'table'}
-    else:
-        raise NotImplementedError
-
+def visualization_histogram(data_dict=None, save_path=None, index=None):
     if data_dict is None:
 
         # f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/histogram/'
@@ -1583,9 +1576,20 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
             # (B, num_layers, num_bins)
 
+            config = data_dict['config']
+            if config.datasets.dataset_name == "modelnet_AnTao420M":
+                mapping = config.datasets.mapping
+            elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+                mapping = [value['category'] for value in config.datasets.mapping.values()]
+            else:
+                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
             B, num_layers, num_bins = probability_of_bins_batch.shape
 
             for j in range(B):
+                if int(label_batch[j]) not in config.test.vis_which:
+                    continue
+
                 probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
                 category = mapping[int(label_batch[j])]
                 idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
@@ -1648,7 +1652,18 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
 
         B, num_layers, num_bins = probability_of_bins_batch.shape
 
+        config = data_dict['config']
+        if config.datasets.dataset_name == "modelnet_AnTao420M":
+            mapping = config.datasets.mapping
+        elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+            mapping = [value['category'] for value in config.datasets.mapping.values()]
+        else:
+            raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
         for j in range(B):
+            if int(label_batch[j]) not in config.test.vis_which:
+                continue
+
             probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
             category = mapping[int(label_batch[j])]
             idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
@@ -1695,7 +1710,7 @@ def visualization_histogram(mode='modelnet', data_dict=None, save_path=None, ind
                 plt.close(fig)
 
 
-def get_statistic_data_all_samples(mode='modelnet', data_dict=None, save_path=None,
+def get_statistic_data_all_samples(data_dict=None, save_path=None,
                                    statistic_data_all_samples=None):
     if data_dict is None:
 
@@ -1729,7 +1744,6 @@ def get_statistic_data_all_samples(mode='modelnet', data_dict=None, save_path=No
 def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_data_all_samples):
     idx_in_bins_batch = data_dict['idx_in_bins']
     # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-    label_batch = data_dict['ground_truth']  # (B,)
     probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
     # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
     # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
@@ -1811,3 +1825,97 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
         plt.close(fig)
 
     return statistic_data_all_samples
+
+
+def visualize_segmentation_predictions(data_dict=None, save_path=None, index=None):
+    if data_dict is None:
+        file_names = os.listdir(save_path)
+
+        for file_name in file_names:
+
+            if '.pkl' in file_name:
+                i = int(file_name.split('_')[-1].split('.')[0])
+
+                with open(f'{save_path}/{file_name}', 'rb') as f:
+                    data_dict = pickle.load(f)
+
+                visualization_segmentation_one_batch(data_dict, i, save_path)
+
+
+    else:
+        visualization_segmentation_one_batch(data_dict, index, save_path)
+
+
+def visualization_segmentation_one_batch(data_dict, i, save_path):
+    samples = data_dict['samples']
+    config = data_dict['config']
+    category_ids = data_dict['ground_truth']
+    preds = data_dict['seg_predictions']
+    seg_labels = data_dict['seg_ground_truth']
+    if config.datasets.dataset_name == "shapenet_AnTao350M":
+        view_range = 0.6
+    elif config.datasets.dataset_name == "shapenet_Yi650M" or config.datasets.dataset_name == "shapenet_Normal":
+        view_range = 0.3
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+    # (B,N,3)
+    B, _, _ = samples.shape
+    for j, (sample, pred, seg_gt, category_id) in enumerate(zip(samples, preds, seg_labels, category_ids)):
+
+        category_id = int(category_id)
+
+        if category_id not in config.test.vis_which:
+            continue
+
+        # mapping: {'02691156': {'category': 'airplane', 'category_id': 0, 'parts_id': [0, 1, 2, 3]}
+        xyzRGB, xyzRGB_gt = set_color_for_one_shape(config, pred, sample, seg_gt)
+
+        category = config.datasets.mapping[category_id]['category']
+
+        if not os.path.exists(f'{save_path}/segmentation/{category}/'):
+            os.makedirs(f'{save_path}/segmentation/{category}/')
+
+        save_figure_for_one_shape(f'{save_path}/segmentation/{category}/sample_{i * B + j}_GroundTruth.png',
+                                  f'{save_path}/segmentation/{category}/sample_{i * B + j}_Prediction.png',
+                                  view_range, xyzRGB, xyzRGB_gt)
+    return config, preds, samples, seg_labels, view_range
+
+
+def set_color_for_one_shape(config, pred, sample, seg_gt):
+    xyzRGB = []
+    xyzRGB_gt = []
+    for xyz, p, gt in zip(sample, pred, seg_gt):
+        xyzRGB_tmp = []
+        xyzRGB_gt_tmp = []
+        xyzRGB_tmp.extend(list(xyz))
+        xyzRGB_tmp.extend(config.datasets.cmap[str(p)])
+        xyzRGB.append(tuple(xyzRGB_tmp))
+        xyzRGB_gt_tmp.extend(list(xyz))
+        xyzRGB_gt_tmp.extend(config.datasets.cmap[str(gt)])
+        xyzRGB_gt.append(tuple(xyzRGB_gt_tmp))
+    return xyzRGB, xyzRGB_gt
+
+
+def save_figure_for_one_shape(gt_saved_path, pred_saved_path, view_range, xyzRGB, xyzRGB_gt):
+    vertex = np.array(xyzRGB)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim3d(-view_range, view_range)
+    ax.set_ylim3d(-view_range, view_range)
+    ax.set_zlim3d(-view_range, view_range)
+    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+    plt.axis('off')
+    plt.grid('off')
+    plt.savefig(pred_saved_path, bbox_inches='tight')
+    plt.close(fig)
+    vertex = np.array(xyzRGB_gt)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim3d(-view_range, view_range)
+    ax.set_ylim3d(-view_range, view_range)
+    ax.set_zlim3d(-view_range, view_range)
+    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+    plt.axis('off')
+    plt.grid('off')
+    plt.savefig(gt_saved_path, bbox_inches='tight')
+    plt.close(fig)

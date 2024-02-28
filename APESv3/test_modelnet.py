@@ -109,7 +109,7 @@ def test(local_rank, config):
     # get datasets
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
         # _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
-        test_set, _ = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,
+        _, test_set = dataloader.get_modelnet_dataset_AnTao420M(config.datasets.saved_path,  # TODO
                                                                 config.train.dataloader.selected_points,
                                                                 config.train.dataloader.fps,
                                                                 config.train.dataloader.data_augmentation.enable,
@@ -295,7 +295,8 @@ def test(local_rank, config):
                                  # B * num_layers * (num_bins)
                                  'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
                                  # (B,)
-                                 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
+                                 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1),  # (B,)
+                                 'config': config
                                  }
 
                     if i < 100:

@@ -96,22 +96,22 @@ def visualization_histogram():
 
 def visualization_all():
     from utils.visualization import visualization_heatmap, visualization_downsampled_points, \
-        visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples
+        visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples, \
+        visualize_segmentation_predictions
 
-    view_range = 0.6
+    view_range = 0.3  # 0.6
     # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_49_Modelnet_Token_Std_4bin'
-    save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_50_Modelnet_Token_Std_8bin'
+    # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_50_Modelnet_Token_Std_8bin'
+    save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_20_22_Shapenet_Token_Std'
+    # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std_2'
 
-    visualization_heatmap(mode='modelnet',
-                          save_path=f'{save_dir}', view_range=view_range)
-    visualization_downsampled_points(mode='modelnet',
-                                     save_path=f'{save_dir}',
+    visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
+    visualization_downsampled_points(save_path=f'{save_dir}',
                                      view_range=view_range)
-    visualization_points_in_bins(mode='modelnet',
-                                 save_path=f'{save_dir}',
-                                 view_range=view_range)
-    visualization_histogram(mode='modelnet', save_path=f'{save_dir}')
-    get_statistic_data_all_samples(mode='modelnet', save_path=save_dir)
+    visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range)
+    visualization_histogram(save_path=f'{save_dir}')
+    get_statistic_data_all_samples(save_path=save_dir)
+    visualize_segmentation_predictions(save_path=save_dir)
 
 
 # from utils.data_analysis import estimate_sigma

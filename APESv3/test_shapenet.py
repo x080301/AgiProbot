@@ -310,9 +310,11 @@ def test(local_rank, config):
                                  # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
                                  'probability_of_bins': probability_of_bins,
                                  # B * num_layers * (num_bins)
-                                 'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1)
+                                 'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
                                  # (B,)
-                                 # 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1)  # (B,)
+                                 'seg_predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1),  # (B,)
+                                 'seg_ground_truth': torch.argmax(torch.concat(seg_label_gather_list, dim=0), dim=1),
+                                 'config': config
                                  }
                     # print(f'samples.shape:{torch.concat(sample_gather_list, dim=0).shape}')
 
@@ -337,14 +339,14 @@ def test(local_rank, config):
                         #                              view_range=view_range)
                         # visualization_histogram(mode='shapenet', data_dict=data_dict,
                         #                         save_path=f'{save_dir}histogram', index=i)
-
-                        if i == 0:
-                            statistic_data_all_samples = None
-                        statistic_data_all_samples = get_statistic_data_all_samples(
-                            mode='shapenet',
-                            data_dict=data_dict,
-                            save_path=save_dir,
-                            statistic_data_all_samples=statistic_data_all_samples)
+                        #
+                        # if i == 0:
+                        #     statistic_data_all_samples = None
+                        # statistic_data_all_samples = get_statistic_data_all_samples(
+                        #     mode='shapenet',
+                        #     data_dict=data_dict,
+                        #     save_path=save_dir,
+                        #     statistic_data_all_samples=statistic_data_all_samples)
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
