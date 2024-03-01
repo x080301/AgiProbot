@@ -1193,8 +1193,14 @@ def visualization_heatmap(data_dict=None, save_path=None, index=None, view_range
             B = sample_batch.shape[0]
 
             for j in range(B):
-                if int(label_batch[j]) not in config.test.vis_which:
-                    continue
+                if '_seg' in save_path:
+                    pass
+                elif '_cls' in save_path:
+                    if int(label_batch[j]) not in config.test.vis_which:
+                        continue
+                else:
+                    raise NotImplementedError
+
 
                 sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
@@ -1407,7 +1413,9 @@ def visualization_points_in_bins(data_dict=None, save_path=None, index=None, vie
             else:
                 raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
 
-            if num_bins == 6:
+            if num_bins == 4:
+                colors = ['red', 'yellow', 'paleturquoise', 'violet']
+            elif num_bins == 6:
                 colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
             elif num_bins == 8:
                 colors = ['red', 'orange', 'yellow', 'lime', 'cyan', 'lightgreen', 'paleturquoise', 'violet']
@@ -1765,16 +1773,17 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
     for j in range(B):
         probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
         idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
-        for k in range(num_layers):
-            idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+        for l in range(num_layers):
+            idx_in_bins[l] = [item.flatten().cpu().numpy() for item in idx_in_bins[l]]
 
         for k in range(num_layers):
             num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
             probabilities_in_bins = probability_of_bins[k, :]
+            probabilities_in_bins = np.nan_to_num(probabilities_in_bins)
 
             num_points_in_bins_allsamples[k, :] += num_points_in_bins
-            num_selected_points_in_bins_allsamples[k, :] += np.around(
-                probabilities_in_bins * num_points_in_bins).astype(np.int32)
+            num_selected_points_in_bins_allsamples[k, :] += \
+                np.around(probabilities_in_bins * num_points_in_bins).astype(np.int32)
             num_zeros[k, :] += (probabilities_in_bins == 0)
             num_ones[k, :] += (probabilities_in_bins == 1)
 
@@ -1793,7 +1802,8 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
 
     for k in range(num_layers):
         bins = np.array(range(num_bins))
-        probabilities_in_bins = num_selected_points_in_bins_allsamples[k, :] / num_points_in_bins_allsamples[k, :]
+        probabilities_in_bins = \
+            num_selected_points_in_bins_allsamples[k, :] / (num_points_in_bins_allsamples[k, :] + 1e-8)
 
         fig = plt.figure()
         ax1 = fig.add_subplot()
@@ -1831,7 +1841,7 @@ def visualize_segmentation_predictions(data_dict=None, save_path=None, index=Non
     if data_dict is None:
         file_names = os.listdir(save_path)
 
-        for file_name in file_names:
+        for file_name in tqdm(file_names):
 
             if '.pkl' in file_name:
                 i = int(file_name.split('_')[-1].split('.')[0])

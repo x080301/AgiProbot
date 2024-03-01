@@ -10,9 +10,17 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonaveragebins_std_seg.yaml wandb.name='Shapenet_Token_Std'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_10bin_cls.yaml wandb.name='Modelnet_Token_Std_10bin'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonaveragebins_std_seg_4bins.yaml wandb.name='Shapenet_Token_Std_4bins'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_12bin_cls.yaml wandb.name='Modelnet_Token_Std_12bin'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonaveragebins_std_seg_8bins.yaml wandb.name='Shapenet_Token_Std_8bins'
 #---------------
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[0,1] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg.yaml wandb.name='Shapenet_Token_Std_AnTao'
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonaveragebins_std_seg_10bins.yaml wandb.name='Shapenet_Token_Std_10bins'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_Yi650M usr_config=configs/token_nonaveragebins_std_seg_12bins.yaml wandb.name='Shapenet_Token_Std_12bins'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_10bin_cls.yaml wandb.name='Modelnet_Token_Std_10bin_2'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_12bin_cls.yaml wandb.name='Modelnet_Token_Std_12bin_2'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg.yaml wandb.name='Shapenet_Token_Std_AnTao'
 #---------------

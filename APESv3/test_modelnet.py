@@ -299,10 +299,9 @@ def test(local_rank, config):
                                  'config': config
                                  }
 
-                    if i < 100:
-                        if config.test.save_pkl:
-                            with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                                pickle.dump(data_dict, f)
+                    if config.test.save_pkl:
+                        with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                            pickle.dump(data_dict, f)
                             # print(f'save{i}')
 
                         # if 'Yi' in config.datasets.dataset_name:
@@ -338,8 +337,7 @@ def test(local_rank, config):
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
-            if i == 100:
-                break
+
                 # if config.test.sampling_score_histogram.enable:
                 #     if i == 0:
                 #         torch_tensor_to_save_batch = None

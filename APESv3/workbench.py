@@ -98,21 +98,35 @@ def visualization_all():
     from utils.visualization import visualization_heatmap, visualization_downsampled_points, \
         visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples, \
         visualize_segmentation_predictions
+    import os
 
-    view_range = 0.3  # 0.6
-    # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_49_Modelnet_Token_Std_4bin'
-    # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_50_Modelnet_Token_Std_8bin'
-    save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_20_22_Shapenet_Token_Std'
-    # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std_2'
+    save_dirs = os.listdir(r'C:\Users\Lenovo\Desktop\test_results')
 
-    visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
-    visualization_downsampled_points(save_path=f'{save_dir}',
-                                     view_range=view_range)
-    visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range)
-    visualization_histogram(save_path=f'{save_dir}')
+    for save_dir in save_dirs:
+        save_dir = f'C:/Users/Lenovo/Desktop/test_results/{save_dir}'
+
+        view_range = 0.6  # 0.6
+        # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_49_Modelnet_Token_Std_4bin'
+        # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_50_Modelnet_Token_Std_8bin'
+        # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_20_22_Shapenet_Token_Std'
+        # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std_2'
+
+        if save_dir != 'C:/Users/Lenovo/Desktop/test_results/2024_02_21_01_47_Modelnet_Token_Std':
+            if save_dir != 'C:/Users/Lenovo/Desktop/test_results/2024_02_26_19_49_Modelnet_Token_Std_4bin':
+                visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
+                visualization_downsampled_points(save_path=f'{save_dir}',
+                                                 view_range=view_range)
+            visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range)
+            visualization_histogram(save_path=f'{save_dir}')
+        get_statistic_data_all_samples(save_path=save_dir)
+
+        if 'Shapenet' in save_dir:
+            visualize_segmentation_predictions(save_path=save_dir)
+def visualize_statistic_data_all_samples():
+    from utils.visualization import get_statistic_data_all_samples
+    save_dir = 'C:/Users/Lenovo/Desktop/2024_02_27_07_23_Modelnet_Token_Std_12bin'
     get_statistic_data_all_samples(save_path=save_dir)
-    visualize_segmentation_predictions(save_path=save_dir)
-
+    visualization_heatmap(save_path=f'{save_dir}', view_range=0.6)
 
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
@@ -134,4 +148,5 @@ def visualization_all():
 # visualization_points_in_bins()
 # visualization_points_in_bins()
 # visualization_histogram()
-visualization_all()
+# visualization_all()
+visualize_statistic_data_all_samples()
