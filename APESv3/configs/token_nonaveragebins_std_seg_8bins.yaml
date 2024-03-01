@@ -112,7 +112,7 @@ feature_learning_block:
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       dynamic_boundaries: true
       bin_boundaries: [ [ 8.45e-06,-7.46e-07,-5.476e-06,-8.971e-06,-1.245e-05 ],[ 1.274e-05,2.405e-07,-6.46e-06,-1.155e-05,-1.68e-05 ] ]
-      normalization_mode: [ z_score_no_std,z_score_no_std ] # no_normalization, z_score, z_score_no_std
+      normalization_mode: [ z_score,z_score ] # no_normalization, z_score, z_score_no_std
     q_in: [ 128, 128 ]
     q_out: [ 128, 128 ]
     k_in: [ 128, 128 ]
