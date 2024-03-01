@@ -61,8 +61,8 @@ def main(config):
 
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(
-            ' ', '').replace('[', '').replace(']', '')
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
+            ']', '')
         mp.spawn(train, args=(config, random_seed, time_label), nprocs=config.train.ddp.nproc_this_node, join=True)
     else:
         exit('It is almost impossible to train this model using CPU. Please use GPU! Exit.')

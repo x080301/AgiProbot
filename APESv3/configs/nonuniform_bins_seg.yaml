@@ -40,7 +40,7 @@ train:
   label_smoothing: false
   amp: false  # whether to use automatic mixed precision
   ddp:
-    which_gpu: [0, 1]
+    which_gpu: ???
     syn_bn: true  # synchronize batch normalization among gpus
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 10076  # please choose an available port
@@ -62,7 +62,7 @@ test:  # only valid when running the test script
       enable: true
       num_vote: 10
   ddp:
-    which_gpu: [1]
+    which_gpu: ???
     master_addr: localhost  # don't change this if you use only one PC
     master_port: 10076  # please choose an available port
     nnodes: 1  # how many PCs you want to use
