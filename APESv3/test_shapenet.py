@@ -261,7 +261,7 @@ def test(local_rank, config):
                 idx_in_bins_all_layers = []
                 k_point_to_choose_all_layers = []
 
-                for downsample_module in my_model.module.block.downsample_list:
+                for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
                     sampling_score_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'attention_point_score',
                                                   rank, config.test.ddp.nproc_this_node, device))
@@ -276,6 +276,9 @@ def test(local_rank, config):
                     k_point_to_choose_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'k_point_to_choose',
                                                   rank, config.test.ddp.nproc_this_node, device))
+
+                    bin_prob = gather_variable_from_gpus(downsample_module, 'bin_prob',
+                                                         rank, config.test.ddp.nproc_this_node, device)
 
                 if rank == 0:
                     # sampling_score_all_layers: num_layers * (B,H,N) -> (B, num_layers, H, N)
@@ -314,7 +317,8 @@ def test(local_rank, config):
                                  # (B,)
                                  'seg_predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1),  # (B,)
                                  'seg_ground_truth': torch.argmax(torch.concat(seg_label_gather_list, dim=0), dim=1),
-                                 'config': config
+                                 'config': config,
+                                 'raw_learned_bin_prob': bin_prob
                                  }
                     # print(f'samples.shape:{torch.concat(sample_gather_list, dim=0).shape}')
 

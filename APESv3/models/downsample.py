@@ -5,6 +5,8 @@ import math
 import torch.nn.functional as F
 import einops
 
+from utils.ops import calculate_num_points_to_choose
+
 
 def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_idx, bin_probability, direct_link_mode):
     B, C, N = input_x_shape
@@ -37,52 +39,6 @@ def bin_probability_multiple(x_ds, input_x_shape, down_sampling_idx, bin_chunks_
     x_ds = x_ds * tensor_to_multiply
 
     return x_ds
-
-
-def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_choose):
-    """
-
-    :param total_points_to_choose: Int
-    :param bin_prob: torch.Tensor(B,num_bins)
-    :param max_num_points: torch.Tensor(B,num_bins)
-    :return: number of choosen points, torch.Tensor(B,num_bins)
-    """
-    # print(f'max_num_points:{max_num_points}')
-    # print(f'bin_prob:{bin_prob}')
-    B, num_bins = bin_prob.shape
-    bin_prob = bin_prob * max_num_points
-    bin_prob += 1e-10
-
-    # print(f'bin_prob:{bin_prob}')
-    # print(f'max_num_points:{max_num_points}')
-
-    num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
-    for _ in range(num_bins):
-        bin_prob = bin_prob / torch.sum(bin_prob, dim=1, keepdim=True)
-        num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
-
-        if torch.all(num_to_choose == 0):
-            break
-        # print(torch.max(num_to_choose))
-
-        # print(f'add:{bin_prob * num_to_choose}')
-        num_chosen_points_in_bin += bin_prob * num_to_choose
-        num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
-                                               num_chosen_points_in_bin)
-        bin_prob = bin_prob * torch.where(num_chosen_points_in_bin >= max_num_points, 0, 1)
-
-    num_chosen_points_in_bin = num_chosen_points_in_bin.int()
-    # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
-
-    num_chosen_points_in_bin[
-        torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
-                                         dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
-
-    # print(num_chosen_points_in_bin)
-    # print(torch.sum(num_chosen_points_in_bin, dim=1))
-    # print(max_num_points)
-    # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
-    return num_chosen_points_in_bin
 
 
 def calculate_num_points_to_choose_one_iteration(probability, max_num_points, num_undecided_points,
@@ -1023,6 +979,7 @@ class DownSampleToken(nn.Module):
         self.idx_chunks = idx_chunks
         # idx_chunks.shape == num_bins * (B, H, n)
         self.bin_prob = bin_prob
+        # bin_prob.shape == (B, num_bins)
         self.k_point_to_choose = k_point_to_choose
         # k_point_to_choose.shape == (B, num_bins)
         return (x_ds, idx), (None, None)

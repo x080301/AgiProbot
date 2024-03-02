@@ -122,11 +122,14 @@ def visualization_all():
 
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
+
+
 def visualize_statistic_data_all_samples():
     from utils.visualization import get_statistic_data_all_samples
     save_dir = 'C:/Users/Lenovo/Desktop/2024_02_27_07_23_Modelnet_Token_Std_12bin'
     get_statistic_data_all_samples(save_path=save_dir)
     visualization_heatmap(save_path=f'{save_dir}', view_range=0.6)
+
 
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()

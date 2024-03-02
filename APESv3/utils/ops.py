@@ -428,3 +428,49 @@ def gather_variable_from_gpus(downsample_module, variable_name, rank, world_size
                         variable_to_return.append(variable_in_one_batch)
                 # variable_to_return: B * num_bins * (H,n)
                 return variable_to_return
+
+
+def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_choose):
+    """
+
+    :param total_points_to_choose: Int
+    :param bin_prob: torch.Tensor(B,num_bins)
+    :param max_num_points: torch.Tensor(B,num_bins)
+    :return: number of choosen points, torch.Tensor(B,num_bins)
+    """
+    # print(f'max_num_points:{max_num_points}')
+    # print(f'bin_prob:{bin_prob}')
+    B, num_bins = bin_prob.shape
+    bin_prob = bin_prob * max_num_points
+    bin_prob += 1e-10
+
+    # print(f'bin_prob:{bin_prob}')
+    # print(f'max_num_points:{max_num_points}')
+
+    num_chosen_points_in_bin = torch.zeros_like(bin_prob, device=bin_prob.device)
+    for _ in range(num_bins):
+        bin_prob = bin_prob / torch.sum(bin_prob, dim=1, keepdim=True)
+        num_to_choose = total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1, keepdim=True)
+
+        if torch.all(num_to_choose == 0):
+            break
+        # print(torch.max(num_to_choose))
+
+        # print(f'add:{bin_prob * num_to_choose}')
+        num_chosen_points_in_bin += bin_prob * num_to_choose
+        num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
+                                               num_chosen_points_in_bin)
+        bin_prob = bin_prob * torch.where(num_chosen_points_in_bin >= max_num_points, 0, 1)
+
+    num_chosen_points_in_bin = num_chosen_points_in_bin.int()
+    # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
+
+    num_chosen_points_in_bin[
+        torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
+                                         dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
+
+    # print(num_chosen_points_in_bin)
+    # print(torch.sum(num_chosen_points_in_bin, dim=1))
+    # print(max_num_points)
+    # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
+    return num_chosen_points_in_bin

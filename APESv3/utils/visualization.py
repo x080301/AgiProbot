@@ -12,6 +12,8 @@ from collections import OrderedDict
 import pickle
 import os
 from tqdm import tqdm
+
+from .ops import calculate_num_points_to_choose
 from .visualization_data_processing import *
 import torch
 
@@ -1201,7 +1203,6 @@ def visualization_heatmap(data_dict=None, save_path=None, index=None, view_range
                 else:
                     raise NotImplementedError
 
-
                 sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
                 sample = sample_batch[j].cpu().numpy()  # (N,3)
 
@@ -1878,20 +1879,19 @@ def visualization_segmentation_one_batch(data_dict, i, save_path):
             continue
 
         # mapping: {'02691156': {'category': 'airplane', 'category_id': 0, 'parts_id': [0, 1, 2, 3]}
-        xyzRGB, xyzRGB_gt = set_color_for_one_shape(config, pred, sample, seg_gt)
+        xyzRGB, xyzRGB_gt = set_color_for_one_shape_seg(config, pred, sample, seg_gt)
 
         category = config.datasets.mapping[category_id]['category']
 
         if not os.path.exists(f'{save_path}/segmentation/{category}/'):
             os.makedirs(f'{save_path}/segmentation/{category}/')
 
-        save_figure_for_one_shape(f'{save_path}/segmentation/{category}/sample_{i * B + j}_GroundTruth.png',
-                                  f'{save_path}/segmentation/{category}/sample_{i * B + j}_Prediction.png',
-                                  view_range, xyzRGB, xyzRGB_gt)
-    return config, preds, samples, seg_labels, view_range
+        save_figure_for_one_shape_seg(f'{save_path}/segmentation/{category}/sample_{i * B + j}_GroundTruth.png',
+                                      f'{save_path}/segmentation/{category}/sample_{i * B + j}_Prediction.png',
+                                      view_range, xyzRGB, xyzRGB_gt)
 
 
-def set_color_for_one_shape(config, pred, sample, seg_gt):
+def set_color_for_one_shape_seg(config, pred, sample, seg_gt):
     xyzRGB = []
     xyzRGB_gt = []
     for xyz, p, gt in zip(sample, pred, seg_gt):
@@ -1906,7 +1906,7 @@ def set_color_for_one_shape(config, pred, sample, seg_gt):
     return xyzRGB, xyzRGB_gt
 
 
-def save_figure_for_one_shape(gt_saved_path, pred_saved_path, view_range, xyzRGB, xyzRGB_gt):
+def save_figure_for_one_shape_seg(gt_saved_path, pred_saved_path, view_range, xyzRGB, xyzRGB_gt):
     vertex = np.array(xyzRGB)
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -1928,4 +1928,147 @@ def save_figure_for_one_shape(gt_saved_path, pred_saved_path, view_range, xyzRGB
     plt.axis('off')
     plt.grid('off')
     plt.savefig(gt_saved_path, bbox_inches='tight')
+    plt.close(fig)
+
+
+def visualize_few_points(M, data_dict=None, save_path=None, index=None):
+    if data_dict is None:
+        file_names = os.listdir(save_path)
+
+        for file_name in tqdm(file_names):
+
+            if '.pkl' in file_name:
+                i = int(file_name.split('_')[-1].split('.')[0])
+
+                with open(f'{save_path}/{file_name}', 'rb') as f:
+                    data_dict = pickle.load(f)
+
+                visualization_few_points_one_batch(data_dict, i, save_path, M)
+    else:
+        visualization_few_points_one_batch(data_dict, index, save_path, M)
+
+
+def visualization_few_points_one_batch(data_dict, index, save_path, M):
+    samples = data_dict['samples']
+    config = data_dict['config']
+    category_ids = data_dict['ground_truth']
+
+    bin_prob = data_dict['raw_learned_bin_prob']
+    # (B, num_bins)
+    sampling_score = data_dict['sampling_score']
+    # (B, num_layers, H, N)
+    sampling_score = sampling_score[:, 0, 0, :]
+    # (B, N)
+
+    idx_in_bins = data_dict['idx_in_bins']
+    # B * num_layers * num_bins * (H,n)
+
+    B, N = sampling_score.shape
+    _, num_bins = bin_prob.shape
+
+    max_num_points = torch.stack(
+        [torch.asarray([idx_in_bins_in_one_bin.nelement() for idx_in_bins_in_one_bin in idx_in_bins_in_one_batch[0]])
+         for idx_in_bins_in_one_batch in idx_in_bins], dim=0)
+    # (B, num_bins)
+    num_chosen_points_in_bin = calculate_num_points_to_choose(bin_prob, max_num_points, M)
+    # torch.Tensor(B,num_bins)
+
+    idx_in_bins = [[idx_in_bins_in_one_bin.flatten() for idx_in_bins_in_one_bin in idx_in_bins_in_one_batch[0]]
+                   for idx_in_bins_in_one_batch in idx_in_bins]
+    # B * num_bins * (n,)
+
+    binmask_sampling_score = torch.zeros((B, num_bins, N), device=sampling_score.device) - 1
+    for i in range(B):
+        for j in range(num_bins):
+            binmask_sampling_score[i, j, idx_in_bins[i][j]] = sampling_score[i, idx_in_bins[i][j]]
+    _, sorted_index = torch.sort(binmask_sampling_score, dim=2)
+
+    selected_index_batch = torch.empty((B, M), device=sampling_score.device)
+    for i in range(B):
+        selected_index_one_batch = []
+        for j in range(num_bins):
+            selected_index_one_batch.append(sorted_index[i, j, :num_chosen_points_in_bin[i, j]])
+        selected_index_batch[i, :] = torch.concat(selected_index_one_batch, dim=0)
+
+    save_figure_for_one_batch(B, M, N, category_ids, config, index, samples, save_path, selected_index_batch,
+                              'TopKInBin')
+
+    _, sorted_index = torch.sort(sampling_score, dim=1)
+    selected_index_batch = sorted_index[:, :M]
+    save_figure_for_one_batch(B, M, N, category_ids, config, index, samples, save_path, selected_index_batch,
+                              'TopM')
+
+
+def save_figure_for_one_batch(B, M, N, category_ids, config, i, samples, save_path, selected_index_batch, mode):
+    if config.datasets.dataset_name == "shapenet_AnTao350M":
+        view_range = 0.6
+    elif config.datasets.dataset_name == "shapenet_Yi650M" or config.datasets.dataset_name == "shapenet_Normal":
+        view_range = 0.3
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
+    if M == 256:
+        s_red = 2
+    elif M == 128:
+        s_red = 4
+    elif M == 64:
+        s_red = 6
+    elif M == 32:
+        s_red = 8
+    elif M == 16:
+        s_red = 12
+    elif M == 8:
+        s_red = 16
+    elif M == 4:
+        s_red = 24
+    elif M == 2:
+        s_red = 32
+    else:
+        s_red = 1
+    RGB_gray = torch.asarray([192, 192, 192], device=samples.device)
+    RGB_gray = RGB_gray.unsqueeze(0).repeat(N, 1)
+    # RGBs: (N,3)
+    for j, (sample, category_id, selected_index) in enumerate(zip(samples, category_ids, selected_index_batch)):
+        # sample (N,3)
+
+        category_id = int(category_id)
+
+        if category_id not in config.test.vis_which:
+            continue
+
+        xyzRGB = torch.concat([sample, RGB_gray], dim=1)
+
+        mask = torch.zeros((N,), dtype=torch.bool)
+        mask[selected_index] = True
+
+        xyzRGB_selected = xyzRGB[mask]
+        xyzRGB_droped = xyzRGB[~mask]
+
+        xyzRGB_selected[:, 3:] = torch.asarray([255, 0, 0], device=samples.device)
+
+        xyzRGB_selected = xyzRGB_selected.cpu().numpy()
+        xyzRGB_droped = xyzRGB_droped.cpu().numpy()
+
+        category = config.datasets.mapping[category_id]['category']
+
+        if not os.path.exists(f'{save_path}/segmentation/{category}/'):
+            os.makedirs(f'{save_path}/segmentation/{category}/')
+
+        save_figure_for_one_shape(f'{save_path}/segmentation/{category}/sample_{i * B + j}_{mode}.png',
+                                  view_range, s_red, xyzRGB_selected, xyzRGB_droped)
+
+
+def save_figure_for_one_shape(saved_path, view_range, s_red, xyzRGB_selected, xyzRGB_droped):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim3d(-view_range, view_range)
+    ax.set_ylim3d(-view_range, view_range)
+    ax.set_zlim3d(-view_range, view_range)
+    ax.scatter(xyzRGB_selected[:, 0], xyzRGB_selected[:, 2], xyzRGB_selected[:, 1], c=xyzRGB_selected[:, 3:] / 255,
+               marker='o', s=s_red)
+    ax.scatter(xyzRGB_droped[:, 0], xyzRGB_droped[:, 2], xyzRGB_droped[:, 1], c=xyzRGB_droped[:, 3:] / 255, marker='o',
+               s=1)
+    plt.axis('off')
+    plt.grid('off')
+    plt.savefig(saved_path, bbox_inches='tight')
     plt.close(fig)
