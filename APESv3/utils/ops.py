@@ -469,8 +469,17 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
         torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
                                          dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
 
+    # if torch.min(num_chosen_points_in_bin) < 0:
+    #     for i in range(B):
+    #         num_chosen_points_in_bin_one_batch = num_chosen_points_in_bin[i, :]
+    #         if torch.min(num_chosen_points_in_bin_one_batch) < 0:
+    #             min = torch.min(num_chosen_points_in_bin_one_batch)
+    #             num_chosen_points_in_bin[i, torch.argmin(num_chosen_points_in_bin_one_batch)] -= min
+    #             num_chosen_points_in_bin[i, torch.argmax(num_chosen_points_in_bin_one_batch)] += min
+
     # print(num_chosen_points_in_bin)
     # print(torch.sum(num_chosen_points_in_bin, dim=1))
     # print(max_num_points)
     # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
+    c=1
     return num_chosen_points_in_bin

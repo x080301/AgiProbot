@@ -97,7 +97,7 @@ def visualization_histogram():
 def visualization_all():
     from utils.visualization import visualization_heatmap, visualization_downsampled_points, \
         visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples, \
-        visualize_segmentation_predictions
+        visualize_segmentation_predictions, visualize_few_points
     import os
 
     save_dirs = os.listdir(r'C:\Users\Lenovo\Desktop\test_results')
@@ -111,17 +111,23 @@ def visualization_all():
         # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_20_22_Shapenet_Token_Std'
         # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std_2'
 
-        if save_dir != 'C:/Users/Lenovo/Desktop/test_results/2024_02_21_01_47_Modelnet_Token_Std':
-            if save_dir != 'C:/Users/Lenovo/Desktop/test_results/2024_02_26_19_49_Modelnet_Token_Std_4bin':
-                visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
-                visualization_downsampled_points(save_path=f'{save_dir}',
-                                                 view_range=view_range)
-            visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range)
-            visualization_histogram(save_path=f'{save_dir}')
-        get_statistic_data_all_samples(save_path=save_dir)
+        if '2024_02_21_01_47_Modelnet_Token_Std' in save_dir:
+            visualization_all = True
+        else:
+            visualization_all = False
+
+        for M in [16, 8, 32, 64, 128]:
+            visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
 
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
+
+        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
+        visualization_downsampled_points(save_path=f'{save_dir}',
+                                         view_range=view_range, visualization_all=visualization_all)
+        visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
+        visualization_histogram(save_path=f'{save_dir}', visualization_all=visualization_all)
+        get_statistic_data_all_samples(save_path=save_dir)
 
 
 def visualize_statistic_data_all_samples():
@@ -151,5 +157,5 @@ def visualize_statistic_data_all_samples():
 # visualization_points_in_bins()
 # visualization_points_in_bins()
 # visualization_histogram()
-# visualization_all()
-visualize_statistic_data_all_samples()
+visualization_all()
+# visualize_statistic_data_all_samples()
