@@ -28,3 +28,7 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_momentum_0.9.yaml wandb.name='Modelnet_Token_Std_momentum_09'
 #---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_momentum_0.999.yaml wandb.name='Modelnet_Token_Std_momentum_0999'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_momentum_0.9999.yaml wandb.name='Modelnet_Token_Std_momentum_09999'
+#---------------

@@ -72,7 +72,7 @@ def run_cmds(run_name, cmd_block, running_gpu):
 if __name__ == '__main__':
     running_gpu = {'server_d': 'which_gpu=[0,1]',  # which_gpu=[]
                    'work_station': 'which_gpu=[0,1]',
-                   'server_a': 'which_gpu=[2,3]'}
+                   'server_a': 'which_gpu=[0,1]'}
 
     hostname = socket.gethostname()
     if 'iesservergpu-d' in hostname:
