@@ -209,6 +209,7 @@ feature_learning_block:
       relu_mean_order: [ mean_relu, mean_relu ] # mean_relu or relu_mean
       token_mode: [ 'multi_token','multi_token' ] # multi_token or one_token
       momentum_update_factor: [ 0.99,0.99 ]
+      boltzmann_T: [ 1.0, 1.0 ]
     boltzmann:
       enable: [ false, false ]
       boltzmann_T: [ 1.0, 1.0 ]

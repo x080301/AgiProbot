@@ -157,7 +157,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                                                       attention_bins_beforesoftmax,
                                                       normalization_mode, M,
                                                       bin_sample_mode, dynamic_boundaries_enable, relu_mean_order,
-                                                      num_bins, momentum_update_factor
+                                                      num_bins, momentum_update_factor, boltzmann_T
                                                       ):
     # attention_bins_beforesoftmax: (B,1,N,num_bins) or (B,1,N,1)
     B, H, N, _ = attention_bins_beforesoftmax.shape
@@ -247,7 +247,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                         print(f'\nnum negative elements:{torch.count_nonzero(aps_chunks_tmp < 0)}\n')
                         print(f'\nnum nan elements:{torch.count_nonzero(torch.isnan(aps_chunks_tmp))}\n')
 
-                    idx_tmp = torch.multinomial(aps_chunks_tmp, num_samples=k, replacement=False)
+                    idx_tmp = torch.multinomial(aps_chunks_tmp / boltzmann_T, num_samples=k, replacement=False)
 
             else:
                 raise ValueError(
@@ -884,7 +884,7 @@ class DownSampleToken(nn.Module):
 
         # boltzmann
         self.boltzmann_enable = config_ds.boltzmann.enable[layer]
-        self.boltzmann_T = config_ds.boltzmann.boltzmann_T[layer]
+        self.boltzmann_T = config_ds.bin.boltzmann_T[layer]
         self.boltzmann_norm_mode = config_ds.boltzmann.norm_mode[layer]
 
     def forward(self, x, x_xyz=None):
@@ -935,7 +935,8 @@ class DownSampleToken(nn.Module):
                     self.dynamic_boundaries,
                     self.relu_mean_order,
                     self.num_bins,
-                    self.momentum_update_factor
+                    self.momentum_update_factor,
+                    self.boltzmann_T
                 )
             # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)
