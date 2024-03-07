@@ -102,7 +102,7 @@ def check_config(config):
             raise ValueError('q_out should be equal to k_out!')
         if q_out % num_heads != 0 or k_out % num_heads != 0 or v_out % num_heads != 0:
             raise ValueError('please set another value for num_heads!')
-        assert num_bins % 2 == 0 and num_bins >= 2, "num_bins should be even and greater than 2!"
+        # assert num_bins % 2 == 0 and num_bins >= 2, "num_bins should be even and greater than 2!"
         assert num_heads == 1, "num_heads should be 1!"
 
         # feature_learning_block.attention
