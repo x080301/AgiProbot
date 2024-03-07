@@ -42,3 +42,13 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT10.yaml wandb.name='Modelnet_Token_Std_boltmannT10'
 #---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_topM.yaml wandb.name='Modelnet_Token_Std_topM'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg_topM.yaml wandb.name='Shapenet_Token_Std_topM'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_uniform.yaml wandb.name='Modelnet_Token_Std_uniform'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_topM4bin.yaml wandb.name='Modelnet_Token_Std_topM4bin'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg_topM4bin.yaml wandb.name='Shapenet_Token_Std_topM4bin'
+#---------------
