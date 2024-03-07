@@ -4,7 +4,7 @@ from utils import ops
 from models import embedding
 from models import attention
 from models import downsample
-from models import downsample_token
+from models import _downsample_token
 
 
 class FeatureLearningBlock(nn.Module):

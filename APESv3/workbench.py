@@ -94,10 +94,26 @@ def visualization_histogram():
     visualization_histogram()
 
 
+def visualization_downsample_segmentation():
+    from utils.visualization import visualize_segmentation_predictions_downsampled, visualize_segmentation_predictions
+    import os
+
+    save_dirs = os.listdir(r'E:/datasets/APES/test_results')
+
+    for save_dir in save_dirs:
+        save_dir = f'E:/datasets/APES/test_results/{save_dir}'
+
+        if 'AnTao' in save_dir:
+            continue
+
+        if 'Shapenet' in save_dir:
+            visualize_segmentation_predictions_downsampled(save_path=save_dir)
+
+
 def visualization_all():
     from utils.visualization import visualization_heatmap, visualization_downsampled_points, \
         visualization_points_in_bins, visualization_histogram, get_statistic_data_all_samples, \
-        visualize_segmentation_predictions, visualize_few_points
+        visualize_segmentation_predictions, visualize_few_points, visualize_segmentation_predictions_downsampled
     import os
 
     save_dirs = os.listdir(r'C:\Users\Lenovo\Desktop\test_results')
@@ -116,18 +132,20 @@ def visualization_all():
         else:
             visualization_all = False
 
-        for M in [16, 8, 32, 64, 128]:
-            visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
-
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
+            visualize_segmentation_predictions_downsampled(save_path=save_dir)
 
-        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range)
+        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
         visualization_downsampled_points(save_path=f'{save_dir}',
                                          view_range=view_range, visualization_all=visualization_all)
-        visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
+        visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range,
+                                     visualization_all=visualization_all)
         visualization_histogram(save_path=f'{save_dir}', visualization_all=visualization_all)
         get_statistic_data_all_samples(save_path=save_dir)
+
+        for M in [16, 8, 32, 64, 128]:
+            visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
 
 
 def visualize_statistic_data_all_samples():
@@ -137,6 +155,61 @@ def visualize_statistic_data_all_samples():
     visualization_heatmap(save_path=f'{save_dir}', view_range=0.6)
 
 
+def visualization_points_in_gray():
+    from utils.visualization import visualization_points_in_gray
+
+    import os
+
+    save_dirs = os.listdir(r'E:/datasets/APES/test_results')
+
+    for save_dir in save_dirs:
+        save_dir = f'E:/datasets/APES/test_results/{save_dir}'
+
+        if '2024_02_21_01_47' not in save_dir:
+            continue
+
+        visualization_points_in_gray(save_path=save_dir)
+
+
+def crop_histogram():
+    from utils.visualization import crop_image
+    import os
+    from tqdm import tqdm
+
+    crop_area = (72, 35, 555, 440)
+
+    for file_name in tqdm(os.listdir('D:/master/semester7/master_arbeit/ECCV/Figures/cls/histogram')):
+        if 'cropped' in file_name:
+            continue
+        input_image_path = f'D:/master/semester7/master_arbeit/ECCV/Figures/cls/histogram/{file_name}'
+        output_image_path = f'D:/master/semester7/master_arbeit/ECCV/Figures/cls/histogram/cropped_{file_name}'
+
+        crop_image(input_image_path, output_image_path, crop_area)
+
+
+def copy_and_rename():
+    from utils.visualization import copy_rename
+
+    # copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'airplane', 27,
+    #             'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
+    # copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'chair', 99,
+    #                 'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
+    copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'chair', 55,
+                'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
+
+
+def copy_and_rename_and_crop():
+    from utils.visualization import copy_and_crop
+
+    # copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'airplane', 27,
+    #             'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
+    # copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'chair', 99,
+    #                 'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
+    copy_and_crop('chair', 95, (55,30,329,348), mode='apes')
+    copy_and_crop('chair', 54, (60,29,325,358), mode='v1')
+
+
+copy_and_rename_and_crop()
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 
@@ -157,5 +230,8 @@ def visualize_statistic_data_all_samples():
 # visualization_points_in_bins()
 # visualization_points_in_bins()
 # visualization_histogram()
-visualization_all()
+# visualization_all()
 # visualize_statistic_data_all_samples()
+# visualization_downsample_segmentation()
+# visualization_points_in_gray()
+# crop_histogram()

@@ -42,6 +42,23 @@ def _pipline_merge_2_pdfs(is_file_found=True):
         print(os.listdir(dir))
 
 
+def _pipline_merge_3_pdfs(is_file_found=True):
+    import PyPDF2
+    import os
+
+    dir = r'C:\Users\Lenovo\Desktop'
+    merged_name = 'YingLuo_ApplicationDocuments_V000007189.pdf'
+    if is_file_found:
+
+        merger = PyPDF2.PdfMerger()
+        files = ['cover.pdf', 'CV.pdf', 'CoverLetter.pdf', 'master.pdf']
+        for filename in files:
+            merger.append(PyPDF2.PdfReader(os.path.join(dir, filename)))
+        merger.write(os.path.join(dir, merged_name))
+    else:
+        print(os.listdir(dir))
+
+
 def png_to_gif(png_dir, gif_dir, duration_time):
     import imageio
     import os
@@ -60,4 +77,4 @@ def _png_to_gif():
 
 
 if __name__ == "__main__":
-    _pipline_merge_2_pdfs()
+    _pipline_merge_3_pdfs()

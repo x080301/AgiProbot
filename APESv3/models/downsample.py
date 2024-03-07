@@ -157,7 +157,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
                                                       attention_bins_beforesoftmax,
                                                       normalization_mode, M,
                                                       bin_sample_mode, dynamic_boundaries_enable, relu_mean_order,
-                                                      num_bins
+                                                      num_bins, momentum_update_factor
                                                       ):
     # attention_bins_beforesoftmax: (B,1,N,num_bins) or (B,1,N,1)
     B, H, N, _ = attention_bins_beforesoftmax.shape
@@ -170,7 +170,8 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(attention_point_score, bin
     aps_chunks, idx_chunks, bin_boundaries, bin_points_mask = ops.sort_chunk_nonuniform(attention_point_score,
                                                                                         bin_boundaries,
                                                                                         num_bins, normalization_mode,
-                                                                                        dynamic_boundaries_enable)
+                                                                                        dynamic_boundaries_enable,
+                                                                                        momentum_update_factor)
     # aps_chunks.shape == num_bins * (B, H, n)
     # idx_chunks.shape == num_bins * (B, H, n)
     # bin_points_mask: (B,H,N,num_bins)
@@ -862,6 +863,7 @@ class DownSampleToken(nn.Module):
         self.bin_mode = config_ds.bin.mode[layer]
         self.enable_multiply = config_ds.bin.multiply[layer]
         self.direct_link_mode = config_ds.bin.direct_link_mode[layer]
+        self.momentum_update_factor = config_ds.bin.momentum_update_factor[layer]
 
         self.dynamic_boundaries = config_ds.bin.dynamic_boundaries
         if config_ds.bin.dynamic_boundaries:
@@ -932,7 +934,8 @@ class DownSampleToken(nn.Module):
                     self.bin_sample_mode,
                     self.dynamic_boundaries,
                     self.relu_mean_order,
-                    self.num_bins
+                    self.num_bins,
+                    self.momentum_update_factor
                 )
             # bin_prob, _ = torch.max(attention_bins, dim=-2)  # x_bins: (B,1,num_bins)
             # bin_prob = bin_prob.squeeze(1)  # x_bins: (B,num_bins)

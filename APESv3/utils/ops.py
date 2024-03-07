@@ -122,7 +122,7 @@ def norm_range(x, dim=-1, n_min=0, n_max=1, mode="minmax"):
     return x_norm
 
 
-def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score, num_bins):
+def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score, num_bins, momentum_update_factor):
     # old_bin_boundaries:2 * (1,1,1,num_bins)
     # attention_point_score: (B, H, N)
 
@@ -140,7 +140,8 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     if old_bin_boundaries is not None:
         new_bin_boundaries = [old_bin_boundaries[0].detach(), old_bin_boundaries[1].detach()]
 
-        bin_boundaries = new_bin_boundaries[0][0, 0, 0, 1:] * 0.99 + 0.01 * bin_boundaries
+        bin_boundaries = new_bin_boundaries[0][0, 0, 0, 1:] * momentum_update_factor + (
+                1 - momentum_update_factor) * bin_boundaries
 
         new_bin_boundaries[0][0, 0, 0, 1:] = bin_boundaries
         new_bin_boundaries[1][0, 0, 0, :-1] = bin_boundaries
@@ -165,7 +166,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
 
 
 def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, normalization_mode,
-                          dynamic_boundaries_enable):
+                          dynamic_boundaries_enable, momentum_update_factor):
     """
 
     :param attention_point_score: (B,1,N)
@@ -207,7 +208,8 @@ def sort_chunk_nonuniform(attention_point_score, bin_boundaries, num_bins, norma
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
 
     if dynamic_boundaries_enable:
-        bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins)
+        bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins,
+                                                            momentum_update_factor)
 
     bin_points_mask = (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1])
     # bin_points_mask: (B,H,N,num_bins)
@@ -481,5 +483,5 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # print(torch.sum(num_chosen_points_in_bin, dim=1))
     # print(max_num_points)
     # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
-    c=1
+    c = 1
     return num_chosen_points_in_bin
