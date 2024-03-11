@@ -127,21 +127,22 @@ def visualization_all():
         # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_20_22_Shapenet_Token_Std'
         # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_21_01_47_Modelnet_Token_Std_2'
 
-        if '2024_02_21_01_47_Modelnet_Token_Std' in save_dir:
-            visualization_all = True
-        else:
-            visualization_all = False
+        visualization_all = True
 
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
             visualize_segmentation_predictions_downsampled(save_path=save_dir)
 
-        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
-        visualization_downsampled_points(save_path=f'{save_dir}',
-                                         view_range=view_range, visualization_all=visualization_all)
+        visualization_histogram(save_path=f'{save_dir}', visualization_all=visualization_all)
+
         visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range,
                                      visualization_all=visualization_all)
-        visualization_histogram(save_path=f'{save_dir}', visualization_all=visualization_all)
+
+        visualization_downsampled_points(save_path=f'{save_dir}',
+                                         view_range=view_range, visualization_all=visualization_all)
+
+        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
+
         get_statistic_data_all_samples(save_path=save_dir)
 
         for M in [16, 8, 32, 64, 128]:
@@ -205,11 +206,12 @@ def copy_and_rename_and_crop():
     #             'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
     # copy_rename('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/few_points', 'chair', 99,
     #                 'D:/master/semester7/master_arbeit/ECCV/Figures/few/pictures')
-    copy_and_crop('chair', 95, (55,30,329,348), mode='apes')
-    copy_and_crop('chair', 54, (60,29,325,358), mode='v1')
+    copy_and_crop('chair', 95, (55, 30, 329, 348), mode='apes')
+    copy_and_crop('chair', 54, (60, 29, 325, 358), mode='v1')
 
 
-copy_and_rename_and_crop()
+visualization_all()
+# copy_and_rename_and_crop()
 # from utils.data_analysis import estimate_sigma
 # estimate_sigma()
 

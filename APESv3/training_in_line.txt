@@ -72,3 +72,5 @@ python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapen
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg_momentum_0.9999.yaml wandb.name='Shapenet_Token_Std_momentum_09999'
 #---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_Token_Std_2'
+#---------------
