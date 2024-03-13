@@ -70,10 +70,35 @@ def run_cmds(run_name, cmd_block, running_gpu):
 
 
 if __name__ == '__main__':
-    running_gpu = {'server_d': 'which_gpu=[2,3]',  # which_gpu=[]
-                   'work_station': 'which_gpu=[0,1]',
-                   'server_a': 'which_gpu=[0,1]'}
+    num_gpus = 2
 
+    result = subprocess.run(['nvidia-smi', '--query-gpu=index,power.draw,memory.used,utilization.gpu,memory.free',
+                             '--format=csv,noheader,nounits'], stdout=subprocess.PIPE, text=True)
+    output = result.stdout.strip().split('\n')
+    gpu_info = []
+    for line in output:
+        gpu_index, power_draw, memory_used, gpu_util, memory_free = line.split(',')
+        gpu_info.append({'GPU Index': int(gpu_index), 'Power Draw (W)': float(power_draw),
+                         'Memory Used (MB)': float(memory_used), 'GPU Utilization (%)': float(gpu_util),
+                         'Memory Free (MB)': float(memory_free)})
+
+    available_gpus = []
+    for gpu in gpu_info:
+        if gpu['GPU Utilization (%)'] > 40 or gpu['Memory Free (MB)'] < 11000:
+            continue
+        else:
+            available_gpus.append(gpu['GPU Index'])
+    if len(available_gpus) < num_gpus:
+        raise ValueError(
+            f"Not enough available GPUs! Available GPUs: {available_gpus}, Required number of GPUs: {num_gpus}")
+    else:
+        running_gpu = available_gpus[:num_gpus]
+
+    running_gpu = f'which_gpu=[{available_gpus[0]},{available_gpus[1]}]'
+
+    # running_gpu = {'server_d': 'which_gpu=[2,3]',  # which_gpu=[]
+    #                'work_station': 'which_gpu=[0,1]',
+    #                'server_a': 'which_gpu=[0,1]'}
     hostname = socket.gethostname()
     if 'iesservergpu-d' in hostname:
         running_device = 'server_d'
@@ -95,4 +120,4 @@ if __name__ == '__main__':
         else:
             trained_runs.append(run_name)
             if running_device == 'work_station' or '_test' not in run_name:
-                print(run_cmds(run_name, cmd_block, running_gpu[running_device]))
+                print(run_cmds(run_name, cmd_block, running_gpu))
