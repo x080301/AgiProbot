@@ -129,6 +129,8 @@ def visualization_all():
 
         visualization_all = True
 
+        get_statistic_data_all_samples(save_path=save_dir)
+
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
             visualize_segmentation_predictions_downsampled(save_path=save_dir)
@@ -142,8 +144,6 @@ def visualization_all():
                                          view_range=view_range, visualization_all=visualization_all)
 
         visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
-
-        get_statistic_data_all_samples(save_path=save_dir)
 
         for M in [16, 8, 32, 64, 128]:
             visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
