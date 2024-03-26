@@ -1941,8 +1941,9 @@ def get_statistic_data_all_samples(data_dict=None, save_path=None,
                     'rb') as f:
                 data_dict = pickle.load(f)
 
-            statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict, save_path,
+            statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict,
                                                                                    statistic_data_all_samples)
+        save_statical_data(data_dict, save_path, statistic_data_all_samples)
 
 
     else:
@@ -1952,26 +1953,26 @@ def get_statistic_data_all_samples(data_dict=None, save_path=None,
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict, save_path,
-                                                                               statistic_data_all_samples)
+        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict, statistic_data_all_samples)
+        save_statical_data(data_dict, save_path, statistic_data_all_samples)
 
     return statistic_data_all_samples
 
 
-def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_data_all_samples):
+def get_statistic_data_all_samples_one_sample(data_dict, statistic_data_all_samples):
     idx_in_bins_batch = data_dict['idx_in_bins']
     # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-    probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
+    probability_of_bins_batch = data_dict['probability_of_bins']  # (B, num_layers, num_bins)
     # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
     # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
     # (B, num_layers, num_bins)
     B, num_layers, num_bins = probability_of_bins_batch.shape
 
     if statistic_data_all_samples is None:
-        num_points_in_bins_allsamples = np.zeros((num_layers, num_bins), dtype=np.int32)
-        num_selected_points_in_bins_allsamples = np.zeros((num_layers, num_bins), dtype=np.int32)
-        num_zeros = np.zeros((num_layers, num_bins), dtype=np.int32)
-        num_ones = np.zeros((num_layers, num_bins), dtype=np.int32)
+        num_points_in_bins_allsamples = torch.zeros((num_layers, num_bins), dtype=torch.int32)
+        num_selected_points_in_bins_allsamples = torch.zeros((num_layers, num_bins), dtype=torch.int32)
+        num_zeros = torch.zeros((num_layers, num_bins), dtype=torch.int32)
+        num_ones = torch.zeros((num_layers, num_bins), dtype=torch.int32)
         statistic_data_all_samples = {}
     else:
         num_points_in_bins_allsamples = statistic_data_all_samples['num_points_in_bins']
@@ -1986,13 +1987,13 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
             idx_in_bins[l] = [item.flatten().cpu().numpy() for item in idx_in_bins[l]]
 
         for k in range(num_layers):
-            num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
+            num_points_in_bins = torch.asarray([len(item) for item in idx_in_bins[k]])
             probabilities_in_bins = probability_of_bins[k, :]
-            probabilities_in_bins = np.nan_to_num(probabilities_in_bins)
+            probabilities_in_bins = torch.nan_to_num(probabilities_in_bins)
 
             num_points_in_bins_allsamples[k, :] += num_points_in_bins
             num_selected_points_in_bins_allsamples[k, :] += \
-                np.around(probabilities_in_bins * num_points_in_bins).astype(np.int32)
+                torch.round(probabilities_in_bins * num_points_in_bins).to(torch.int32)
             num_zeros[k, :] += (probabilities_in_bins == 0)
             num_ones[k, :] += (probabilities_in_bins == 1)
 
@@ -2001,18 +2002,25 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
     statistic_data_all_samples['num_zeros'] = num_zeros
     statistic_data_all_samples['num_ones'] = num_ones
 
+    # save_statical_data(data_dict, save_path, statistic_data_all_samples)
+
+    return statistic_data_all_samples
+
+
+def save_statical_data(data_dict, save_path, statistic_data_all_samples):
+    B, num_layers, num_bins = data_dict['probability_of_bins'].shape
     lines_to_save = []
     for k in range(num_layers):
         lines_to_save.append(f'\nlayer{k}:')
-        lines_to_save.append(f'\n\tnum relu:{num_zeros[k, :]}')
-        lines_to_save.append(f'\n\tnum saturation:{num_ones[k, :]}')
+        lines_to_save.append(f'\n\tnum relu:{statistic_data_all_samples["num_zeros"][k, :]}')
+        lines_to_save.append(f'\n\tnum saturation:{statistic_data_all_samples["num_ones"][k, :]}')
     with open(f'{save_path}/relu_and_saturation.txt', 'w') as file:
         file.writelines(lines_to_save)
-
     for k in range(num_layers):
         bins = np.array(range(num_bins))
         probabilities_in_bins = \
-            num_selected_points_in_bins_allsamples[k, :] / (num_points_in_bins_allsamples[k, :] + 1e-8)
+            statistic_data_all_samples['num_selected_points_in_bins'][k, :] / (
+                    statistic_data_all_samples['num_points_in_bins'][k, :] + 1e-8)
 
         fig = plt.figure()
         ax1 = fig.add_subplot()
@@ -2022,7 +2030,7 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
         color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
         ax1.set_xlabel('Bin')
         ax1.set_ylabel('Number of Points in Bins')  # , color=color)
-        ax1.bar(bins, num_points_in_bins_allsamples[k, :], color=color)
+        ax1.bar(bins, statistic_data_all_samples['num_points_in_bins'][k, :].cpu().numpy(), color=color)
         ax1.tick_params(axis='y')  # , labelcolor=color)
 
         ax2 = ax1.twinx()
@@ -2031,7 +2039,7 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
         ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
         # ax2.set_ylim([0, 100])
         # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
-        ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
+        ax2.plot(bins, probabilities_in_bins.cpu().numpy(), linewidth=5.0, marker='o', color=color)
         ax2.tick_params(axis='y')  # , labelcolor=color)
 
         plt.title('Number of Points and Sampling Ratio over Bins')
@@ -2042,8 +2050,6 @@ def get_statistic_data_all_samples_one_sample(data_dict, save_path, statistic_da
         # plt.grid('off')
         plt.savefig(f'{save_path}/histogram_all_samples_layer{k}.png', bbox_inches='tight')
         plt.close(fig)
-
-    return statistic_data_all_samples
 
 
 def visualize_segmentation_predictions(data_dict=None, save_path=None, index=None):
@@ -2203,6 +2209,7 @@ def set_color_for_one_shape_seg(config, pred, sample, seg_gt):
         xyzRGB_gt_tmp.extend(list(xyz))
         xyzRGB_gt_tmp.extend(config.datasets.cmap[str(gt)])
         xyzRGB_gt.append(tuple(xyzRGB_gt_tmp))
+
     return xyzRGB, xyzRGB_gt
 
 

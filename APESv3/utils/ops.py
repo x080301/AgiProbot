@@ -483,5 +483,93 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, total_points_to_cho
     # print(torch.sum(num_chosen_points_in_bin, dim=1))
     # print(max_num_points)
     # print(f'num_chosen_points_in_bin:{num_chosen_points_in_bin}')
-    c = 1
     return num_chosen_points_in_bin
+
+
+def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enable, momentum_update_factor,
+                  normalization_mode, num_bins):
+    B, H, N = attention_point_score.shape
+
+    bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
+
+    # print(f'B{B},H{H},N{N}')
+    # bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
+    if normalization_mode == 'no_normalization':
+        pass
+    elif normalization_mode == 'z_score':
+        # attention_point_score: (B,1,N)
+        attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
+                                / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
+
+    else:
+        raise NotImplementedError
+
+    attention_point_score = attention_point_score.reshape(B, H, N, 1)
+    # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
+    if dynamic_boundaries_enable:
+        bin_boundaries = update_sampling_score_bin_boundary(bin_boundaries, attention_point_score, num_bins,
+                                                            momentum_update_factor)
+    bin_points_mask = (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1])
+    # bin_points_mask: (B,H,N,num_bins)
+    return bin_boundaries, bin_points_mask
+
+
+def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_T,
+                                 k_point_to_choose):
+    if bin_sample_mode == "topk":
+        # attention_point_score: (B, H, N)
+        attention_point_score = attention_point_score + 1e-8
+
+        # bin_points_mask: (B, H, N, num_bins)
+        masked_attention_point_score = attention_point_score * bin_points_mask
+        # masked_attention_point_score: (B, H, N, num_bins)
+
+        _, attention_index_score = torch.sort(masked_attention_point_score, dim=2, descending=True)
+        attention_index_score = attention_index_score.squeeze(dim=1)
+        # attention_index_score: (B, N, num_bins)
+
+        B, _, N, num_bins = bin_points_mask.shape
+        index_down = []
+        for batch_index in range(B):
+            sampled_index_in_one_batch = []
+            for bin_index in range(num_bins):
+                sampled_index_in_one_batch.append(
+                    attention_index_score[batch_index, :k_point_to_choose[batch_index, bin_index], bin_index])
+            index_down.append(torch.concat(sampled_index_in_one_batch))
+        index_down = torch.stack(index_down).reshape(B, 1, M)
+        # sampled_index: (B,H,M)
+
+    elif bin_sample_mode == "uniform" or bin_sample_mode == "random":
+        if bin_sample_mode == "uniform":
+            sampling_probabilities = bin_points_mask.float().squeeze(dim=1)
+        elif bin_sample_mode == "random":
+            # attention_point_score: (B, H, N)
+            # bin_points_mask: (B, H, N, num_bins)
+            sampling_probabilities = torch.exp(attention_point_score / boltzmann_T) * bin_points_mask
+            sampling_probabilities = sampling_probabilities / torch.sum(sampling_probabilities, dim=2, keepdim=True)
+            sampling_probabilities = sampling_probabilities.squeeze(dim=1)
+            # sampling_probabilities: (B,N,num_bins)
+
+        B, N, num_bins = sampling_probabilities.shape
+
+        sampling_probabilities = sampling_probabilities.permute(0, 2, 1).reshape(-1, N)
+        # sampling_probabilities: (B*num_bins,N)
+        sampled_index_M_points = torch.multinomial(sampling_probabilities, M)
+        # sampled_index_M_points: (B*num_bins,M)
+        sampled_index_M_points = sampled_index_M_points.reshape(B, num_bins, M)
+        # sampled_index_M_points: (B,num_bins,M)
+
+        index_down = []
+        for batch_index in range(B):
+            sampled_index_in_one_batch = []
+            for bin_index in range(num_bins):
+                sampled_index_in_one_batch.append(
+                    sampled_index_M_points[batch_index, bin_index, :k_point_to_choose[batch_index, bin_index]])
+            index_down.append(torch.concat(sampled_index_in_one_batch))
+        index_down = torch.stack(index_down).reshape(B, 1, M)
+        # sampled_index: (B,H,M)
+
+    else:
+        raise ValueError(
+            'Please check the setting of bin sample mode. It must be topk, multinomial or random!')
+    return index_down

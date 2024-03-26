@@ -129,7 +129,7 @@ def visualization_all():
 
         visualization_all = True
 
-        get_statistic_data_all_samples(save_path=save_dir)
+
 
         if 'Shapenet' in save_dir:
             visualize_segmentation_predictions(save_path=save_dir)
@@ -147,6 +147,8 @@ def visualization_all():
 
         for M in [16, 8, 32, 64, 128]:
             visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
+
+        get_statistic_data_all_samples(save_path=save_dir)
 
 
 def visualize_statistic_data_all_samples():
