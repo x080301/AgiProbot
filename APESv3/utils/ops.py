@@ -552,7 +552,7 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
             sampling_probabilities = sampling_probabilities.squeeze(dim=1)
             # sampling_probabilities: (B,N,num_bins)
 
-            sampling_probabilities[torch.isnan(sampling_probabilities)] = 0
+            sampling_probabilities[torch.isnan(sampling_probabilities)] = 1e-8
 
         B, N, num_bins = sampling_probabilities.shape
 
