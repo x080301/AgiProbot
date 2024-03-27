@@ -1168,32 +1168,67 @@ class DownSampleToken(nn.Module):
             # bin_tokens.shape ==(B,C,num_bins)
             x_and_token = torch.concat((x, bin_tokens), dim=2)  # x: (B,C,N+num_bins)
 
-            q = self.q_conv(x)
-            # q.shape == (B, C, N)
-            q = self.split_heads(q, self.num_heads, self.q_depth)
-            # q.shape == (B, H, D, N)
-            k = self.k_conv(x_and_token)
-            # k.shape ==  (B, C, N+num_bins)
-            k = self.split_heads(k, self.num_heads, self.k_depth)
-            # k.shape == (B, H, D, N+num_bins)
-            v = self.v_conv(x_and_token)
-            # v.shape ==  (B, C, N+num_bins)
-            v = self.split_heads(v, self.num_heads, self.v_depth)
-            # v.shape == (B, H, D, N+num_bins)
-            q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
+            if self.asm == "dot":
 
-            energy = q @ k  # energy.shape == (B, H, N, N)
+                q = self.q_conv(x)
+                # q.shape == (B, C, N)
+                q = self.split_heads(q, self.num_heads, self.q_depth)
+                # q.shape == (B, H, D, N)
+                q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
 
-            scale_factor = math.sqrt(q.shape[-1])
+                k = self.k_conv(x_and_token)
+                # k.shape ==  (B, C, N+num_bins)
+                k = self.split_heads(k, self.num_heads, self.k_depth)
+                # k.shape == (B, H, D, N+num_bins)
+                v = self.v_conv(x_and_token)
+                # v.shape ==  (B, C, N+num_bins)
+                v = self.split_heads(v, self.num_heads, self.v_depth)
+                # v.shape == (B, H, D, N+num_bins)
 
-            attention_map_beforesoftmax = energy / scale_factor
+                energy = q @ k  # energy.shape == (B, H, N, N+num_bins)
 
-            attention_map = self.softmax(attention_map_beforesoftmax)  # attention.shape == (B, H, N, N)
+                scale_factor = math.sqrt(q.shape[-1])
 
-            _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
-            attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
-            # attention_bins_beforesoftmax: (B,1,N,num_bins)
+                attention_map_beforesoftmax = energy / scale_factor
 
+                attention_map = self.softmax(attention_map_beforesoftmax)  # attention.shape == (B, H, N, N+num_bins)
+
+                _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
+                # attention_bins_beforesoftmax: (B,1,N,num_bins)
+                attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+            elif self.asm == "l2":
+                q = self.q_conv(x_and_token)
+                # q.shape == (B, C, N+num_bins)
+                q = self.split_heads(q, self.num_heads, self.q_depth)
+                q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N+num_bins, D)
+
+                # q.shape == (B, H, D, N)
+                k = self.k_conv(x_and_token)
+                # k.shape ==  (B, C, N+num_bins)
+                k = self.split_heads(k, self.num_heads, self.k_depth)
+                # k.shape == (B, H, D, N+num_bins)
+                v = self.v_conv(x_and_token)
+                # v.shape ==  (B, C, N+num_bins)
+                v = self.split_heads(v, self.num_heads, self.v_depth)
+                # v.shape == (B, H, D, N+num_bins)
+
+                energy = -1 * ops.l2_global(q, k)  # -(Q-K)^2 energy.shape == (B, H, N+num_bins, N+num_bins)
+
+                scale_factor = math.sqrt(q.shape[-1])
+
+                attention_map_beforesoftmax = energy / scale_factor
+                # attention_map_beforesoftmax.shape == (B, H, N+num_bins, N+num_bins)
+                attention_map_beforesoftmax, _ = torch.split(attention_map_beforesoftmax, N, dim=2)
+                # attention_map_beforesoftmax.shape == (B, H, N, N+num_bins)
+
+                attention_map = self.softmax(attention_map_beforesoftmax)  # attention.shape == (B, H, N, N+num_bins)
+
+                _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
+                # attention_bins_beforesoftmax: (B,1,N,num_bins)
+                attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError
 
