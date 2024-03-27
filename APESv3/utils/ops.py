@@ -490,7 +490,8 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
                   normalization_mode, num_bins):
     B, H, N = attention_point_score.shape
 
-    bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
+    if bin_boundaries is not None:
+        bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
 
     # print(f'B{B},H{H},N{N}')
     # bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
