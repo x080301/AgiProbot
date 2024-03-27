@@ -547,14 +547,12 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
             # attention_point_score: (B, H, N)
             # bin_points_mask: (B, H, N, num_bins)
 
-            print(f'number of nan:{torch.sum(torch.isnan(attention_point_score))}')
-            print(f'number of inf:{torch.sum(torch.isinf(attention_point_score))}')
-            print(f'number of negative:{torch.sum(attention_point_score < 0)}')
-
             sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_T) * bin_points_mask
             sampling_probabilities = sampling_probabilities / torch.sum(sampling_probabilities, dim=2, keepdim=True)
             sampling_probabilities = sampling_probabilities.squeeze(dim=1)
             # sampling_probabilities: (B,N,num_bins)
+
+            sampling_probabilities[torch.isnan(sampling_probabilities)] = 0
 
         B, N, num_bins = sampling_probabilities.shape
 
