@@ -262,6 +262,8 @@ def test(local_rank, config):
                 k_point_to_choose_all_layers = []
 
                 for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
+                    downsample_module.output_variable_calculatio()
+
                     sampling_score_all_layers.append(
                         gather_variable_from_gpus(downsample_module, 'attention_point_score',
                                                   rank, config.test.ddp.nproc_this_node, device))
