@@ -135,7 +135,7 @@ feature_learning_block:
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       normalization_mode: [ z_score,z_score ] # no_normalization, z_score, z_score_no_std
-      boltzmann_t: [ 10, 10 ]
+      boltzmann_T: [ 10, 10 ]
     M:
       - 1024
       - 512

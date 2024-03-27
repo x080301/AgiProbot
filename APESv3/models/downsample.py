@@ -1156,7 +1156,7 @@ class DownSampleToken(nn.Module):
 
         # boltzmann
         self.boltzmann_enable = config_ds.boltzmann.enable[layer]
-        self.boltzmann_T = config_ds.bin.boltzmann_t[layer]
+        self.boltzmann_T = config_ds.bin.boltzmann_T[layer]
         self.boltzmann_norm_mode = config_ds.boltzmann.norm_mode[layer]
 
     def forward(self, x, x_xyz=None):
