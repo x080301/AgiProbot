@@ -1,28 +1,28 @@
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT001.yaml wandb.name='Modelnet_boltmannT_0_01'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT001.yaml wandb.name='Modelnet_boltmannT_0_01'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT005.yaml wandb.name='Modelnet_boltmannT_0_05'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT005.yaml wandb.name='Modelnet_boltmannT_0_05'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT01.yaml wandb.name='Modelnet_boltmannT_0_1'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT01.yaml wandb.name='Modelnet_boltmannT_0_1'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_boltmannT_1'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT10.yaml wandb.name='Modelnet_boltmannT_10'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT10.yaml wandb.name='Modelnet_boltmannT_10'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_2'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_2'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_2'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_2'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_boltmannT_1_2'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_3'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_3'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_3'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_3'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_boltmannT_1_3'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_4'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT001.yaml wandb.name='Modelnet_boltmannT_0_01_4'
 #---------------
-python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_seg_boltzmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_4'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT005.yaml wandb.name='Modelnet_boltmannT_0_05_4'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls.yaml wandb.name='Modelnet_boltmannT_1_4'
 #---------------
