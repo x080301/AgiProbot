@@ -79,7 +79,7 @@ def train(local_rank, config, random_seed,
         hostname = socket.gethostname()
         config.wandb.name = f'{time_label}_{config.wandb.name}'
         if 'iesservergpu' in hostname:
-            save_dir = '/data/users/fu/APES'
+            save_dir = '/home/ies/fu/train_output/'  # '/data/users/fu/APES'
         else:
             save_dir = '/home/team1/cwu/FuHaoWorkspace/APES/'
         time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
