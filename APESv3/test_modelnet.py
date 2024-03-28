@@ -77,7 +77,7 @@ def test(local_rank, config):
 
     hostname = socket.gethostname()
     if 'iesservergpu' in hostname:
-        save_dir = f'/data/users/fu/APES/test_results/{config.wandb.name}/'
+        save_dir = f'/home/ies/fu/train_output/test_results/{config.wandb.name}/'#f'/data/users/fu/APES/test_results/{config.wandb.name}/'
     else:
         save_dir = f'/home/team1/cwu/FuHaoWorkspace/test_results/{config.wandb.name}/'
     if rank == 0:
