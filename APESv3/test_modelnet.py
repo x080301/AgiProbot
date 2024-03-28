@@ -330,24 +330,24 @@ def test(local_rank, config):
                         visualization_histogram_one_batch(
                             counter_in_categories_visualization_histogram,
                             data_dict, save_dir, True)
-                        print('3-----------------------')
+
                         visualization_points_in_bins_one_batch(
                             counter_in_categories_visualization_points_in_bins,
                             data_dict, save_dir, 0.6, False)
-                        print('4-----------------------')
+
                         visualization_downsampled_points_one_batch(
                             counter_in_categories_visualization_downsampled_points,
                             data_dict, save_dir, 0.6, False)
-                        print('5-----------------------')
+
                         visualization_heatmap_one_batch(
                             counter_in_categories_visualization_heatmap,
                             data_dict, save_dir, 0.6, False)
-                        print('6-----------------------')
+
                         for M in [16, 8, 32, 64, 128]:
                             visualization_few_points_one_batch(
                                 counter_in_categories_visualization_few_points[M],
                                 data_dict, i, save_dir, M, visualization_all=False)
-                        print('7-----------------------')
+
                         # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                         #     pickle.dump(data_dict, f)
                         # print(f'save{i}')
