@@ -214,22 +214,22 @@ def test(local_rank, config):
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
 
         if config.test.save_pkl:
-            counter_in_categories_visualize_segmentation_predictions = {}
-            counter_in_categories_visualize_segmentation_predictions_downsampled_1 = {}
-            counter_in_categories_visualize_segmentation_predictions_downsampled_2 = {}
+            counter_in_categories_visualize_segmentation_predictions = {'rank': rank}
+            counter_in_categories_visualize_segmentation_predictions_downsampled_1 = {'rank': rank}
+            counter_in_categories_visualize_segmentation_predictions_downsampled_2 = {'rank': rank}
             statistic_data_all_samples = None
             if not os.path.exists(f'{save_dir}/histogram'):
                 os.makedirs(f'{save_dir}/histogram')
-            counter_in_categories_visualization_histogram = {}
-            counter_in_categories_visualization_points_in_bins = {}
-            counter_in_categories_visualization_downsampled_points = {}
-            counter_in_categories_visualization_heatmap = {}
+            counter_in_categories_visualization_histogram = {'rank': rank}
+            counter_in_categories_visualization_points_in_bins = {'rank': rank}
+            counter_in_categories_visualization_downsampled_points = {'rank': rank}
+            counter_in_categories_visualization_heatmap = {'rank': rank}
             counter_in_categories_visualization_few_points = {
-                8: {},
-                16: {},
-                32: {},
-                64: {},
-                128: {}
+                8: {'rank': rank},
+                16: {'rank': rank},
+                32: {'rank': rank},
+                64: {'rank': rank},
+                128: {'rank': rank}
             }
 
         for i, (samples, seg_labels, cls_label) in enumerate(test_loader):

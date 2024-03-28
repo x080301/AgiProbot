@@ -1260,8 +1260,12 @@ def visualization_heatmap_one_batch(counter_in_categories, data_dict, save_path,
             counter_in_categories[category] += 1
         else:
             counter_in_categories[category] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category]
 
-        visualization_heatmap_one_shape(counter_in_categories[category], sample, category, sampling_score,
+        visualization_heatmap_one_shape(id_in_counter, sample, category, sampling_score,
                                         f'{save_path}/heat_map',
                                         view_range)
 
@@ -1400,6 +1404,10 @@ def visualization_downsampled_points_one_batch(counter_in_categories, data_dict,
             counter_in_categories[category] += 1
         else:
             counter_in_categories[category] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category]
 
         for k in range(num_layers):
             if k != 0:
@@ -1431,7 +1439,7 @@ def visualization_downsampled_points_one_batch(counter_in_categories, data_dict,
             plt.grid('off')
 
             plt.savefig(
-                f'{save_path}/downsampled_points/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                f'{save_path}/downsampled_points/{category}/sample{id_in_counter}_layer{k}.png',
                 bbox_inches='tight')
             plt.close(fig)
 
@@ -1613,6 +1621,10 @@ def visualization_points_in_bins_one_batch(counter_in_categories, data_dict, sav
             counter_in_categories[category] += 1
         else:
             counter_in_categories[category] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category]
 
         for k in range(num_layers):
             if k != 0:
@@ -1653,7 +1665,7 @@ def visualization_points_in_bins_one_batch(counter_in_categories, data_dict, sav
             plt.grid('off')
 
             plt.savefig(
-                f'{save_path}/points_in_bins/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                f'{save_path}/points_in_bins/{category}/sample{id_in_counter}_layer{k}.png',
                 bbox_inches='tight')
             plt.close(fig)
 
@@ -1886,6 +1898,10 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
             counter_in_categories[category] += 1
         else:
             counter_in_categories[category] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category]
 
         for k in range(num_layers):
             bins = np.array(range(num_bins))
@@ -1923,7 +1939,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
             # plt.grid('off')
 
             plt.savefig(
-                f'{save_path}/histogram/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                f'{save_path}/histogram/{category}/sample{id_in_counter}_layer{k}.png',
                 bbox_inches='tight')
             plt.close(fig)
 
@@ -2156,10 +2172,14 @@ def visualization_segmentation_one_batch_downsampled(counter_in_categories, data
             counter_in_categories[category_id] += 1
         else:
             counter_in_categories[category_id] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category_id] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category_id]
 
         save_figure_for_one_shape_seg(
-            f'{save_path}/segmentation_layer{layer_index}/{category}/sample_{counter_in_categories[category_id]}_GroundTruth.png',
-            f'{save_path}/segmentation_layer{layer_index}/{category}/sample_{counter_in_categories[category_id]}_Prediction.png',
+            f'{save_path}/segmentation_layer{layer_index}/{category}/sample_{id_in_counter}_GroundTruth.png',
+            f'{save_path}/segmentation_layer{layer_index}/{category}/sample_{id_in_counter}_Prediction.png',
             view_range, xyzRGB, xyzRGB_gt)
 
 
@@ -2199,11 +2219,16 @@ def visualization_segmentation_one_batch(counter_in_categories, data_dict, i, sa
         else:
             counter_in_categories[category_id] = 1
 
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category_id] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category_id]
+
         print(
-            f'saving: {save_path}/segmentation/{category}/sample_{counter_in_categories[category_id]}_GroundTruth.png')
+            f'saving: {save_path}/segmentation/{category}/sample_{id_in_counter}_GroundTruth.png')
         save_figure_for_one_shape_seg(
-            f'{save_path}/segmentation/{category}/sample_{counter_in_categories[category_id]}_GroundTruth.png',
-            f'{save_path}/segmentation/{category}/sample_{counter_in_categories[category_id]}_Prediction.png',
+            f'{save_path}/segmentation/{category}/sample_{id_in_counter}_GroundTruth.png',
+            f'{save_path}/segmentation/{category}/sample_{id_in_counter}_Prediction.png',
             view_range, xyzRGB, xyzRGB_gt)
 
 
@@ -2381,6 +2406,10 @@ def save_figure_for_one_batch(counter_in_categories, B, M, N, category_ids, conf
             counter_in_categories[category_id] += 1
         else:
             counter_in_categories[category_id] = 1
+        if 'rank' in counter_in_categories.keys():
+            id_in_counter = counter_in_categories[category_id] * 2 + counter_in_categories['rank'] - 1
+        else:
+            id_in_counter = counter_in_categories[category_id]
 
         xyzRGB = torch.concat([sample, RGB_gray], dim=1)
 
@@ -2404,7 +2433,7 @@ def save_figure_for_one_batch(counter_in_categories, B, M, N, category_ids, conf
             os.makedirs(f'{save_path}/few_points/{M}/{category}/')
 
         save_figure_for_one_shape(
-            f'{save_path}/few_points/{M}/{category}/sample_{counter_in_categories[category_id]}_{mode}.png',
+            f'{save_path}/few_points/{M}/{category}/sample_{id_in_counter}_{mode}.png',
             view_range, s_red, xyzRGB_selected, xyzRGB_droped)
 
 
