@@ -1902,7 +1902,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
             id_in_counter = counter_in_categories[category] * 2 + counter_in_categories['rank'] - 1
         else:
             id_in_counter = counter_in_categories[category]
-
+        print('1------------------')
         for k in range(num_layers):
             bins = np.array(range(num_bins))
             num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
@@ -1920,7 +1920,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
             ax1.tick_params(axis='y')  # , labelcolor=color)
 
             ax2 = ax1.twinx()
-
+            print('2------------------')
             color = 'red'  # 'darkred'
             ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
             # ax2.set_ylim([0, 100])
