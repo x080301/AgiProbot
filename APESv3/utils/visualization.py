@@ -1891,7 +1891,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
         idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
 
         for k in range(num_layers):
-            idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+            idx_in_bins[k] = [item.flatten() for item in idx_in_bins[k]]
             # num_layers * num_bins * (n,)
 
         if category in counter_in_categories.keys():
@@ -1905,7 +1905,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
 
         for k in range(num_layers):
             bins = np.array(range(num_bins))
-            num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
+            num_points_in_bins = np.array([item.nelement() for item in idx_in_bins[k]])
             probabilities_in_bins = probability_of_bins[k, :]
 
             fig = plt.figure()
