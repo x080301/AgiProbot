@@ -1865,7 +1865,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
     idx_in_bins_batch = data_dict['idx_in_bins']
     # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
     label_batch = data_dict['ground_truth']  # (B,)
-    probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
+    probability_of_bins_batch = data_dict['probability_of_bins']  # (B, num_layers, num_bins)
     # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
     # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
     # (B, num_layers, num_bins)
@@ -1924,7 +1924,7 @@ def visualization_histogram_one_batch(counter_in_categories, data_dict, save_pat
             ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
             # ax2.set_ylim([0, 100])
             # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
-            ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
+            ax2.plot(bins, probabilities_in_bins.cpu().numpy(), linewidth=5.0, marker='o', color=color)
             ax2.tick_params(axis='y')  # , labelcolor=color)
 
             plt.title('Number of Points and Sampling Ratio over Bins')
