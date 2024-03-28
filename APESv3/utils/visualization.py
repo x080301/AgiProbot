@@ -1188,42 +1188,7 @@ def visualization_heatmap(data_dict=None, save_path=None, index=None, view_range
                     'rb') as f:
                 data_dict = pickle.load(f)
 
-            config = data_dict['config']
-            if config.datasets.dataset_name == "modelnet_AnTao420M":
-                mapping = config.datasets.mapping
-            elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
-                mapping = [value['category'] for value in config.datasets.mapping.values()]
-            else:
-                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
-
-            sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
-            sample_batch = data_dict['samples']  # (B,N,3)
-            label_batch = data_dict['ground_truth']
-
-            B = sample_batch.shape[0]
-
-            for j in range(B):
-                if 'Shapenet' in save_path:
-                    pass
-                elif 'Modelnet' in save_path:
-                    if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
-                        continue
-                else:
-                    raise NotImplementedError
-
-                sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
-                sample = sample_batch[j].cpu().numpy()  # (N,3)
-
-                category = mapping[int(label_batch[j])]
-
-                if category in counter_in_categories.keys():
-                    counter_in_categories[category] += 1
-                else:
-                    counter_in_categories[category] = 1
-
-                visualization_heatmap_one_shape(counter_in_categories[category], sample, category, sampling_score,
-                                                f'{save_path}/heat_map',
-                                                view_range)
+            visualization_heatmap_one_batch(counter_in_categories, data_dict, save_path, view_range, visualization_all)
     else:
         data_dict = deepcopy(data_dict)
         if not os.path.exists(f'{save_path}/heat_map'):
@@ -1265,6 +1230,42 @@ def visualization_heatmap(data_dict=None, save_path=None, index=None, view_range
                                             view_range)
 
 
+def visualization_heatmap_one_batch(counter_in_categories, data_dict, save_path, view_range, visualization_all):
+    config = data_dict['config']
+    if config.datasets.dataset_name == "modelnet_AnTao420M":
+        mapping = config.datasets.mapping
+    elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
+        mapping = [value['category'] for value in config.datasets.mapping.values()]
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+    sampling_score_batch = data_dict['sampling_score']  # (B, num_layers, H, N)
+    sample_batch = data_dict['samples']  # (B,N,3)
+    label_batch = data_dict['ground_truth']
+    B = sample_batch.shape[0]
+    for j in range(B):
+        if 'Shapenet' in save_path:
+            pass
+        elif 'Modelnet' in save_path:
+            if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
+                continue
+        else:
+            raise NotImplementedError
+
+        sampling_score = sampling_score_batch[j][0].flatten().cpu().numpy()  # (N,)
+        sample = sample_batch[j].cpu().numpy()  # (N,3)
+
+        category = mapping[int(label_batch[j])]
+
+        if category in counter_in_categories.keys():
+            counter_in_categories[category] += 1
+        else:
+            counter_in_categories[category] = 1
+
+        visualization_heatmap_one_shape(counter_in_categories[category], sample, category, sampling_score,
+                                        f'{save_path}/heat_map',
+                                        view_range)
+
+
 def visualization_downsampled_points(data_dict=None, save_path=None, index=None, view_range=None,
                                      visualization_all=False):
     counter_in_categories = {}
@@ -1285,75 +1286,8 @@ def visualization_downsampled_points(data_dict=None, save_path=None, index=None,
                     'rb') as f:
                 data_dict = pickle.load(f)
 
-            sample_batch = data_dict['samples']  # (B,N,3)
-            label_batch = data_dict['ground_truth']  # (B,)
-            idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
-
-            config = data_dict['config']
-            if config.datasets.dataset_name == "modelnet_AnTao420M":
-                mapping = config.datasets.mapping
-            elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
-                mapping = [value['category'] for value in config.datasets.mapping.values()]
-            else:
-                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
-
-            B = sample_batch.shape[0]
-            num_layers = len(idx_down_batch[0])
-
-            for j in range(B):
-                if 'Shapenet' in save_path:
-                    pass
-                elif 'Modelnet' in save_path:
-                    if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
-                        continue
-                else:
-                    raise NotImplementedError
-
-                sample = sample_batch[j].cpu().numpy()  # (N,3)
-                category = mapping[int(label_batch[j])]
-
-                idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
-
-                if category in counter_in_categories.keys():
-                    counter_in_categories[category] += 1
-                else:
-                    counter_in_categories[category] = 1
-
-                for k in range(num_layers):
-                    if k != 0:
-                        idx_down[k] = idx_down[k - 1][idx_down[k]]
-
-                    xyzRGB = []
-
-                    for xyz in sample:
-                        xyzRGB_tmp = []
-                        xyzRGB_tmp.extend(list(xyz))
-                        # print(my_cmap)
-                        # print(np.asarray(my_cmap(rgb)))
-                        xyzRGB_tmp.extend([192, 192, 192])  # gray color
-                        xyzRGB.append(xyzRGB_tmp)
-
-                    vertex = np.array(xyzRGB)  # (N,3+3)
-                    vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
-
-                    if not os.path.exists(f'{save_path}/downsampled_points/{category}/'):
-                        os.makedirs(f'{save_path}/downsampled_points/{category}/')
-
-                    fig = plt.figure()
-                    ax = fig.add_subplot(projection='3d')
-                    ax.set_xlim3d(-view_range, view_range)
-                    ax.set_ylim3d(-view_range, view_range)
-                    ax.set_zlim3d(-view_range, view_range)
-                    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
-                    plt.axis('off')
-                    plt.grid('off')
-
-                    plt.savefig(
-                        f'{save_path}/downsampled_points/{category}/sample{counter_in_categories[category]}_layer{k}.png',
-                        bbox_inches='tight')
-                    plt.close(fig)
-
-                    # print(f'.png file is saved in {saved_path}')
+            visualization_downsampled_points_one_batch(counter_in_categories, data_dict, save_path, view_range,
+                                                       visualization_all)
     else:
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
@@ -1432,6 +1366,78 @@ def visualization_downsampled_points(data_dict=None, save_path=None, index=None,
                 # print(f'.png file is saved in {saved_path}')
 
 
+def visualization_downsampled_points_one_batch(counter_in_categories, data_dict, save_path, view_range,
+                                               visualization_all):
+    data_dict = deepcopy(data_dict)
+
+    sample_batch = data_dict['samples']  # (B,N,3)
+    label_batch = data_dict['ground_truth']  # (B,)
+    idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+    config = data_dict['config']
+    if config.datasets.dataset_name == "modelnet_AnTao420M":
+        mapping = config.datasets.mapping
+    elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
+        mapping = [value['category'] for value in config.datasets.mapping.values()]
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+    B = sample_batch.shape[0]
+    num_layers = len(idx_down_batch[0])
+    for j in range(B):
+        if 'Shapenet' in save_path:
+            pass
+        elif 'Modelnet' in save_path:
+            if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
+                continue
+        else:
+            raise NotImplementedError
+
+        sample = sample_batch[j].cpu().numpy()  # (N,3)
+        category = mapping[int(label_batch[j])]
+
+        idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+
+        if category in counter_in_categories.keys():
+            counter_in_categories[category] += 1
+        else:
+            counter_in_categories[category] = 1
+
+        for k in range(num_layers):
+            if k != 0:
+                idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+            xyzRGB = []
+
+            for xyz in sample:
+                xyzRGB_tmp = []
+                xyzRGB_tmp.extend(list(xyz))
+                # print(my_cmap)
+                # print(np.asarray(my_cmap(rgb)))
+                xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                xyzRGB.append(xyzRGB_tmp)
+
+            vertex = np.array(xyzRGB)  # (N,3+3)
+            vertex[idx_down[k], 3], vertex[idx_down[k], 4], vertex[idx_down[k], 5] = 255, 0, 0  # red color
+
+            if not os.path.exists(f'{save_path}/downsampled_points/{category}/'):
+                os.makedirs(f'{save_path}/downsampled_points/{category}/')
+
+            fig = plt.figure()
+            ax = fig.add_subplot(projection='3d')
+            ax.set_xlim3d(-view_range, view_range)
+            ax.set_ylim3d(-view_range, view_range)
+            ax.set_zlim3d(-view_range, view_range)
+            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+            plt.axis('off')
+            plt.grid('off')
+
+            plt.savefig(
+                f'{save_path}/downsampled_points/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                bbox_inches='tight')
+            plt.close(fig)
+
+            # print(f'.png file is saved in {saved_path}')
+
+
 def visualization_points_in_bins(data_dict=None, save_path=None, index=None, view_range=None, visualization_all=False):
     counter_in_categories = {}
     colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
@@ -1461,108 +1467,8 @@ def visualization_points_in_bins(data_dict=None, save_path=None, index=None, vie
                     'rb') as f:
                 data_dict = pickle.load(f)
 
-            sample_batch = data_dict['samples']  # (B,N,3)
-            label_batch = data_dict['ground_truth']  # (B,)
-            idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
-            idx_in_bins_batch = data_dict['idx_in_bins']
-            # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-
-            B = sample_batch.shape[0]
-            num_layers = len(idx_in_bins_batch[0])
-            num_bins = len(idx_in_bins_batch[0][0])
-
-            config = data_dict['config']
-            if config.datasets.dataset_name == "modelnet_AnTao420M":
-                mapping = config.datasets.mapping
-            elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
-                mapping = [value['category'] for value in config.datasets.mapping.values()]
-            else:
-                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
-
-            if num_bins == 4:
-                colors = ['red', 'yellow', 'paleturquoise', 'violet']
-            elif num_bins == 6:
-                colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
-            elif num_bins == 8:
-                colors = ['red', 'orange', 'yellow', 'lime', 'cyan', 'lightgreen', 'paleturquoise', 'violet']
-            elif num_bins == 10:
-                colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'cyan', 'lightgreen',
-                          'paleturquoise', 'violet']
-            elif num_bins == 12:
-                colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'palegreen', 'lightcyan', 'cyan',
-                          'lightgreen', 'paleturquoise', 'violet']
-            else:
-                raise NotImplementedError
-
-            colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
-
-            for j in range(B):
-                if 'Shapenet' in save_path:
-                    pass
-                elif 'Modelnet' in save_path:
-                    if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
-                        continue
-                else:
-                    raise NotImplementedError
-
-                sample = sample_batch[j].cpu().numpy()  # (N,3)
-                category = mapping[int(label_batch[j])]
-
-                idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
-
-                idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
-                for k in range(num_layers):
-                    idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
-
-                if category in counter_in_categories.keys():
-                    counter_in_categories[category] += 1
-                else:
-                    counter_in_categories[category] = 1
-
-                for k in range(num_layers):
-                    if k != 0:
-                        idx_down[k] = idx_down[k - 1][idx_down[k]]
-
-                        for l in range(num_bins):
-                            idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
-
-                    xyzRGB = []
-
-                    for xyz in sample:
-                        xyzRGB_tmp = []
-                        xyzRGB_tmp.extend(list(xyz))
-                        # print(my_cmap)
-                        # print(np.asarray(my_cmap(rgb)))
-                        xyzRGB_tmp.extend([192, 192, 192])  # gray color
-                        xyzRGB.append(xyzRGB_tmp)
-
-                    vertex = np.array(xyzRGB)  # (N,3+3)
-
-                    # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
-
-                    for l in range(num_bins):
-                        vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
-                            colors[l]
-
-                    if not os.path.exists(f'{save_path}/points_in_bins/{category}/'):
-                        os.makedirs(f'{save_path}/points_in_bins/{category}/')
-                    # blue, darkcyan, orange, lime, yellow, Red
-
-                    fig = plt.figure()
-                    ax = fig.add_subplot(projection='3d')
-                    ax.set_xlim3d(-view_range, view_range)
-                    ax.set_ylim3d(-view_range, view_range)
-                    ax.set_zlim3d(-view_range, view_range)
-                    ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
-                    plt.axis('off')
-                    plt.grid('off')
-
-                    plt.savefig(
-                        f'{save_path}/points_in_bins/{category}/sample{counter_in_categories[category]}_layer{k}.png',
-                        bbox_inches='tight')
-                    plt.close(fig)
-
-                    # print(f'.png file is saved in {saved_path}')
+            visualization_points_in_bins_one_batch(counter_in_categories, data_dict, save_path, view_range,
+                                                   visualization_all)
     else:
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
@@ -1650,6 +1556,108 @@ def visualization_points_in_bins(data_dict=None, save_path=None, index=None, vie
                     f'{save_path}/points_in_bins/{category}/sample{counter_in_categories[category]}_layer{k}.png',
                     bbox_inches='tight')
                 plt.close(fig)
+
+
+def visualization_points_in_bins_one_batch(counter_in_categories, data_dict, save_path, view_range, visualization_all):
+    data_dict = deepcopy(data_dict)
+
+    sample_batch = data_dict['samples']  # (B,N,3)
+    label_batch = data_dict['ground_truth']  # (B,)
+    idx_down_batch = data_dict['idx_down']  # B * num_layers * (H,n)
+    idx_in_bins_batch = data_dict['idx_in_bins']
+    # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+    B = sample_batch.shape[0]
+    num_layers = len(idx_in_bins_batch[0])
+    num_bins = len(idx_in_bins_batch[0][0])
+    config = data_dict['config']
+    if config.datasets.dataset_name == "modelnet_AnTao420M":
+        mapping = config.datasets.mapping
+    elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
+        mapping = [value['category'] for value in config.datasets.mapping.values()]
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+    if num_bins == 4:
+        colors = ['red', 'yellow', 'paleturquoise', 'violet']
+    elif num_bins == 6:
+        colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
+    elif num_bins == 8:
+        colors = ['red', 'orange', 'yellow', 'lime', 'cyan', 'lightgreen', 'paleturquoise', 'violet']
+    elif num_bins == 10:
+        colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'cyan', 'lightgreen',
+                  'paleturquoise', 'violet']
+    elif num_bins == 12:
+        colors = ['red', 'orange', 'yellow', 'firebrick', 'orchid', 'lime', 'palegreen', 'lightcyan', 'cyan',
+                  'lightgreen', 'paleturquoise', 'violet']
+    else:
+        raise NotImplementedError
+    colors = [[int(round(RGorB * 255)) for RGorB in matplotlib.colors.to_rgb(color)] for color in colors]
+    for j in range(B):
+        if 'Shapenet' in save_path:
+            pass
+        elif 'Modelnet' in save_path:
+            if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
+                continue
+        else:
+            raise NotImplementedError
+
+        sample = sample_batch[j].cpu().numpy()  # (N,3)
+        category = mapping[int(label_batch[j])]
+
+        idx_down = [item.flatten().cpu().numpy() for item in idx_down_batch[j]]  # num_layers * (n,)
+
+        idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+        for k in range(num_layers):
+            idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+
+        if category in counter_in_categories.keys():
+            counter_in_categories[category] += 1
+        else:
+            counter_in_categories[category] = 1
+
+        for k in range(num_layers):
+            if k != 0:
+                idx_down[k] = idx_down[k - 1][idx_down[k]]
+
+                for l in range(num_bins):
+                    idx_in_bins[k][l] = idx_down[k - 1][idx_in_bins[k][l]]
+
+            xyzRGB = []
+
+            for xyz in sample:
+                xyzRGB_tmp = []
+                xyzRGB_tmp.extend(list(xyz))
+                # print(my_cmap)
+                # print(np.asarray(my_cmap(rgb)))
+                xyzRGB_tmp.extend([192, 192, 192])  # gray color
+                xyzRGB.append(xyzRGB_tmp)
+
+            vertex = np.array(xyzRGB)  # (N,3+3)
+
+            # colors = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 215, 0], [0, 255, 255], [128, 0, 128]]
+
+            for l in range(num_bins):
+                vertex[idx_in_bins[k][l], 3], vertex[idx_in_bins[k][l], 4], vertex[idx_in_bins[k][l], 5] = \
+                    colors[l]
+
+            if not os.path.exists(f'{save_path}/points_in_bins/{category}/'):
+                os.makedirs(f'{save_path}/points_in_bins/{category}/')
+            # blue, darkcyan, orange, lime, yellow, Red
+
+            fig = plt.figure()
+            ax = fig.add_subplot(projection='3d')
+            ax.set_xlim3d(-view_range, view_range)
+            ax.set_ylim3d(-view_range, view_range)
+            ax.set_zlim3d(-view_range, view_range)
+            ax.scatter(vertex[:, 0], vertex[:, 2], vertex[:, 1], c=vertex[:, 3:] / 255, marker='o', s=1)
+            plt.axis('off')
+            plt.grid('off')
+
+            plt.savefig(
+                f'{save_path}/points_in_bins/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                bbox_inches='tight')
+            plt.close(fig)
+
+            # print(f'.png file is saved in {saved_path}')
 
 
 def visualization_gray_one_batch(counter_in_categories, data_dict, save_path):
@@ -1750,92 +1758,10 @@ def visualization_histogram(data_dict=None, save_path=None, index=None, visualiz
                 i = int(filename.split('_')[-1].split('.')[0])
 
             with open(
-                    f'{save_path}/intermediate_result_{i}.pkl',
-                    'rb') as f:
+                    f'{save_path}/intermediate_result_{i}.pkl', 'rb') as f:
                 data_dict = pickle.load(f)
 
-            idx_in_bins_batch = data_dict['idx_in_bins']
-            # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-            label_batch = data_dict['ground_truth']  # (B,)
-            probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
-            # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
-            # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
-
-            # (B, num_layers, num_bins)
-
-            config = data_dict['config']
-            if config.datasets.dataset_name == "modelnet_AnTao420M":
-                mapping = config.datasets.mapping
-            elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
-                mapping = [value['category'] for value in config.datasets.mapping.values()]
-            else:
-                raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
-
-            B, num_layers, num_bins = probability_of_bins_batch.shape
-
-            for j in range(B):
-                if 'Shapenet' in save_path:
-                    pass
-                elif 'Modelnet' in save_path:
-                    if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
-                        continue
-                else:
-                    raise NotImplementedError
-
-                probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
-                category = mapping[int(label_batch[j])]
-                idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
-
-                for k in range(num_layers):
-                    idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
-                    # num_layers * num_bins * (n,)
-
-                if category in counter_in_categories.keys():
-                    counter_in_categories[category] += 1
-                else:
-                    counter_in_categories[category] = 1
-
-                for k in range(num_layers):
-                    bins = np.array(range(num_bins))
-                    num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
-                    probabilities_in_bins = probability_of_bins[k, :]
-
-                    fig = plt.figure()
-                    ax1 = fig.add_subplot()
-
-                    # fig, ax1 = plt.subplots()
-
-                    color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
-                    ax1.set_xlabel('Bin')
-                    ax1.set_ylabel('Number of Points in Bins')  # , color=color)
-                    ax1.bar(bins, num_points_in_bins, color=color)
-                    ax1.tick_params(axis='y')  # , labelcolor=color)
-
-                    ax2 = ax1.twinx()
-
-                    color = 'red'  # 'darkred'
-                    ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
-                    # ax2.set_ylim([0, 100])
-                    # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
-                    ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
-                    ax2.tick_params(axis='y')  # , labelcolor=color)
-
-                    plt.title('Number of Points and Sampling Ratio over Bins')
-
-                    fig.tight_layout()
-
-                    if not os.path.exists(f'{save_path}/histogram/{category}/'):
-                        os.makedirs(f'{save_path}/histogram/{category}/')
-
-                    # plt.axis('off')
-                    # plt.grid('off')
-
-                    plt.savefig(
-                        f'{save_path}/histogram/{category}/sample{counter_in_categories[category]}_layer{k}.png',
-                        bbox_inches='tight')
-                    plt.close(fig)
-
-                    # print(f'.png file is saved in {saved_path}')
+            visualization_histogram_one_batch(counter_in_categories, data_dict, save_path, visualization_all)
     else:
         data_dict = deepcopy(data_dict)
         # save_path = f'/home/team1/cwu/FuHaoWorkspace/test_results/2024_02_04_15_47_modelnet_nostd_nonuniform_newdownsampling/downsampled_points/'
@@ -1921,6 +1847,89 @@ def visualization_histogram(data_dict=None, save_path=None, index=None, visualiz
                 plt.close(fig)
 
 
+def visualization_histogram_one_batch(counter_in_categories, data_dict, save_path, visualization_all):
+    data_dict = deepcopy(data_dict)
+
+    idx_in_bins_batch = data_dict['idx_in_bins']
+    # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+    label_batch = data_dict['ground_truth']  # (B,)
+    probability_of_bins_batch = data_dict['probability_of_bins'].cpu().numpy()  # (B, num_layers, num_bins)
+    # probability_of_bins_batch = [torch.stack(item, dim=0) for item in probability_of_bins_batch]
+    # probability_of_bins_batch = torch.stack(probability_of_bins_batch, dim=0)
+    # (B, num_layers, num_bins)
+    config = data_dict['config']
+    if config.datasets.dataset_name == "modelnet_AnTao420M":
+        mapping = config.datasets.mapping
+    elif config.datasets.dataset_name == 'shapenet_AnTao350M' or config.datasets.dataset_name == 'shapenet_Yi650M':
+        mapping = [value['category'] for value in config.datasets.mapping.values()]
+    else:
+        raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+    B, num_layers, num_bins = probability_of_bins_batch.shape
+    for j in range(B):
+        if 'Shapenet' in save_path:
+            pass
+        elif 'Modelnet' in save_path:
+            if int(label_batch[j]) not in config.test.vis_which and not visualization_all:
+                continue
+        else:
+            raise NotImplementedError
+
+        probability_of_bins = probability_of_bins_batch[j, :, :]  # (num_layers, num_bins)
+        category = mapping[int(label_batch[j])]
+        idx_in_bins = idx_in_bins_batch[j]  # num_layers * num_bins * (H,n)
+
+        for k in range(num_layers):
+            idx_in_bins[k] = [item.flatten().cpu().numpy() for item in idx_in_bins[k]]
+            # num_layers * num_bins * (n,)
+
+        if category in counter_in_categories.keys():
+            counter_in_categories[category] += 1
+        else:
+            counter_in_categories[category] = 1
+
+        for k in range(num_layers):
+            bins = np.array(range(num_bins))
+            num_points_in_bins = np.array([len(item) for item in idx_in_bins[k]])
+            probabilities_in_bins = probability_of_bins[k, :]
+
+            fig = plt.figure()
+            ax1 = fig.add_subplot()
+
+            # fig, ax1 = plt.subplots()
+
+            color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
+            ax1.set_xlabel('Bin')
+            ax1.set_ylabel('Number of Points in Bins')  # , color=color)
+            ax1.bar(bins, num_points_in_bins, color=color)
+            ax1.tick_params(axis='y')  # , labelcolor=color)
+
+            ax2 = ax1.twinx()
+
+            color = 'red'  # 'darkred'
+            ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
+            # ax2.set_ylim([0, 100])
+            # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
+            ax2.plot(bins, probabilities_in_bins, linewidth=5.0, marker='o', color=color)
+            ax2.tick_params(axis='y')  # , labelcolor=color)
+
+            plt.title('Number of Points and Sampling Ratio over Bins')
+
+            fig.tight_layout()
+
+            if not os.path.exists(f'{save_path}/histogram/{category}/'):
+                os.makedirs(f'{save_path}/histogram/{category}/')
+
+            # plt.axis('off')
+            # plt.grid('off')
+
+            plt.savefig(
+                f'{save_path}/histogram/{category}/sample{counter_in_categories[category]}_layer{k}.png',
+                bbox_inches='tight')
+            plt.close(fig)
+
+            # print(f'.png file is saved in {saved_path}')
+
+
 def get_statistic_data_all_samples(data_dict=None, save_path=None,
                                    statistic_data_all_samples=None):
     if data_dict is None:
@@ -1936,9 +1945,7 @@ def get_statistic_data_all_samples(data_dict=None, save_path=None,
             else:
                 i = int(filename.split('_')[-1].split('.')[0])
 
-            with open(
-                    f'{save_path}/intermediate_result_{i}.pkl',
-                    'rb') as f:
+            with open(f'{save_path}/intermediate_result_{i}.pkl', 'rb') as f:
                 data_dict = pickle.load(f)
 
             statistic_data_all_samples = get_statistic_data_all_samples_one_sample(data_dict,
@@ -1960,6 +1967,8 @@ def get_statistic_data_all_samples(data_dict=None, save_path=None,
 
 
 def get_statistic_data_all_samples_one_sample(data_dict, statistic_data_all_samples):
+    data_dict = deepcopy(data_dict)
+
     idx_in_bins_batch = data_dict['idx_in_bins']
     # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
     probability_of_bins_batch = data_dict['probability_of_bins']  # (B, num_layers, num_bins)
@@ -2096,6 +2105,8 @@ def visualize_segmentation_predictions_downsampled(data_dict=None, save_path=Non
 
 
 def visualization_segmentation_one_batch_downsampled(counter_in_categories, data_dict, i, save_path, layer_index):
+    data_dict = deepcopy(data_dict)
+
     samples = data_dict['samples']  # (B,N,3)
     config = data_dict['config']
     category_ids = data_dict['ground_truth']
@@ -2153,6 +2164,8 @@ def visualization_segmentation_one_batch_downsampled(counter_in_categories, data
 
 
 def visualization_segmentation_one_batch(counter_in_categories, data_dict, i, save_path):
+    data_dict = deepcopy(data_dict)
+
     samples = data_dict['samples']
     config = data_dict['config']
     category_ids = data_dict['ground_truth']
