@@ -15,10 +15,22 @@ from utils.check_config import set_config_run
 import datetime
 import socket
 import pickle
+import argparse
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main(config):
+    hostname = socket.gethostname()
+    if hostname == 'LAPTOP-MPPIHOVR':
+        parser = argparse.ArgumentParser(description="Test ModelNet with custom configurations.")
+        parser.add_argument("--datasets", type=str, default='modelnet_AnTao420M', help="Dataset to use.")
+        parser.add_argument("--usr_config", type=str, default='configs/token_nonaveragebins_std_cls.yaml',
+                            help="Path to the user configuration file.")
+        parser.add_argument("--wandb.name", type=str, default="2024_03_28_05_23_Modelnet_boltmannT_1_4",
+                            help="Weights & Biases run name.")
+        parser.add_argument("--which_gpu", type=int, nargs='+', default=[0], help="GPU indices for DDP.")
+        config = parser.parse_args()
+
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -78,6 +90,8 @@ def test(local_rank, config):
     hostname = socket.gethostname()
     if 'iesservergpu' in hostname:
         save_dir = f'/home/ies/fu/train_output/test_results/{config.wandb.name}/'  # f'/data/users/fu/APES/test_results/{config.wandb.name}/'
+    elif hostname == 'LAPTOP-MPPIHOVR':
+        save_dir = f'E:/datasets/APES/test_results/boltmannT/{config.wandb.name}/'
     else:
         save_dir = f'/home/team1/cwu/FuHaoWorkspace/test_results/{config.wandb.name}/'
     if rank == 0:
