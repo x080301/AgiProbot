@@ -522,7 +522,7 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
         attention_point_score = attention_point_score + 1e-8
 
         # bin_points_mask: (B, H, N, num_bins)
-        masked_attention_point_score = attention_point_score * bin_points_mask
+        masked_attention_point_score = attention_point_score.unsqueeze(3) * bin_points_mask
         # masked_attention_point_score: (B, H, N, num_bins)
 
         _, attention_index_score = torch.sort(masked_attention_point_score, dim=2, descending=True)
