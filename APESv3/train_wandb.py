@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     available_gpus = []
     for gpu in gpu_info:
-        if gpu['GPU Utilization (%)'] > 40 or gpu['Memory Free (MB)'] < 11000:
+        if gpu['GPU Utilization (%)'] > 20 or gpu['Memory Free (MB)'] < 11000:
             continue
         else:
             available_gpus.append(gpu['GPU Index'])
