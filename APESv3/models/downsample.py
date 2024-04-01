@@ -1113,12 +1113,12 @@ class DownSampleToken(nn.Module):
                 # self.bin_tokens = nn.Parameter(torch.randn(1, q_in, self.num_bins))
                 # self.bin_tokens = nn.Parameter(torch.randn(1, q_in, self.num_bins)/torch.sqrt(q_in))
                 self.bin_tokens = nn.Parameter(
-                    torch.normal(mean=0, std=1 / torch.sqrt(q_in), size=(1, q_in, self.num_bins)))
+                    torch.normal(mean=0, std=1 / math.sqrt(q_in), size=(1, q_in, self.num_bins)))
             elif self.token_mode == 'one_token':
                 # self.bin_tokens = nn.Parameter(torch.randn(1, q_in, 1))
                 # self.bin_tokens = nn.Parameter(torch.randn(1, q_in, 1))
                 self.bin_tokens = nn.Parameter(
-                    torch.normal(mean=0, std=1 / torch.sqrt(q_in), size=(1, q_in, 1)))
+                    torch.normal(mean=0, std=1 / math.sqrt(q_in), size=(1, q_in, 1)))
 
         else:
             raise NotImplementedError
