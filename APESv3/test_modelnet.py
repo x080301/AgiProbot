@@ -36,7 +36,7 @@ def main():
     cmd_config = {
         'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
         'datasets': 'modelnet_AnTao420M',
-        'wandb': {'name': '2024_03_28_05_23_Modelnet_boltmannT_1_4'},
+        'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
         'test': {'ddp': {'which_gpu': [4, 5]}}
     }
     config = OmegaConf.merge(config, OmegaConf.create(cmd_config))

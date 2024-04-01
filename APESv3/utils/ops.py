@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 
 def index_points(points, idx):
@@ -551,6 +552,8 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
         elif bin_sample_mode == "random":
             # attention_point_score: (B, H, N)
             # bin_points_mask: (B, H, N, num_bins)
+
+            attention_point_score_np = attention_point_score.cpu().numpy()
 
             sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_T) * bin_points_mask
             # sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / 0.01) * bin_points_mask
