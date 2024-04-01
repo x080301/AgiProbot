@@ -518,6 +518,9 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
 
 def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_T,
                                  k_point_to_choose):
+    # attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
+    #                         / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
+
     if bin_sample_mode == "topk":
         # attention_point_score: (B, H, N)
         attention_point_score = attention_point_score + 1e-8
@@ -552,12 +555,44 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
         elif bin_sample_mode == "random":
             # attention_point_score: (B, H, N)
             # bin_points_mask: (B, H, N, num_bins)
-
-            attention_point_score_np = attention_point_score.cpu().numpy()
+            # boltzmann_T = 1  # TODO
+            # attention_point_score_np = attention_point_score.cpu().numpy()
+            # attention_point_score_masked_np = (attention_point_score.unsqueeze(3) * bin_points_mask).permute(0,1,3,2)
+            # attention_point_score_masked_np0=attention_point_score_masked_np[0,0,0,:]
+            # attention_point_score_masked_np0=attention_point_score_masked_np0[attention_point_score_masked_np0!=0]
+            # attention_point_score_masked_np0=(attention_point_score_masked_np0 - torch.mean(attention_point_score_masked_np0, dim=-1, keepdim=True)) \
+            #                 / torch.std(attention_point_score_masked_np0, dim=-1, unbiased=False, keepdim=True)
+            # attention_point_score_masked_np0=attention_point_score_masked_np0.cpu().numpy()
 
             sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_T) * bin_points_mask
             # sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / 0.01) * bin_points_mask
             sampling_probabilities = sampling_probabilities / torch.sum(sampling_probabilities, dim=2, keepdim=True)
+
+            # sampling_probabilities_np = sampling_probabilities.permute(0,1,3,2).cpu().numpy()
+            # std_np = np.zeros((6,))
+            # maxvalue = np.zeros((6,))
+            # minvalue = np.zeros((6,))
+            # meanvalue = np.zeros((6,))
+            # for x in range(6):
+            #
+            #     sampling_probabilities_np_0 = sampling_probabilities_np[0, 0,  x,:]
+            #     sampling_probabilities_np_0 = sampling_probabilities_np_0[sampling_probabilities_np_0 != 0]
+            #
+            #     maxvalue[x] = np.max(sampling_probabilities_np_0)
+            #     minvalue[x] = np.min(sampling_probabilities_np_0)
+            #     meanvalue[x] = np.mean(sampling_probabilities_np_0)
+            #     std_np[x] = np.std(sampling_probabilities_np_0)
+            # #
+            # std_np0 = np.zeros((6,))
+            # maxvalue0 = np.zeros((6,))
+            # minvalue0 = np.zeros((6,))
+            # meanvalue0 = np.zeros((6,))
+            # for x in range(6):
+            #     maxvalue0[x] = np.max(attention_point_score_np[ x,0,:])
+            #     minvalue0[x] = np.min(attention_point_score_np[ x,0,:])
+            #     meanvalue0[x] = np.mean(attention_point_score_np[ x,0,:])
+            #     std_np0[x] = np.std(attention_point_score_np[ x,0,:])
+
             sampling_probabilities = sampling_probabilities.squeeze(dim=1)
             # sampling_probabilities: (B,N,num_bins)
 

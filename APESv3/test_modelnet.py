@@ -18,31 +18,22 @@ import pickle
 import argparse
 
 
-# @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
-# def main(config):
-def main():
+@hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
+def main(config):
+# def main():
     hostname = socket.gethostname()
-    # # if hostname == 'LAPTOP-MPPIHOVR':
-    # parser = argparse.ArgumentParser(description="Test ModelNet with custom configurations.")
-    # parser.add_argument("--datasets", type=str, default='modelnet_AnTao420M', help="Dataset to use.")
-    # parser.add_argument("--usr_config", type=str, default='configs/token_nonaveragebins_std_cls.yaml',
-    #                     help="Path to the user configuration file.")
-    # parser.add_argument("--wandb.name", type=str, default="2024_03_28_05_23_Modelnet_boltmannT_1_4",
-    #                     help="Weights & Biases run name.")
-    # parser.add_argument("--which_gpu", type=int, nargs='+', default=[4, 5], help="GPU indices for DDP.")
-    # config = parser.parse_args()
 
-    config = OmegaConf.load('configs/default.yaml')
-    cmd_config = {
-        'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
-        'datasets': 'modelnet_AnTao420M',
-        'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
-        'test': {'ddp': {'which_gpu': [4, 5]}}
-    }
-    config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
-
-    dataset_config=OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
-    config = OmegaConf.merge(config, dataset_config)
+    # config = OmegaConf.load('configs/default.yaml')
+    # cmd_config = {
+    #     'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
+    #     'datasets': 'modelnet_AnTao420M',
+    #     'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
+    #     'test': {'ddp': {'which_gpu': [4, 5]}}
+    # }
+    # config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+    #
+    # dataset_config=OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+    # config = OmegaConf.merge(config, dataset_config)
 
     # check working directory
     try:
