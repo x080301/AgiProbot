@@ -2073,6 +2073,7 @@ def save_statical_data(data_dict, save_path, statistic_data_all_samples):
         # plt.axis('off')
         # plt.grid('off')
         plt.savefig(f'{save_path}/histogram_all_samples_layer{k}.png', bbox_inches='tight')
+        plt.savefig(f'E:/datasets/APES/test_results/boltmannT/histogram_all_samples/{save_path.split("Modelnet_Token_")[-1]}_histogram_all_samples_layer{k}.png')
         plt.close(fig)
 
 
@@ -2522,3 +2523,37 @@ def copy_and_crop(category, index, crop_area, mode='apes'):
 
     else:
         raise NotImplementedError
+
+
+def figure_for_thesis():
+    bins = np.array(range(6))
+    dataset = np.asarray([1024 / 6, 1024 / 6, 1024 / 6, 1024 / 6, 1024 / 6, 1024 / 6])
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot()
+
+    # fig, ax1 = plt.subplots()
+
+    color = 'lightsteelblue'  # [106/255,153/255,208/255]  # 'skyblue'  # 'royalblue'  # 'cornflowerblue'  # 'royalblue' ;lightsteelblue
+    ax1.set_xlabel('Bin')
+    ax1.set_ylabel('Number of Points in Bins')  # , color=color)
+    ax1.bar(bins, dataset, color=color)
+    ax1.tick_params(axis='y')  # , labelcolor=color)
+
+    # ax2 = ax1.twinx()
+    #
+    # color = 'red'  # 'darkred'
+    # ax2.set_ylabel('Sampling Ratio in Bins')  # , color=color)
+    # # ax2.set_ylim([0, 100])
+    # # ax2.plot(bins, probabilities_in_bins * 100, marker='o',color=color)
+    # ax2.plot(bins, probabilities_in_bins.cpu().numpy(), linewidth=5.0, marker='o', color=color)
+    # ax2.tick_params(axis='y')  # , labelcolor=color)
+
+    # plt.title('Number of Points and Sampling Ratio over Bins')
+
+    fig.tight_layout()
+
+    # plt.axis('off')
+    # plt.grid('off')
+    plt.savefig(f'C:/Users/Lenovo/Desktop/histogram_all_samples.png', bbox_inches='tight')
+    plt.close(fig)

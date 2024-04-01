@@ -116,10 +116,13 @@ def visualization_all():
         visualize_segmentation_predictions, visualize_few_points, visualize_segmentation_predictions_downsampled
     import os
 
-    save_dirs = os.listdir(r'E:/datasets/APES/test_result_1')
+    path_ = 'D:/datasets/test_result_0/test_results/'  # 'E:/datasets/APES/test_results/boltmannT/'
+    save_dirs = os.listdir(path_)
 
     for save_dir in save_dirs:
-        save_dir = f'E:/datasets/APES/test_result_1/{save_dir}'
+        save_dir = f'{path_}{save_dir}'
+        if '2024_' not in save_dir:
+            continue
 
         view_range = 0.6  # 0.6
         # save_dir = 'C:/Users/Lenovo/Desktop/2024_02_26_19_49_Modelnet_Token_Std_4bin'
@@ -135,18 +138,18 @@ def visualization_all():
 
         get_statistic_data_all_samples(save_path=save_dir)
 
-        visualization_histogram(save_path=f'{save_dir}', visualization_all=True)
-
-        visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range,
-                                     visualization_all=visualization_all)
-
-        visualization_downsampled_points(save_path=f'{save_dir}',
-                                         view_range=view_range, visualization_all=visualization_all)
-
-        visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
-
-        for M in [16, 8, 32, 64, 128]:
-            visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
+        # visualization_histogram(save_path=f'{save_dir}', visualization_all=True)
+        #
+        # visualization_points_in_bins(save_path=f'{save_dir}', view_range=view_range,
+        #                              visualization_all=visualization_all)
+        #
+        # visualization_downsampled_points(save_path=f'{save_dir}',
+        #                                  view_range=view_range, visualization_all=visualization_all)
+        #
+        # visualization_heatmap(save_path=f'{save_dir}', view_range=view_range, visualization_all=visualization_all)
+        #
+        # for M in [16, 8, 32, 64, 128]:
+        #     visualize_few_points(M, save_path=save_dir, visualization_all=visualization_all)
 
 
 def visualize_statistic_data_all_samples():

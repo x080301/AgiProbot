@@ -364,7 +364,6 @@ def test(local_rank, config):
 
                         with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                             pickle.dump(data_dict, f)
-                        print(f'save{i}')
 
                         # if 'Yi' in config.datasets.dataset_name:
                         #     view_range = 0.3

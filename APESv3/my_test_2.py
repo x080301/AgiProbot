@@ -44,7 +44,7 @@ for testline in test_list:
     # print(testline_1)
     for trained in trained_list:
         if testline_1 in trained and trained[-1]==testline_1[-1]:#len(trained.split(testline_1))==1:
-            test_cmd=f"test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
+            test_cmd=f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
 
     print(test_cmd)
         # if :
