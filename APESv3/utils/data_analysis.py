@@ -329,3 +329,221 @@ def draw_pcd(idx, saved_sampling_score_dir='modelnet_sampling_scores.pt'):
     # o3d.io.write_point_cloud(save_dir, point_cloud, write_ascii=True)
 
     o3d.visualization.draw_geometries([point_cloud])
+
+
+def normalization_in_bins():
+    import pickle
+    import torch
+
+    with open(r'E:\datasets\APES\test_results\masked_attention_score.pkl', 'rb') as f:
+        data_dict = pickle.load(f)
+
+    masked_attention_score = data_dict['masked_attention_score']
+
+    print(f'masked_attention_score.shape:{masked_attention_score.shape}')
+
+    masked_attention_score_oneshape = masked_attention_score[1, 0, :, :].permute(1, 0)
+
+    print(f'masked_attention_score_oneshape.shape:{masked_attention_score_oneshape.shape}')
+
+    print('----------------------------------------')
+    print('No Fuhrther Process')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+        max_value.append(torch.max(masked_attention_score_oneshape_onebin).item())
+        min_value.append((torch.min(masked_attention_score_oneshape_onebin).item()))
+        mean_value.append((torch.mean(masked_attention_score_oneshape_onebin).item()))
+        std_value.append((torch.std(masked_attention_score_oneshape_onebin).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('sigmoid and Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.sigmoid(Proposed)
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('tanh and Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.tanh(Proposed)
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    # print('----------------------------------------')
+    # print('sqrt and Softmax')
+    # max_value = []
+    # min_value = []
+    # mean_value = []
+    # std_value = []
+    # for bin_index in range(masked_attention_score_oneshape.shape[0]):
+    #     masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+    #     Proposed = masked_attention_score_oneshape_onebin[
+    #         masked_attention_score_oneshape_onebin != 0]
+    #
+    #     Proposed = torch.sign(Proposed) * torch.pow(torch.abs(Proposed), 1 / 2) * 2
+    #     Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+    #
+    #     max_value.append(torch.max(Proposed).item())
+    #     min_value.append((torch.min(Proposed).item()))
+    #     mean_value.append((torch.mean(Proposed).item()))
+    #     std_value.append((torch.std(Proposed).item()))
+    # print(f'max:{max_value}')
+    # print(f'min:{min_value}')
+    # print(f'mean:{mean_value}')
+    # print(f'std:{std_value}')
+    #
+    # print('----------------------------------------')
+    # print('ln+1 and Softmax')
+    # max_value = []
+    # min_value = []
+    # mean_value = []
+    # std_value = []
+    # for bin_index in range(masked_attention_score_oneshape.shape[0]):
+    #     masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+    #     Proposed = masked_attention_score_oneshape_onebin[
+    #         masked_attention_score_oneshape_onebin != 0]
+    #
+    #     Proposed = torch.log(Proposed + 1)
+    #     Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+    #
+    #     max_value.append(torch.max(Proposed).item())
+    #     min_value.append((torch.min(Proposed).item()))
+    #     mean_value.append((torch.mean(Proposed).item()))
+    #     std_value.append((torch.std(Proposed).item()))
+    # print(f'max:{max_value}')
+    # print(f'min:{min_value}')
+    # print(f'mean:{mean_value}')
+    # print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('tanh and T0.3 and Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.tanh(Proposed) / 0.3
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('tanh and T0.1 and Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.tanh(Proposed) / 0.1
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')
+
+    print('----------------------------------------')
+    print('tanh and T0.05 and Softmax')
+    max_value = []
+    min_value = []
+    mean_value = []
+    std_value = []
+    for bin_index in range(masked_attention_score_oneshape.shape[0]):
+        masked_attention_score_oneshape_onebin = masked_attention_score_oneshape[bin_index, :]
+        Proposed = masked_attention_score_oneshape_onebin[
+            masked_attention_score_oneshape_onebin != 0]
+
+        Proposed = torch.nn.functional.tanh(Proposed) / 0.05
+        Proposed = torch.nn.functional.softmax(Proposed, dim=0)
+
+        max_value.append(torch.max(Proposed).item())
+        min_value.append((torch.min(Proposed).item()))
+        mean_value.append((torch.mean(Proposed).item()))
+        std_value.append((torch.std(Proposed).item()))
+    print(f'max:{max_value}')
+    print(f'min:{min_value}')
+    print(f'mean:{mean_value}')
+    print(f'std:{std_value}')

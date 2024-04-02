@@ -18,10 +18,15 @@ from utils.check_config import set_config_run
 import time
 import datetime
 import socket
+import sys
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
-def main(config):
+def main_with_Decorators(config):
+    main_without_Decorators(config)
+
+
+def main_without_Decorators(config):
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -509,4 +514,23 @@ def train(local_rank, config, random_seed,
 
 
 if __name__ == '__main__':
-    main()
+    num_arguments = len(sys.argv)
+
+    if num_arguments > 1:
+        main_with_Decorators()
+    else:
+        config = OmegaConf.load('configs/default.yaml')
+        cmd_config = {
+            'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},
+            'datasets': 'modelnet_AnTao420M',
+            'usr_config': 'configs/token_nonaveragebins_std_cls_boltmannT10.yaml',
+            'wandb': {'name': 'Modelnet_Token_Std_boltmannT10'}
+        }
+        config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+
+        dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+        dataset_config = OmegaConf.create({'datasets': dataset_config})
+        config = OmegaConf.merge(config, dataset_config)
+        # print(config.datasets)
+
+        main_without_Decorators(config)

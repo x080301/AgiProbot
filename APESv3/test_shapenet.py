@@ -1,20 +1,15 @@
 import wandb
 import hydra
-import torch
-import os
-import numpy as np
+
 import torch.multiprocessing as mp
 import torch.distributed as dist
-import pkbar
 from omegaconf import OmegaConf
 from pathlib import Path
-from utils import dataloader, metrics
+from utils import dataloader
 from models import seg_model
 from utils.visualization import *
 from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
-from utils.save_backup import save_backup
-import pickle
 import socket
 import sys
 
@@ -408,8 +403,6 @@ def test(local_rank, config):
 
 if __name__ == '__main__':
     num_arguments = len(sys.argv)
-    print(num_arguments)
-    print(sys.argv)
 
     if num_arguments > 1:
         main_with_Decorators()
@@ -424,6 +417,7 @@ if __name__ == '__main__':
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
 
         dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+        dataset_config = OmegaConf.create({'datasets': dataset_config})
         config = OmegaConf.merge(config, dataset_config)
 
         main_without_Decorators(config)

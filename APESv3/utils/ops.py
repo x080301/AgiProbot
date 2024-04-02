@@ -1,5 +1,5 @@
 import torch
-import numpy as np
+import numbers
 
 
 def index_points(points, idx):
@@ -518,9 +518,7 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
 
 def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_t,
                                  k_point_to_choose):
-    attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
-                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
-
+    B, _, N, num_bins = bin_points_mask.shape
     if bin_sample_mode == "topk":
         # attention_point_score: (B, H, N)
         attention_point_score = attention_point_score + 1e-8
@@ -533,7 +531,6 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
         attention_index_score = attention_index_score.squeeze(dim=1)
         # attention_index_score: (B, N, num_bins)
 
-        B, _, N, num_bins = bin_points_mask.shape
         index_down = []
         for batch_index in range(B):
             sampled_index_in_one_batch = []
@@ -545,6 +542,7 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
         # sampled_index: (B,H,M)
 
     elif bin_sample_mode == "uniform" or bin_sample_mode == "random":
+
         if bin_sample_mode == "uniform":
             # bin_points_mask: (B, H, N, num_bins)
             sampling_probabilities = bin_points_mask.float().squeeze(dim=1)
@@ -553,32 +551,29 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
                 sampling_probabilities + (torch.sum(sampling_probabilities, dim=1, keepdim=True) == 0)
 
         elif bin_sample_mode == "random":
+            attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
+                                    / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
+            attention_point_score = torch.nn.functional.tanh(attention_point_score)
             # attention_point_score: (B, H, N)
-            # bin_points_mask: (B, H, N, num_bins)
-            # boltzmann_T = 1  # TODO
-            # attention_point_score_np = attention_point_score.cpu().numpy()
-            # attention_point_score_masked_np = (attention_point_score.unsqueeze(3) * bin_points_mask).permute(0,1,3,2)
-            # attention_point_score_masked_np0=attention_point_score_masked_np[0,0,0,:]
-            # attention_point_score_masked_np0=attention_point_score_masked_np0[attention_point_score_masked_np0!=0]
-            # attention_point_score_masked_np0=(attention_point_score_masked_np0 - torch.mean(attention_point_score_masked_np0, dim=-1, keepdim=True)) \
-            #                 / torch.std(attention_point_score_masked_np0, dim=-1, unbiased=False, keepdim=True)
-            # attention_point_score_masked_np0=attention_point_score_masked_np0.cpu().numpy()
 
             if boltzmann_t == 'mode_1':
                 # bin_points_mask: (B, H, N, num_bins)
-                boltzmann_t = bin_points_mask.float().squeeze(dim=1)
+                num_points_in_onebatch_one_bin = torch.sum(bin_points_mask, dim=2, keepdim=True).float()
+                # num_points_in_onebatch_one_bin: (B, H, 1, num_bins)
+
+                boltzmann_t_inverse = num_points_in_onebatch_one_bin / 100.0
+                # boltzmann_t_inverse: B, H, 1, num_bins)
+
             elif boltzmann_t == 'mode_2':
-                pass
-            elif (boltzmann_t == 1.0
-                  or boltzmann_t == 0.5
-                  or boltzmann_t == 0.3
-                  or boltzmann_t == 0.1
-                  or boltzmann_t == 0.05):
-                pass
+                boltzmann_t_inverse = N / (100.0 * num_bins)
+            elif isinstance(boltzmann_t, numbers.Number):
+                boltzmann_t_inverse = 1 / boltzmann_t
             else:
                 raise NotImplementedError
 
-            sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_t) * bin_points_mask
+            # sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_t) * bin_points_mask
+            sampling_probabilities = torch.exp(
+                attention_point_score.unsqueeze(3) * boltzmann_t_inverse) * bin_points_mask
             # sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / 0.01) * bin_points_mask
             sampling_probabilities = sampling_probabilities / torch.sum(sampling_probabilities, dim=2, keepdim=True)
 
@@ -611,8 +606,6 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
             # sampling_probabilities: (B,N,num_bins)
 
             sampling_probabilities[torch.isnan(sampling_probabilities)] = 1e-8
-
-        B, N, num_bins = sampling_probabilities.shape
 
         sampling_probabilities = sampling_probabilities.permute(0, 2, 1).reshape(-1, N)
         # sampling_probabilities: (B*num_bins,N)

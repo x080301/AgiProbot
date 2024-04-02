@@ -498,11 +498,8 @@ def test(local_rank, config):
 
 if __name__ == '__main__':
     num_arguments = len(sys.argv)
-    print(num_arguments)
-    print(sys.argv)
 
     if num_arguments > 1:
-        print('---------------')
         main_with_Decorators()
     else:
         config = OmegaConf.load('configs/default.yaml')
@@ -515,6 +512,7 @@ if __name__ == '__main__':
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
 
         dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+        dataset_config = OmegaConf.create({'datasets': dataset_config})
         config = OmegaConf.merge(config, dataset_config)
 
         main_without_Decorators(config)
