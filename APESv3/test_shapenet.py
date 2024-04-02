@@ -16,12 +16,17 @@ from utils.check_config import set_config_run
 from utils.save_backup import save_backup
 import pickle
 import socket
+import sys
 
 from utils.ops import reshape_gathered_variable, gather_variable_from_gpus
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
-def main(config):
+def main_with_Decorators(config):
+    main_without_Decorators(config)
+
+
+def main_without_Decorators(config):
     # check working directory
     try:
         assert str(Path.cwd().resolve()) == str(Path(__file__).resolve().parents[0])
@@ -402,4 +407,23 @@ def test(local_rank, config):
 
 
 if __name__ == '__main__':
-    main()
+    num_arguments = len(sys.argv)
+    print(num_arguments)
+    print(sys.argv)
+
+    if num_arguments > 1:
+        main_with_Decorators()
+    else:
+        config = OmegaConf.load('configs/default.yaml')
+        cmd_config = {
+            'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
+            'datasets': 'modelnet_AnTao420M',
+            'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
+            'test': {'ddp': {'which_gpu': [0, 1]}}
+        }
+        config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+
+        dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+        config = OmegaConf.merge(config, dataset_config)
+
+        main_without_Decorators(config)

@@ -1,12 +1,12 @@
 import wandb
 from omegaconf import OmegaConf
-import hydra
 from pathlib import Path
-from utils import dataloader, metrics
+from utils import dataloader
 from models import cls_model
 import torch.multiprocessing as mp
 import torch.distributed as dist
-import pkbar
+import sys
+import hydra
 
 from utils.ops import reshape_gathered_variable, gather_variable_from_gpus
 from utils.visualization import *
@@ -15,20 +15,22 @@ from utils.check_config import set_config_run
 import datetime
 import socket
 import pickle
-import argparse
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
-def main(config):
-# def main():
-    hostname = socket.gethostname()
+def main_with_Decorators(config):
+    main_without_Decorators(config)
+
+
+def main_without_Decorators(config):
+    # hostname = socket.gethostname()
 
     # config = OmegaConf.load('configs/default.yaml')
     # cmd_config = {
     #     'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
     #     'datasets': 'modelnet_AnTao420M',
     #     'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
-    #     'test': {'ddp': {'which_gpu': [4, 5]}}
+    #     'test': {'ddp': {'which_gpu': [0, 1]}}
     # }
     # config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
     #
@@ -495,4 +497,24 @@ def test(local_rank, config):
 
 
 if __name__ == '__main__':
-    main()
+    num_arguments = len(sys.argv)
+    print(num_arguments)
+    print(sys.argv)
+
+    if num_arguments > 1:
+        print('---------------')
+        main_with_Decorators()
+    else:
+        config = OmegaConf.load('configs/default.yaml')
+        cmd_config = {
+            'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
+            'datasets': 'modelnet_AnTao420M',
+            'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
+            'test': {'ddp': {'which_gpu': [0, 1]}}
+        }
+        config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+
+        dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+        config = OmegaConf.merge(config, dataset_config)
+
+        main_without_Decorators(config)

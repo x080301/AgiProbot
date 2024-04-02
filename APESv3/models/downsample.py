@@ -1260,6 +1260,16 @@ class DownSampleToken(nn.Module):
         self.k_point_to_choose = calculate_num_points_to_choose(bin_weights, max_num_points, self.M)
         # k_point_to_choose.shape == (B, num_bins)
 
+        # attention_point_score = (self.attention_point_score - torch.mean(self.attention_point_score, dim=2, keepdim=True)) \
+        #                         / torch.std(self.attention_point_score, dim=2, unbiased=False, keepdim=True)
+        # import pickle
+        # data_dict = {}
+        # masked_attention_score = attention_point_score.unsqueeze(3) * bin_points_mask
+        # data_dict["masked_attention_score"] = masked_attention_score
+        # with open(f'/home/ies/fu/train_output/masked_attention_score.pkl', 'wb') as f:
+        #     pickle.dump(data_dict, f)
+        #     print('saved')
+
         index_down = generating_downsampled_index(self.M,
                                                   self.attention_point_score,
                                                   self.bin_points_mask,

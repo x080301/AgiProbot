@@ -116,7 +116,7 @@ def visualization_all():
         visualize_segmentation_predictions, visualize_few_points, visualize_segmentation_predictions_downsampled
     import os
 
-    path_ = 'D:/datasets/test_result_0/test_results/'  # 'E:/datasets/APES/test_results/boltmannT/'
+    path_ = r'D:\datasets\test_result_1/'  # 'E:/datasets/APES/test_results/boltmannT/'
     save_dirs = os.listdir(path_)
 
     for save_dir in save_dirs:
