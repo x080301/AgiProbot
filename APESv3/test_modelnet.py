@@ -237,8 +237,9 @@ def test(local_rank, config):
 
         if config.test.save_pkl:
             statistic_data_all_samples = None
-            if not os.path.exists(f'{save_dir}/histogram'):
-                os.makedirs(f'{save_dir}/histogram')
+            if rank==0:
+                if not os.path.exists(f'{save_dir}/histogram'):
+                    os.makedirs(f'{save_dir}/histogram')
             counter_in_categories_visualization_histogram = {'rank': rank}
             counter_in_categories_visualization_points_in_bins = {'rank': rank}
             counter_in_categories_visualization_downsampled_points = {'rank': rank}
