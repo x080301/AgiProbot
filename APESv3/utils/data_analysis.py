@@ -310,7 +310,6 @@ def visualization_sampling_score_in_bin(saved_sampling_score_dir='modelnet_sampl
     # plt.title("Histogram of Tensor Elements")
     # plt.xlabel("Value")
     # plt.ylabel("Frequency")
-    #
 
 
 def draw_pcd(idx, saved_sampling_score_dir='modelnet_sampling_scores.pt'):
