@@ -347,26 +347,26 @@ def test(local_rank, config):
                         statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
                             data_dict,
                             statistic_data_all_samples)
-                        visualization_histogram_one_batch(
-                            counter_in_categories_visualization_histogram,
-                            data_dict, save_dir, True)
-
-                        visualization_points_in_bins_one_batch(
-                            counter_in_categories_visualization_points_in_bins,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_downsampled_points_one_batch(
-                            counter_in_categories_visualization_downsampled_points,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_heatmap_one_batch(
-                            counter_in_categories_visualization_heatmap,
-                            data_dict, save_dir, 0.6, False)
-
-                        for M in [16, 8, 32, 64, 128]:
-                            visualization_few_points_one_batch(
-                                counter_in_categories_visualization_few_points[M],
-                                data_dict, i, save_dir, M, visualization_all=False)
+                        # visualization_histogram_one_batch(
+                        #     counter_in_categories_visualization_histogram,
+                        #     data_dict, save_dir, True)
+                        #
+                        # visualization_points_in_bins_one_batch(
+                        #     counter_in_categories_visualization_points_in_bins,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # visualization_downsampled_points_one_batch(
+                        #     counter_in_categories_visualization_downsampled_points,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # visualization_heatmap_one_batch(
+                        #     counter_in_categories_visualization_heatmap,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # for M in [16, 8, 32, 64, 128]:
+                        #     visualization_few_points_one_batch(
+                        #         counter_in_categories_visualization_few_points[M],
+                        #         data_dict, i, save_dir, M, visualization_all=False)
 
                         # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                         #     pickle.dump(data_dict, f)
