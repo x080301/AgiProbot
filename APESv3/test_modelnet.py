@@ -7,14 +7,15 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 import sys
 import hydra
+import subprocess
+import datetime
+import socket
 
 from utils.ops import reshape_gathered_variable, gather_variable_from_gpus
 from utils.visualization import *
 from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
-import datetime
-import socket
-import pickle
+
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
@@ -504,6 +505,7 @@ if __name__ == '__main__':
     if num_arguments > 1:
         main_with_Decorators()
     else:
+        subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',

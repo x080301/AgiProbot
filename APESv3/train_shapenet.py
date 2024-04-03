@@ -10,6 +10,7 @@ import torch
 import pkbar
 import wandb
 from utils import metrics, debug
+import subprocess
 
 import torch.multiprocessing as mp
 import torch.distributed as dist
@@ -607,6 +608,7 @@ if __name__ == '__main__':
     if num_arguments > 1:
         main_with_Decorators()
     else:
+        subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},

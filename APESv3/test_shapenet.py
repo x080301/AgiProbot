@@ -1,17 +1,18 @@
 import wandb
 import hydra
-
-import torch.multiprocessing as mp
-import torch.distributed as dist
+import subprocess
+import socket
+import sys
 from omegaconf import OmegaConf
 from pathlib import Path
+import torch.multiprocessing as mp
+import torch.distributed as dist
+
 from utils import dataloader
 from models import seg_model
 from utils.visualization import *
 from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
-import socket
-import sys
 
 from utils.ops import reshape_gathered_variable, gather_variable_from_gpus
 
@@ -407,6 +408,7 @@ if __name__ == '__main__':
     if num_arguments > 1:
         main_with_Decorators()
     else:
+        subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',

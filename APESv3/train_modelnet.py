@@ -19,6 +19,7 @@ import time
 import datetime
 import socket
 import sys
+import subprocess
 
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
@@ -519,6 +520,7 @@ if __name__ == '__main__':
     if num_arguments > 1:
         main_with_Decorators()
     else:
+        subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},

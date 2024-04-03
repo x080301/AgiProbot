@@ -18,15 +18,19 @@ def get_trained_runs():
     return trained_runs
 
 
-test_list = ["python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_1'",
-"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_2'",
-"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_3'",
-"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_4'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_1'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_2'","ython train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_3'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_4'"]
+test_list = [
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_1'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_2'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_3'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_4'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_1'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_2'",
+    "ython train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_3'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_4'"]
 
 trained_list = get_trained_runs()
 
-subprocess.run('nvidia-smi', shell=True, text=True, stdout=None,  # subprocess.PIPE,
-                           stderr=subprocess.PIPE)
+subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
 
 for testline in test_list:
     testline_1 = testline.split("wandb.name='")[-1].split("'")[0]
@@ -34,13 +38,13 @@ for testline in test_list:
     # print(config)
     # print(testline_1)
     for trained in trained_list:
-        if testline_1 in trained and trained[-1]==testline_1[-1]:#len(trained.split(testline_1))==1:
-            test_cmd=f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
+        if testline_1 in trained and trained[-1] == testline_1[-1]:  # len(trained.split(testline_1))==1:
+            test_cmd = f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
 
             # subprocess.run(test_cmd, shell=True, text=True, stdout=None,  # subprocess.PIPE,
             #                stderr=subprocess.PIPE)
 
     print(test_cmd)
-        # if :
-        #     print(trained)
+    # if :
+    #     print(trained)
     # print(testline)

@@ -342,6 +342,7 @@ def normalization_in_bins():
     print(f'masked_attention_score.shape:{masked_attention_score.shape}')
 
     masked_attention_score_oneshape = masked_attention_score[1, 0, :, :].permute(1, 0)
+    print(masked_attention_score_oneshape.permute(1, 0))
 
     print(f'masked_attention_score_oneshape.shape:{masked_attention_score_oneshape.shape}')
 
