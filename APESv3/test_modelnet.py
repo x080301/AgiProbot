@@ -237,7 +237,7 @@ def test(local_rank, config):
 
         if config.test.save_pkl:
             statistic_data_all_samples = None
-            if rank==0:
+            if rank == 0:
                 if not os.path.exists(f'{save_dir}/histogram'):
                     os.makedirs(f'{save_dir}/histogram')
             counter_in_categories_visualization_histogram = {'rank': rank}
@@ -424,8 +424,9 @@ def test(local_rank, config):
                 #                                                      attention_map,
                 #                                                      save_dir)
 
-                if config.test.save_pkl:
-                    save_statical_data(data_dict, save_dir, statistic_data_all_samples)
+        if rank == 0:
+            if config.test.save_pkl:
+                save_statical_data(data_dict, save_dir, statistic_data_all_samples)
     # if rank == 0:
     #     preds = np.concatenate(pred_list, axis=0)
     #     cls_labels = np.concatenate(cls_label_list, axis=0)
