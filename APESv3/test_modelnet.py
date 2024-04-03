@@ -235,21 +235,21 @@ def test(local_rank, config):
                 f'Print Results: {config.test.print_results} - Visualize Downsampled Points: {config.test.visualize_downsampled_points.enable} - Visualize Heatmap: {config.test.visualize_attention_heatmap.enable}')
             pbar = pkbar.Pbar(name='Start testing, please wait...', target=len(test_loader))
 
-        # if config.test.save_pkl:
-        #     statistic_data_all_samples = None
-        #     if not os.path.exists(f'{save_dir}/histogram'):
-        #         os.makedirs(f'{save_dir}/histogram')
-        #     counter_in_categories_visualization_histogram = {'rank': rank}
-        #     counter_in_categories_visualization_points_in_bins = {'rank': rank}
-        #     counter_in_categories_visualization_downsampled_points = {'rank': rank}
-        #     counter_in_categories_visualization_heatmap = {'rank': rank}
-        #     counter_in_categories_visualization_few_points = {
-        #         8: {'rank': rank},
-        #         16: {'rank': rank},
-        #         32: {'rank': rank},
-        #         64: {'rank': rank},
-        #         128: {'rank': rank}
-        #     }
+        if config.test.save_pkl:
+            statistic_data_all_samples = None
+            if not os.path.exists(f'{save_dir}/histogram'):
+                os.makedirs(f'{save_dir}/histogram')
+            counter_in_categories_visualization_histogram = {'rank': rank}
+            counter_in_categories_visualization_points_in_bins = {'rank': rank}
+            counter_in_categories_visualization_downsampled_points = {'rank': rank}
+            counter_in_categories_visualization_heatmap = {'rank': rank}
+            counter_in_categories_visualization_few_points = {
+                8: {'rank': rank},
+                16: {'rank': rank},
+                32: {'rank': rank},
+                64: {'rank': rank},
+                128: {'rank': rank}
+            }
 
         for i, (samples, cls_labels) in enumerate(test_loader):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
@@ -344,32 +344,32 @@ def test(local_rank, config):
                                  }
 
                     if config.test.save_pkl:
-                        # statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
-                        #     data_dict,
-                        #     statistic_data_all_samples)
-                        # visualization_histogram_one_batch(
-                        #     counter_in_categories_visualization_histogram,
-                        #     data_dict, save_dir, True)
-                        #
-                        # visualization_points_in_bins_one_batch(
-                        #     counter_in_categories_visualization_points_in_bins,
-                        #     data_dict, save_dir, 0.6, False)
-                        #
-                        # visualization_downsampled_points_one_batch(
-                        #     counter_in_categories_visualization_downsampled_points,
-                        #     data_dict, save_dir, 0.6, False)
-                        #
-                        # visualization_heatmap_one_batch(
-                        #     counter_in_categories_visualization_heatmap,
-                        #     data_dict, save_dir, 0.6, False)
-                        #
-                        # for M in [16, 8, 32, 64, 128]:
-                        #     visualization_few_points_one_batch(
-                        #         counter_in_categories_visualization_few_points[M],
-                        #         data_dict, i, save_dir, M, visualization_all=False)
+                        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
+                            data_dict,
+                            statistic_data_all_samples)
+                        visualization_histogram_one_batch(
+                            counter_in_categories_visualization_histogram,
+                            data_dict, save_dir, True)
 
-                        with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                            pickle.dump(data_dict, f)
+                        visualization_points_in_bins_one_batch(
+                            counter_in_categories_visualization_points_in_bins,
+                            data_dict, save_dir, 0.6, False)
+
+                        visualization_downsampled_points_one_batch(
+                            counter_in_categories_visualization_downsampled_points,
+                            data_dict, save_dir, 0.6, False)
+
+                        visualization_heatmap_one_batch(
+                            counter_in_categories_visualization_heatmap,
+                            data_dict, save_dir, 0.6, False)
+
+                        for M in [16, 8, 32, 64, 128]:
+                            visualization_few_points_one_batch(
+                                counter_in_categories_visualization_few_points[M],
+                                data_dict, i, save_dir, M, visualization_all=False)
+
+                        # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+                        #     pickle.dump(data_dict, f)
 
                         # if 'Yi' in config.datasets.dataset_name:
                         #     view_range = 0.3
@@ -423,8 +423,8 @@ def test(local_rank, config):
                 #                                                      attention_map,
                 #                                                      save_dir)
 
-        # if config.test.save_pkl:
-        #     save_statical_data(data_dict, save_dir, statistic_data_all_samples)
+        if config.test.save_pkl:
+            save_statical_data(data_dict, save_dir, statistic_data_all_samples)
     # if rank == 0:
     #     preds = np.concatenate(pred_list, axis=0)
     #     cls_labels = np.concatenate(cls_label_list, axis=0)

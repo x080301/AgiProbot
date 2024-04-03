@@ -18,8 +18,10 @@ def get_trained_runs():
     return trained_runs
 
 
-test_list = [
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT02.yaml wandb.name='Modelnet_Token_Std_boltmannT02_4'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT01.yaml wandb.name='Modelnet_Token_Std_boltmannT01_newinit_1'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT01.yaml wandb.name='Modelnet_Token_Std_boltmannT01_newinit_2'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT01.yaml wandb.name='Modelnet_Token_Std_boltmannT01_newinit_3'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/token_nonaveragebins_std_cls_boltmannT01.yaml wandb.name='Modelnet_Token_Std_boltmannT01_newinit_4'"]
+test_list = ["python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_1'",
+"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_2'",
+"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_3'",
+"python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode1.yaml wandb.name='Modelnet_Token_Std_boltmann_mode1_norm_4'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_1'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_2'","ython train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_3'","python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT_mode2.yaml wandb.name='Modelnet_Token_Std_boltmann_mode2_norm_4'"]
 
 trained_list = get_trained_runs()
 
@@ -35,8 +37,8 @@ for testline in test_list:
         if testline_1 in trained and trained[-1]==testline_1[-1]:#len(trained.split(testline_1))==1:
             test_cmd=f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
 
-            subprocess.run(test_cmd, shell=True, text=True, stdout=None,  # subprocess.PIPE,
-                           stderr=subprocess.PIPE)
+            # subprocess.run(test_cmd, shell=True, text=True, stdout=None,  # subprocess.PIPE,
+            #                stderr=subprocess.PIPE)
 
     print(test_cmd)
         # if :
