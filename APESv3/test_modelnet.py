@@ -424,8 +424,8 @@ def test(local_rank, config):
                 #                                                      attention_map,
                 #                                                      save_dir)
 
-        if config.test.save_pkl:
-            save_statical_data(data_dict, save_dir, statistic_data_all_samples)
+                if config.test.save_pkl:
+                    save_statical_data(data_dict, save_dir, statistic_data_all_samples)
     # if rank == 0:
     #     preds = np.concatenate(pred_list, axis=0)
     #     cls_labels = np.concatenate(cls_label_list, axis=0)
