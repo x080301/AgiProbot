@@ -2077,7 +2077,7 @@ def save_statical_data(data_dict, save_path, statistic_data_all_samples):
             plt.savefig(f'E:/datasets/APES/test_results/boltmannT/histogram_all_samples/{save_path.split("Modelnet_Token_")[-1]}_histogram_all_samples_layer{k}.png')
         elif 'FuHaoWorkspace' in save_path:
             plt.savefig(
-                f'/home/team1/cwu/FuHaoWorkspace/test_results/{save_path.split("Modelnet_Token_")[-1]}_histogram_all_samples_layer{k}.png')
+                f'/home/team1/cwu/FuHaoWorkspace/test_results/{save_path.split("Modelnet_Token_")[-1].split("/")[0]}_histogram_all_samples_layer{k}.png')
         plt.close(fig)
 
 
