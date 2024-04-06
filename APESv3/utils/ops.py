@@ -566,6 +566,15 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
 
             elif boltzmann_t == 'mode_2':
                 boltzmann_t_inverse = N / (100.0 * num_bins)
+            elif boltzmann_t=='mode_3':
+                # bin_points_mask: (B, H, N, num_bins)
+                num_points_in_onebatch_one_bin = torch.sum(bin_points_mask, dim=2, keepdim=True).float()
+                # num_points_in_onebatch_one_bin: (B, H, 1, num_bins)
+
+                boltzmann_t_inverse = num_points_in_onebatch_one_bin / 2000.0
+                # boltzmann_t_inverse: B, H, 1, num_bins)
+            elif boltzmann_t == 'mode_4':
+                boltzmann_t_inverse = N / (2000.0 * num_bins)
             elif isinstance(boltzmann_t, numbers.Number):
                 boltzmann_t_inverse = 1 / boltzmann_t
             else:
