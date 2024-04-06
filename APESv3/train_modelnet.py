@@ -525,7 +525,7 @@ if __name__ == '__main__':
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},
             'datasets': 'modelnet_AnTao420M',
-            'usr_config': 'configs/boltzmannT1.yaml',
+            'usr_config': 'configs/boltzmannT_mode4.yaml',
             'wandb': {'name': 'Test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
