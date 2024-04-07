@@ -19,6 +19,10 @@ def get_trained_runs():
 
 
 test_list = [
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_1'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_2'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_3'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_4'",
     "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_5'",
     "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_6'",
     "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT01.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_norm_7'",
