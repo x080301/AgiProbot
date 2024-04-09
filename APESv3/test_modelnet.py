@@ -349,9 +349,10 @@ def test(local_rank, config):
                         statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
                             data_dict,
                             statistic_data_all_samples)
-                        visualization_histogram_one_batch(
-                            counter_in_categories_visualization_histogram,
-                            data_dict, save_dir, True)
+
+                        # visualization_histogram_one_batch(
+                        #     counter_in_categories_visualization_histogram,
+                        #     data_dict, save_dir, True)
 
                         # visualization_points_in_bins_one_batch(
                         #     counter_in_categories_visualization_points_in_bins,
