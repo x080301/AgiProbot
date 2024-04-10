@@ -1370,8 +1370,8 @@ class DownSampleToken(nn.Module):
 
     def calculate_attention_score(self, x, attention_points):
         mask, sparse_attention_map = self.get_sparse_attention_map(x, attention_points)
-        # sparse_num = torch.sum(mask, dim=-2) + 1e-8
-        sparse_num = torch.sum(mask, dim=-2) + 1
+        sparse_num = torch.sum(mask, dim=-2) + 1e-8
+        # sparse_num = torch.sum(mask, dim=-2) + 1
 
         # full attention map based
         if self.idx_mode == "col_sum":
