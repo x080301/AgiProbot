@@ -20,11 +20,15 @@ def knn(a, b, k):
     :param b: b.shape == (B, M, C)
     :param k: int
     """
-    inner = -2 * torch.matmul(a, b.transpose(2, 1))  # inner.shape == (B, N, M)
-    aa = torch.sum(a ** 2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
-    bb = torch.sum(b ** 2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
-    # TODO: some values inside pairwise_distance is positive
-    pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
+    # inner = -2 * torch.matmul(a, b.transpose(2, 1))  # inner.shape == (B, N, M)
+    # aa = torch.sum(a ** 2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
+    # bb = torch.sum(b ** 2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
+    # # TODO: some values inside pairwise_distance is positive
+    # pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
+    pairwise_distance = -torch.cdist(a, b, compute_mode='donot_use_mm_for_euclid_dist')
+
+    # num_positive = torch.sum(pairwise_distance > 0)
+
     distance, idx = pairwise_distance.topk(k=k, dim=-1)  # idx.shape == (B, N, K)
     return distance, idx
 
@@ -566,7 +570,7 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
 
             elif boltzmann_t == 'mode_2':
                 boltzmann_t_inverse = N / (100.0 * num_bins)
-            elif boltzmann_t=='mode_3':
+            elif boltzmann_t == 'mode_3':
                 # bin_points_mask: (B, H, N, num_bins)
                 num_points_in_onebatch_one_bin = torch.sum(bin_points_mask, dim=2, keepdim=True).float()
                 # num_points_in_onebatch_one_bin: (B, H, 1, num_bins)

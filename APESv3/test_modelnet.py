@@ -346,30 +346,30 @@ def test(local_rank, config):
                                  }
 
                     if config.test.save_pkl:
-                        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
-                            data_dict,
-                            statistic_data_all_samples)
-
-                        visualization_histogram_one_batch(
-                            counter_in_categories_visualization_histogram,
-                            data_dict, save_dir, True)
-
-                        visualization_points_in_bins_one_batch(
-                            counter_in_categories_visualization_points_in_bins,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_downsampled_points_one_batch(
-                            counter_in_categories_visualization_downsampled_points,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_heatmap_one_batch(
-                            counter_in_categories_visualization_heatmap,
-                            data_dict, save_dir, 0.6, False)
-
-                        for M in [16, 8, 32, 64, 128]:
-                            visualization_few_points_one_batch(
-                                counter_in_categories_visualization_few_points[M],
-                                data_dict, i, save_dir, M, visualization_all=False)
+                        # statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
+                        #     data_dict,
+                        #     statistic_data_all_samples)
+                        #
+                        # visualization_histogram_one_batch(
+                        #     counter_in_categories_visualization_histogram,
+                        #     data_dict, save_dir, True)
+                        #
+                        # visualization_points_in_bins_one_batch(
+                        #     counter_in_categories_visualization_points_in_bins,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # visualization_downsampled_points_one_batch(
+                        #     counter_in_categories_visualization_downsampled_points,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # visualization_heatmap_one_batch(
+                        #     counter_in_categories_visualization_heatmap,
+                        #     data_dict, save_dir, 0.6, False)
+                        #
+                        # for M in [16, 8, 32, 64, 128]:
+                        #     visualization_few_points_one_batch(
+                        #         counter_in_categories_visualization_few_points[M],
+                        #         data_dict, i, save_dir, M, visualization_all=False)
 
                         # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
                         #     pickle.dump(data_dict, f)
@@ -396,6 +396,7 @@ def test(local_rank, config):
                         #     data_dict=data_dict,
                         #     save_path=save_dir,
                         #     statistic_data_all_samples=statistic_data_all_samples)
+                        pass
 
             if rank == 0:
                 preds = torch.concat(pred_gather_list, dim=0)
@@ -509,10 +510,10 @@ if __name__ == '__main__':
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
-            'usr_config': 'configs/token_nonaveragebins_std_cls.yaml',
+            'usr_config': 'configs/boltzmannT0102.yaml',
             'datasets': 'modelnet_AnTao420M',
-            'wandb': {'name': '2024_02_21_01_47_Modelnet_Token_Std'},
-            'test': {'ddp': {'which_gpu': [4, 5]}}
+            'wandb': {'name': '2024_04_09_13_39_Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_1'},
+            'test': {'ddp': {'which_gpu': [0, 1]}}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
 
