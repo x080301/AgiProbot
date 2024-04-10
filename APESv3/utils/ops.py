@@ -23,6 +23,7 @@ def knn(a, b, k):
     a_mean = torch.mean(a, dim=1, keepdim=True)
     a = a - a_mean
     b = b - a_mean
+
     a_std = torch.mean(torch.std(a, dim=1, keepdim=True), dim=2, keepdim=True)
     a = a / a_std
     b = b / a_std
@@ -30,7 +31,6 @@ def knn(a, b, k):
     # inner = -2 * torch.matmul(a, b.transpose(2, 1))  # inner.shape == (B, N, M)
     # aa = torch.sum(a ** 2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
     # bb = torch.sum(b ** 2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
-    # # TODO: some values inside pairwise_distance is positive
     # pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
     pairwise_distance = -torch.cdist(a, b)  # , compute_mode='donot_use_mm_for_euclid_dist')
 
