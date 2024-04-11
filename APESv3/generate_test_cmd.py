@@ -20,17 +20,16 @@ def get_trained_runs():
 
 test_list = [
 
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_1'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_2'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_3'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_4'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_5'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_6'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_7'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_8'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_9'",
-    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_10'"
-
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_1'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_2'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_3'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_4'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_5'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_6'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_7'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_8'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_9'",
+    "python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/boltzmannT0102.yaml wandb.name='Modelnet_Token_Std_boltzmann_T0102_norm_new_knn_10'"
 
 
 ]

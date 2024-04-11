@@ -346,9 +346,9 @@ def test(local_rank, config):
                                  }
 
                     if config.test.save_pkl:
-                        # statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
-                        #     data_dict,
-                        #     statistic_data_all_samples)
+                        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
+                            data_dict,
+                            statistic_data_all_samples)
                         #
                         # visualization_histogram_one_batch(
                         #     counter_in_categories_visualization_histogram,
