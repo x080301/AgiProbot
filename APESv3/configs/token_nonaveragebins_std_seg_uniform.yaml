@@ -113,6 +113,8 @@ feature_learning_block:
       dynamic_boundaries: true
       bin_boundaries: [ [ 8.45e-06,-7.46e-07,-5.476e-06,-8.971e-06,-1.245e-05 ],[ 1.274e-05,2.405e-07,-6.46e-06,-1.155e-05,-1.68e-05 ] ]
       normalization_mode: [ z_score,z_score ] # no_normalization, z_score, z_score_no_std
+      multiply: [ false, false ]
+      boltzmann_T: [ 1, 1 ] # mode_1,mode_2,[1,0.5],[0.5,0.25],[0.3,0.15],[0.1,0.05],[0.05,0.025]
     q_in: [ 128, 128 ]
     q_out: [ 128, 128 ]
     k_in: [ 128, 128 ]
