@@ -378,3 +378,4 @@ python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapen
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg_adaptive.yaml wandb.name='Shapenet_Token_Std_adaptive_1'
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/token_nonaveragebins_std_seg_logmean.yaml wandb.name='Shapenet_Token_Std_logmean_1'
+#---------------
