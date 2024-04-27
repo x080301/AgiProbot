@@ -34,6 +34,8 @@ def knn(a, b, k):
     # pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
     pairwise_distance = -torch.cdist(a, b)  # , compute_mode='donot_use_mm_for_euclid_dist')
 
+    # diff = torch.unsqueeze(a, dim=1) - torch.unsqueeze(b, dim=2)
+    # pairwise_distance = torch.sum(diff ** 2, dim=-1)
     # num_positive = torch.sum(pairwise_distance > 0)
 
     distance, idx = pairwise_distance.topk(k=k, dim=-1)  # idx.shape == (B, N, K)
@@ -146,8 +148,13 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
     bin_boundaries = sorted_scores[bin_boundaries_index]
 
-    torch.distributed.all_reduce(bin_boundaries)  # , reduce_op=torch.distributed.ReduceOp.SUM)
-    bin_boundaries = bin_boundaries / torch.distributed.get_world_size()
+    try:
+        world_size = torch.distributed.get_world_size()
+    except Exception as e:
+        pass
+    else:
+        torch.distributed.all_reduce(bin_boundaries)  # , reduce_op=torch.distributed.ReduceOp.SUM)
+        bin_boundaries = bin_boundaries / world_size
 
     if old_bin_boundaries is not None:
         new_bin_boundaries = [old_bin_boundaries[0].detach(), old_bin_boundaries[1].detach()]

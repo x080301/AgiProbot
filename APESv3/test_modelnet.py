@@ -513,7 +513,7 @@ if __name__ == '__main__':
             'usr_config': 'configs/boltzmannT0102.yaml',
             'datasets': 'modelnet_AnTao420M',
             'wandb': {'name': '2024_04_09_13_39_Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_1'},
-            'test': {'ddp': {'which_gpu': [0, 1]}}
+            'test': {'ddp': {'which_gpu': [4, 5]}}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
 
