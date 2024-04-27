@@ -92,7 +92,10 @@ if __name__ == '__main__':
         raise ValueError(
             f"Not enough available GPUs! Available GPUs: {available_gpus}, Required number of GPUs: {num_gpus}")
     else:
-        running_gpu = available_gpus[:num_gpus]
+        if len(available_gpus) == 2:
+            running_gpu = available_gpus[:1]
+        else:
+            running_gpu = available_gpus[:num_gpus]
 
     running_gpu = f'which_gpu=[{available_gpus[0]},{available_gpus[1]}]'
 
