@@ -619,7 +619,7 @@ if __name__ == '__main__':
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},
             'datasets': 'shapenet_AnTao350M',
-            'usr_config': 'configs/token_nonaveragebins_std_seg_logmean.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin2.yaml',
             'wandb': {'name': 'test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
