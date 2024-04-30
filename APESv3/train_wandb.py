@@ -84,11 +84,13 @@ if __name__ == '__main__':
 
     available_gpus = []
     for gpu in gpu_info:
-        print(f'GPU {gpu["GPU Index"]} Utilization (%): {gpu["GPU Utilization (%)"]}, Memory Used (MB): {gpu["Memory Free (MB)"]}')
+        print(
+            f'GPU {gpu["GPU Index"]} Utilization (%): {gpu["GPU Utilization (%)"]}, Memory Free (MB): {gpu["Memory Free (MB)"]}')
         if gpu['GPU Utilization (%)'] > 20 or gpu['Memory Free (MB)'] < 11000:
             continue
         else:
             available_gpus.append(gpu['GPU Index'])
+    print(f"available_gpus:{available_gpus}")
     if len(available_gpus) < num_gpus:
         raise ValueError(
             f"Not enough available GPUs! Available GPUs: {available_gpus}, Required number of GPUs: {num_gpus}")
