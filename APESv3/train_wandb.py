@@ -65,7 +65,7 @@ def run_cmds(run_name, cmd_block, running_gpu):
         if result.returncode != 0:
             with open(f'train_logs/{run_name}.txt', 'w') as file:
                 file.writelines(result.stderr)
-            return False
+            return result.stderr
     return True
 
 

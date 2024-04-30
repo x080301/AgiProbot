@@ -617,7 +617,7 @@ if __name__ == '__main__':
         #     'wandb': {'name': 'test'}
         # }
         cmd_config = {
-            'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},
+            'train': {'epochs': 200, 'ddp': {'which_gpu': [2]}},
             'datasets': 'shapenet_AnTao350M',
             'usr_config': 'configs/seg_boltzmannT01_bin2.yaml',
             'wandb': {'name': 'test'}
