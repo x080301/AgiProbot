@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     available_gpus = []
     for gpu in gpu_info:
-        print(f'GPU {gpu} Utilization (%): {gpu["GPU Utilization (%)"]}, Memory Used (MB): {gpu["Memory Free (MB)"]}')
+        print(f'GPU {gpu["GPU Index"]} Utilization (%): {gpu["GPU Utilization (%)"]}, Memory Used (MB): {gpu["Memory Free (MB)"]}')
         if gpu['GPU Utilization (%)'] > 20 or gpu['Memory Free (MB)'] < 11000:
             continue
         else:
