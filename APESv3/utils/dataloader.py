@@ -190,12 +190,20 @@ def get_shapenet_dataset_Yi650M(saved_path, mapping, selected_points, fps_enable
 # AnTao350M shapenet dataloader
 
 def download_shapenet_AnTao350M(url, saved_path):
+    # current_directory = os.getcwd()
+    # print(current_directory)
+    # saved_path_0 = os.path.join(saved_path, 'shapenet_part_seg_hdf5_data')
+    # print(saved_path_0)
     if not os.path.exists(saved_path):
         os.makedirs(saved_path)
+
     if not os.path.exists(os.path.join(saved_path, 'shapenet_part_seg_hdf5_data')):
         zipfile = os.path.basename(url)
         os.system('wget %s --no-check-certificate; unzip %s' % (url, zipfile))
+
         os.system('mv %s %s' % ('hdf5_data', os.path.join(saved_path, 'shapenet_part_seg_hdf5_data')))
+        # command0='wget %s --no-check-certificate; unzip %s' % (url, zipfile)
+        # command = 'mv %s %s' % ('hdf5_data', os.path.join(saved_path, 'shapenet_part_seg_hdf5_data'))
         os.system('rm %s' % (zipfile))
 
 

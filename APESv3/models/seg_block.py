@@ -6,7 +6,6 @@ from models import embedding
 from models import attention
 from models import downsample
 from models import upsample
-from models import _downsample_token
 
 
 class FeatureLearningBlock(nn.Module):

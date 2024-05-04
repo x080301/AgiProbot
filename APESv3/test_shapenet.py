@@ -411,10 +411,10 @@ if __name__ == '__main__':
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
-            'usr_config': 'configs/token_nonaveragebins_std_seg_logmean.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin6.yaml',
             'datasets': 'shapenet_AnTao350M',
             'wandb': {'name': '2024_04_16_01_26_Shapenet_Token_Std_logmean_1'},
-            'test': {'ddp': {'which_gpu': [0, 1]}}
+            'test': {'ddp': {'which_gpu': [3]}}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
 

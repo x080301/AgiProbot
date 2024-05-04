@@ -54,7 +54,7 @@ test: # only valid when running the test script
   label_smoothing: false
   epsilon: 0.2  # epsilon for label smoothing
   dataloader:
-    batch_size_per_gpu: 4
+    batch_size_per_gpu: 8
     num_workers: 2  # ${test.ddp.nproc_this_node}  # the number of subprocess to load data
     prefetch: ${test.dataloader.batch_size_per_gpu}  # samples to be prefetched. e.g. 64 means 64*num_workers samples to be prefetched
     pin_memory: true  # pin memory in RAM
