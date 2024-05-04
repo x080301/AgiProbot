@@ -75,6 +75,17 @@ def main_without_Decorators(config):
         exit('It is almost impossible to train this model using CPU. Please use GPU! Exit.')
 
 
+def feature_transform_regularizer(trans):
+    # trans: (B,C,C)
+    d = trans.size()[1]
+    batchsize = trans.size()[0]
+    I = torch.eye(d)[None, :, :]
+    if trans.is_cuda:
+        I = I.cuda()
+    loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2, 1)) - I, dim=(1, 2)))
+    return loss
+
+
 def train(local_rank, config, random_seed,
           time_label):  # the first arg must be local rank for the sake of using mp.spawn(...)
 
@@ -373,8 +384,15 @@ def train(local_rank, config, random_seed,
                 scaler.step(optimizer)
                 scaler.update()
             else:
-                preds = my_model(samples, cls_label)
-                train_loss = loss_fn(preds, seg_labels)
+
+                if config.train.regression_loss_factor > 0:
+                    preds, trans = my_model(samples, cls_label)
+                    train_loss = loss_fn(preds, seg_labels) \
+                                 + config.train.consistency_loss_factor * feature_transform_regularizer(trans)
+                else:
+                    preds = my_model(samples, cls_label)
+                    train_loss = loss_fn(preds, seg_labels)
+
                 train_loss.backward()
                 # log debug information
                 if config.train.debug.enable:
@@ -617,9 +635,9 @@ if __name__ == '__main__':
         #     'wandb': {'name': 'test'}
         # }
         cmd_config = {
-            'train': {'epochs': 200, 'ddp': {'which_gpu': [2]}},
+            'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
             'datasets': 'shapenet_AnTao350M',
-            'usr_config': 'configs/seg_boltzmannT01_bin2.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml',
             'wandb': {'name': 'test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))

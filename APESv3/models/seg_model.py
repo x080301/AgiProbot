@@ -59,16 +59,18 @@ class ShapeNetModel(nn.Module):
         if self.STN_enable == True:
             self.STN = embedding.STN()
 
+        self.regression_loss_factor = config.train.regression_loss_factor
+
     def forward(self, x, category_id):
         # x.shape == (B, 3, N)  category_id.shape == (B, 16, 1)
         B, C, N = x.shape
         # x.shape == (B, 3, N)
 
-        if self.STN_enable == True:
+        if self.STN_enable:
             x0, _ = ops.group(x, 32, 'center_diff')  # (B, 3, num_points) -> (B, 3*2, num_points, k)
-            t = self.STN(x0)  # (B, 3, 3)
+            trans = self.STN(x0)  # (B, 3, 3)
             x = x.transpose(2, 1)  # (B, 3, num_points) -> (B, num_points, 3)
-            x = torch.bmm(x, t)  # (B, num_points, 3) * (B, 3, 3) -> (B, num_points, 3)
+            x = torch.bmm(x, trans)  # (B, num_points, 3) * (B, 3, 3) -> (B, num_points, 3)
             x = x.transpose(2, 1)  # (B, num_points, 3) -> (B, 3, num_points)
 
         x_tmp = self.block(x)
@@ -101,4 +103,8 @@ class ShapeNetModel(nn.Module):
         # x.shape == (B, 50, N)
         # x = self.conv5(x)
         # # x.shape == (B, 50, N)
-        return x
+
+        if self.regression_loss_factor > 0:
+            return x, trans
+        else:
+            return x

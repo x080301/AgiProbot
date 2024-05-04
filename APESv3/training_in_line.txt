@@ -88,3 +88,9 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_consistency_loss_1.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_consistency_loss_5'
 #---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_feature_transform_regularization_1'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_feature_transform_regularization_2'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_feature_transform_regularization_3'
+#---------------
