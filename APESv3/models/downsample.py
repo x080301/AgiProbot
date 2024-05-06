@@ -1165,6 +1165,8 @@ class DownSampleToken(nn.Module):
         self.boltzmann_T = config_ds.bin.boltzmann_T[layer]
         self.boltzmann_norm_mode = config_ds.boltzmann.norm_mode[layer]
 
+        self.token_orthognonal_loss_factor = config_ds.bin.token_orthognonal_loss_factor
+
     def forward(self, x, x_xyz=None):
         # x.shape == (B, C, N)
 
@@ -1293,6 +1295,8 @@ class DownSampleToken(nn.Module):
         self.idx = index_down
         # self.idx: (B,H,M)
 
+        if self.token_orthognonal_loss_factor > 0:
+            self.attention_bins_beforesoftmax = attention_bins_beforesoftmax
         return (x_ds, index_down), (None, None)
 
     def bin_weghts_calculation(self, attention_bins_beforesoftmax, bin_points_mask, relu_mean_order):

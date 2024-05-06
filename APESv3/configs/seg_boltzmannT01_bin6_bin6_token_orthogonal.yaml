@@ -54,7 +54,7 @@ test: # only valid when running the test script
   label_smoothing: false
   epsilon: 0.2  # epsilon for label smoothing
   dataloader:
-    batch_size_per_gpu: 4
+    batch_size_per_gpu: 8
     num_workers: 2  # ${test.ddp.nproc_this_node}  # the number of subprocess to load data
     prefetch: ${test.dataloader.batch_size_per_gpu}  # samples to be prefetched. e.g. 64 means 64*num_workers samples to be prefetched
     pin_memory: true  # pin memory in RAM
@@ -105,11 +105,12 @@ feature_learning_block:
     asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
     bin:
       enable: [ true, true ]
+      token_orthognonal_loss_factor: 0.001 # valid when >0
       dynamic_boundaries: true
       bin_boundaries: [ [ 6.065e-06,3.737e-07,-2.851e-06, -5.421e-06,-8.08e-06 ],[ 5.914e-05,-2.619e-05,-5.652e-05,-7.882e-05,-0.0001078 ] ]
       multiply: [ false, false ]
       mode: [ token, token ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
-      num_bins: [ 8, 8 ]
+      num_bins: [ 6, 6 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh

@@ -22,6 +22,7 @@ import socket
 import sys
 
 from utils.check_config import set_config_run
+from utils.loss import feature_transform_regularizer_loss
 
 
 # os.environ['TORCH_USE_CUDA_DSA'] = '1'
@@ -75,15 +76,18 @@ def main_without_Decorators(config):
         exit('It is almost impossible to train this model using CPU. Please use GPU! Exit.')
 
 
-def feature_transform_regularizer(trans):
-    # trans: (B,C,C)
-    d = trans.size()[1]
-    batchsize = trans.size()[0]
-    I = torch.eye(d)[None, :, :]
-    if trans.is_cuda:
-        I = I.cuda()
-    loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2, 1)) - I, dim=(1, 2)))
-    return loss
+def token_orthognonal_loss(tokens):
+    # tokens.shape=(B,1,N,C)=(16,1,1024,6)
+    tokens = torch.squeeze(tokens, dim=1)
+
+    token_orthognonal_loss = torch.matmul(tokens.transpose(1, 2), tokens)
+    # print(torch.diagonal(token_orthognonal_loss, dim1=1, dim2=2))
+    token_orthognonal_loss = token_orthognonal_loss - torch.diag_embed(
+        torch.diagonal(token_orthognonal_loss, dim1=1,
+                       dim2=2))  # - torch.diag(token_orthognonal_loss.diagonal())
+    token_orthognonal_loss = torch.sum(token_orthognonal_loss)
+
+    return token_orthognonal_loss
 
 
 def train(local_rank, config, random_seed,
@@ -388,10 +392,15 @@ def train(local_rank, config, random_seed,
                 if config.train.regression_loss_factor > 0:
                     preds, trans = my_model(samples, cls_label)
                     train_loss = loss_fn(preds, seg_labels) \
-                                 + config.train.consistency_loss_factor * feature_transform_regularizer(trans)
+                                 + config.train.consistency_loss_factor * feature_transform_regularizer_loss(trans)
                 else:
                     preds = my_model(samples, cls_label)
                     train_loss = loss_fn(preds, seg_labels)
+
+                if config.feature_learning_block.downsample.bin.token_orthognonal_loss_factor > 0:
+                    for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
+                        train_loss += token_orthognonal_loss(
+                            downsample_module.attention_bins_beforesoftmax) * config.feature_learning_block.downsample.bin.token_orthognonal_loss_factor
 
                 train_loss.backward()
                 # log debug information
@@ -637,7 +646,7 @@ if __name__ == '__main__':
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
             'datasets': 'shapenet_AnTao350M',
-            'usr_config': 'configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin6_bin6_token_orthogonal.yaml',
             'wandb': {'name': 'test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
