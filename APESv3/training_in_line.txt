@@ -94,3 +94,9 @@ python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapen
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_feature_transform_regularization_3'
 #---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_bin6_token_orthogonal.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_token_orthogonal_1'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_bin6_token_orthogonal.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_token_orthogonal_2'
+#---------------
+python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_bin6_token_orthogonal.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_token_orthogonal_3'
+#---------------
