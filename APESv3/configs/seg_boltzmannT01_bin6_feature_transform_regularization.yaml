@@ -7,7 +7,7 @@ wandb:
 
 train:
   epochs: 200
-  regression_loss_factor: 0.001 # valid when >0
+  stn_regularization_loss_factor: 0.001 # valid when >0
   dataloader:
     selected_points: 2048  # points to be selected from every point cloud
     fps: false  #  whether to use fps to select points. if false, use random downsample to select points

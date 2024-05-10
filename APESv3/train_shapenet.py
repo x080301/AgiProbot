@@ -389,10 +389,11 @@ def train(local_rank, config, random_seed,
                 scaler.update()
             else:
 
-                if config.train.regression_loss_factor > 0:
+                if config.train.stn_regularization_loss_factor > 0:
                     preds, trans = my_model(samples, cls_label)
                     train_loss = loss_fn(preds, seg_labels) \
-                                 + config.train.consistency_loss_factor * feature_transform_regularizer_loss(trans)
+                                 + config.train.stn_regularization_loss_factor * feature_transform_regularizer_loss(
+                        trans)
                 else:
                     preds = my_model(samples, cls_label)
                     train_loss = loss_fn(preds, seg_labels)
@@ -646,7 +647,7 @@ if __name__ == '__main__':
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
             'datasets': 'shapenet_AnTao350M',
-            'usr_config': 'configs/seg_boltzmannT01_bin6_bin6_token_orthogonal.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml',
             'wandb': {'name': 'test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))

@@ -24,6 +24,13 @@ def count_parameters(module):
     return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
 
+def print_flops(model):
+    for name, module in model.named_modules():
+        if len(list(module.children())) == 0:  # 只考虑基本模块，避免重复计算
+            module_flops, module_params = profile(module, inputs=(input,), verbose=False)
+            print(f"{name}: {module_flops} FLOPs")
+
+
 def cal_parameters_of_cls(config):
     # hostname = socket.gethostname()
 
@@ -97,17 +104,20 @@ def cal_parameters_of_cls(config):
                 if name == 'downsample_list':
                     for name, module in module.named_children():
                         params = count_parameters(module)
-                        print(f"{name}: {params} parameters")
+
+                        print(f"downsample layer {name}: {params} parameters")
                 elif name == 'feature_learning_layer_list':
                     for name, module in module.named_children():
                         params = count_parameters(module)
-                        print(f"{name}: {params} parameters")
+                        print(f"feature learning layer {name}: {params} parameters")
                 else:
                     params = count_parameters(module)
                     print(f"{name}: {params} parameters")
         else:
+
             params = count_parameters(module)
             print(f"{name}: {params} parameters")
+    print_flops
     # if torch.cuda.is_available():
     #     os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
     #     os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
@@ -184,8 +194,8 @@ def cal_parameters_of_seg(config):
 
     flops, params = profile(my_model, inputs=(torch.randn((1, 3, 2048)), torch.randn((1, 16, 1))))
 
-    print(f"FLOPs: {flops}")
     print(f"Parameters: {params}")
+    print(f"FLOPs: {flops}")
 
     for name, module in my_model.named_children():
 
@@ -195,21 +205,25 @@ def cal_parameters_of_seg(config):
                 if name == 'downsample_list':
                     for name, module in module.named_children():
                         params = count_parameters(module)
-                        print(f"{name}: {params} parameters")
+                        print(f"downsample layer {name}: {params} parameters")
                 elif name == 'feature_learning_layer_list':
                     for name, module in module.named_children():
                         params = count_parameters(module)
-                        print(f"{name}: {params} parameters")
+                        print(f"feature learning layer {name}: {params} parameters")
                 elif name == 'upsample_list':
                     for name, module in module.named_children():
                         params = count_parameters(module)
-                        print(f"{name}: {params} parameters")
+                        print(f"upsample layers {name}: {params} parameters")
                 else:
+                    if name == 'embedding_list':
+                        flops, params = profile(module, inputs=(torch.randn((1, 3, 2048)), torch.randn((1, 16, 1)),))
+                        print(f"{name}: {params} parameters, {flops} FLOPs")
                     params = count_parameters(module)
                     print(f"{name}: {params} parameters")
         else:
             params = count_parameters(module)
             print(f"{name}: {params} parameters")
+
     # if torch.cuda.is_available():
     #     os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
     #     os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(

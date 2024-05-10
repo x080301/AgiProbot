@@ -59,7 +59,7 @@ class ShapeNetModel(nn.Module):
         if self.STN_enable == True:
             self.STN = embedding.STN()
 
-        self.regression_loss_factor = config.train.regression_loss_factor
+        self.stn_regularization_loss_factor = config.train.stn_regularization_loss_factor
 
     def forward(self, x, category_id):
         # x.shape == (B, 3, N)  category_id.shape == (B, 16, 1)
@@ -104,7 +104,7 @@ class ShapeNetModel(nn.Module):
         # x = self.conv5(x)
         # # x.shape == (B, 50, N)
 
-        if self.regression_loss_factor > 0:
+        if self.stn_regularization_loss_factor > 0:
             return x, trans
         else:
             return x

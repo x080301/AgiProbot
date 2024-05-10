@@ -47,7 +47,7 @@ train: # only valid when running the training script
     which: adamW  # adamw or sgd
     weight_decay: 1e-4
   consistency_loss_factor: 0  # only valid when training modelnet model
-  regression_loss_factor: 0 # valid when >0
+  stn_regularization_loss_factor: 0 # valid when >0
   aux_loss:
     enable: false
     shared: false
