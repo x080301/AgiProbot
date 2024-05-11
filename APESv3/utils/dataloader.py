@@ -364,11 +364,15 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
     def __init__(self, saved_path, partition, selected_points, fps_enable, augmentation, num_aug, jitter, std, clip,
                  rotate, which_axis,
                  angle_range, translate, x_translate_range, y_translate_range, z_translate_range, anisotropic_scale,
-                 x_scale_range, y_scale_range, z_scale_range, isotropic):
+                 x_scale_range, y_scale_range, z_scale_range, isotropic, vote_enable=False, vote_num=10):
         self.selected_points = selected_points
         self.fps_enable = fps_enable
         self.augmentation = augmentation
         self.num_aug = num_aug
+        self.vote = vote_enable
+        self.vote_num = vote_num
+        self.partition = partition
+
         if augmentation:
             self.augmentation_list = []
             if jitter:
@@ -394,6 +398,12 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
         elif partition == 'test':
             file = glob.glob(os.path.join(saved_path, 'modelnet40_ply_hdf5_2048', '*test*.h5'))
             file.sort()
+
+            if self.vote:
+                self.vote_list = []
+                for _ in range(self.vote_num - 1):
+                    self.vote_list.append(
+                        [data_augmentation.anisotropic_scale, [x_scale_range, y_scale_range, z_scale_range, isotropic]])
         else:
             raise ValueError(
                 'modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
@@ -424,13 +434,31 @@ class ModelNet_AnTao420M(torch.utils.data.Dataset):
         else:
             indices = np.random.choice(2048, self.selected_points, False)
             pcd = pcd[indices]
-        if self.augmentation:
-            choice = np.random.choice(len(self.augmentation_list), self.num_aug, replace=False)
-            for i in choice:
-                augmentation, params = self.augmentation_list[i]
-                pcd = augmentation(pcd, *params)
-        pcd = torch.Tensor(pcd).to(torch.float32)
-        pcd = pcd.permute(1, 0)
+
+        if self.partition == "test" and self.vote:
+            pcd_tmp_list = []
+            pcd_list = []
+            for i in range(len(self.vote_list)):
+                augmentation, params = self.vote_list[i]
+                pcd_tmp = augmentation(pcd, *params)
+                pcd_tmp_list.append(pcd_tmp)
+            for i, pcd_tmp in enumerate(pcd_tmp_list):
+                if i == 0:
+                    pcd = torch.Tensor(pcd).to(torch.float32)
+                else:
+                    pcd = torch.Tensor(pcd_tmp).to(torch.float32)
+                pcd = pcd.permute(1, 0)
+                pcd_list.append(pcd)
+            pcd = pcd_list
+        else:
+            if self.augmentation:
+                choice = np.random.choice(len(self.augmentation_list), self.num_aug, replace=False)
+                for i in choice:
+                    augmentation, params = self.augmentation_list[i]
+                    pcd = augmentation(pcd, *params)
+
+            pcd = torch.Tensor(pcd).to(torch.float32)
+            pcd = pcd.permute(1, 0)
 
         # pcd.shape == (C, N)  category_onehot.shape == (40,)
         return pcd, category_onehot
@@ -440,7 +468,7 @@ def get_modelnet_dataset_AnTao420M(saved_path, selected_points, fps_enable, augm
                                    rotate, which_axis,
                                    angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
                                    anisotropic_scale,
-                                   x_scale_range, y_scale_range, z_scale_range, isotropic):
+                                   x_scale_range, y_scale_range, z_scale_range, isotropic,vote_enable=False, vote_num=10):
     # get dataset
     trainval_set = ModelNet_AnTao420M(saved_path, 'trainval', selected_points, fps_enable, augmentation, num_aug,
                                       jitter, std, clip, rotate, which_axis,
@@ -451,7 +479,7 @@ def get_modelnet_dataset_AnTao420M(saved_path, selected_points, fps_enable, augm
                                   rotate, which_axis,
                                   angle_range, translate, x_translate_range, y_translate_range, z_translate_range,
                                   anisotropic_scale,
-                                  x_scale_range, y_scale_range, z_scale_range, isotropic)
+                                  x_scale_range, y_scale_range, z_scale_range, isotropic,vote_enable, vote_num)
     return trainval_set, test_set
 
 

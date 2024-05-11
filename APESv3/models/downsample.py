@@ -275,7 +275,7 @@ class DownSampleCarve(nn.Module):
         super(DownSampleCarve, self).__init__()
 
         self.M = config_ds.M[layer]
-        self.K = 32
+        self.K = config_ds.K
         self.asm = config_ds.asm[layer]
         self.res = config_ds.res.enable[layer]
         self.ff = config_ds.res.ff[layer]

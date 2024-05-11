@@ -154,7 +154,9 @@ def train(local_rank, config, random_seed,
                                                                            config.train.dataloader.data_augmentation.anisotropic_scale.x_range,
                                                                            config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
                                                                            config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
-                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+                                                                           config.train.dataloader.data_augmentation.anisotropic_scale.isotropic,
+                                                                           config.train.dataloader.vote.enable,
+                                                                           config.train.dataloader.vote.num_vote)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
         trainval_set, test_set = dataloader.get_modelnet_dataset_Alignment1024(config.datasets.saved_path,
                                                                                config.train.dataloader.selected_points,
@@ -358,6 +360,7 @@ def train(local_rank, config, random_seed,
                 scaler.update()
             else:
                 preds = my_model(samples)
+
                 if config.feature_learning_block.res_link.enable:
                     if config.train.aux_loss.enable:
                         train_loss = loss_fn(preds[-1], cls_labels) + config.train.aux_loss.factor * aux_loss(preds,
@@ -454,8 +457,22 @@ def train(local_rank, config, random_seed,
             cls_label_list = []
             with torch.no_grad():
                 for samples, cls_labels in validation_loader:
-                    samples, cls_labels = samples.to(device), cls_labels.to(device)
-                    preds = my_model(samples)
+                    cls_labels = cls_labels.to(device)
+                    if config.train.dataloader.vote.enable:
+                        if epoch + 1 >= config.train.dataloader.vote.vote_start_epoch:
+                            preds_list = []
+                            for samples_vote in samples:
+                                samples_vote = samples_vote.to(device)
+                                preds = my_model(samples_vote)
+                                preds_list.append(preds)
+                            preds = torch.mean(torch.stack(preds_list), dim=0)
+                        else:
+                            samples = samples[0].to(device)
+                            preds = my_model(samples)
+                    else:
+                        samples = samples.to(device)
+                        preds = my_model(samples)
+
                     if config.train.aux_loss.enable:
                         val_loss = loss_fn(preds[-1], cls_labels)
                         preds = preds[-1]
@@ -535,8 +552,8 @@ if __name__ == '__main__':
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
-            'datasets': 'modelnet_ScanObjectNN',  # 'modelnet_AnTao420M',#'modelnet_ScanObjectNN',
-            'usr_config': 'configs/cls_boltzmannT01_bin6.yaml',
+            'datasets': 'modelnet_AnTao420M',  # 'modelnet_AnTao420M',#'modelnet_ScanObjectNN',
+            'usr_config': 'configs/cls_boltzmannT01_bin6_vote.yaml',
             'wandb': {'name': 'Test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))

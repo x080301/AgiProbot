@@ -647,7 +647,7 @@ if __name__ == '__main__':
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
             'datasets': 'shapenet_AnTao350M',
-            'usr_config': 'configs/seg_boltzmannT01_bin6_feature_transform_regularization.yaml',
+            'usr_config': 'configs/seg_boltzmannT01_bin6_k256.yaml',
             'wandb': {'name': 'test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
