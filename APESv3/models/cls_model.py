@@ -14,6 +14,11 @@ class ModelNetModel(nn.Module):
         else:
             raise ValueError('This time only support neighbor2point block!')
 
+        if config.datasets.dataset_name == 'modelnet_ScanObjectNN':
+            num_output = 15
+        else:
+            num_output = 40
+
         self.res_link_enable = config.feature_learning_block.res_link.enable
 
         self.aux_loss_enable = config.train.aux_loss.enable
@@ -28,7 +33,7 @@ class ModelNetModel(nn.Module):
                                                  nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.5))
                     self.linear2 = nn.Sequential(nn.Linear(512, 256), nn.BatchNorm1d(256),
                                                  nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.5))
-                    self.linear3 = nn.Linear(256, 40)
+                    self.linear3 = nn.Linear(256, num_output)
                 else:
                     self.linear1_list = nn.ModuleList()
                     self.linear2_list = nn.ModuleList()
@@ -40,7 +45,7 @@ class ModelNetModel(nn.Module):
                         self.linear2_list.append(
                             nn.Sequential(nn.Linear(512, 256), nn.BatchNorm1d(256), nn.LeakyReLU(negative_slope=0.2),
                                           nn.Dropout(p=0.5)))
-                        self.linear3_list.append(nn.Linear(256, 40))
+                        self.linear3_list.append(nn.Linear(256, num_output))
                 if self.aux_loss_concat:
                     self.linear0 = nn.Sequential(nn.Linear(1024 * num_layers, 1024), nn.BatchNorm1d(1024),
                                                  nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.5))
@@ -49,12 +54,12 @@ class ModelNetModel(nn.Module):
                                              nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.5))
                 self.linear2 = nn.Sequential(nn.Linear(1024, 256), nn.BatchNorm1d(256),
                                              nn.LeakyReLU(negative_slope=0.2), nn.Dropout(p=0.5))
-                self.linear3 = nn.Linear(256, 40)
+                self.linear3 = nn.Linear(256, num_output)
         else:
             assert self.aux_loss_enable == False and consistency_loss_factor == 0, "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(nn.Linear(1024, 256), nn.BatchNorm1d(256), nn.LeakyReLU(negative_slope=0.2),
                                          nn.Dropout(p=0.5))
-            self.linear3 = nn.Linear(256, 40)
+            self.linear3 = nn.Linear(256, num_output)
 
     def forward(self, x):  # x.shape == (B, 3, N)
         if self.res_link_enable:

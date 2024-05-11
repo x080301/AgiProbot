@@ -21,6 +21,8 @@ import socket
 import sys
 import subprocess
 
+from utils.ScanObjectNN import ScanObjectNN
+
 
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main_with_Decorators(config):
@@ -45,6 +47,8 @@ def main_without_Decorators(config):
         dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
     elif config.datasets.dataset_name == 'modelnet_Alignment1024':
         dataloader.download_modelnet_Alignment1024(config.datasets.url, config.datasets.saved_path)
+    elif config.datasets.dataset_name == 'modelnet_ScanObjectNN':
+        ScanObjectNN(config.train.dataloader.selected_points)
     else:
         raise ValueError('Not implemented!')
 
@@ -172,6 +176,9 @@ def train(local_rank, config, random_seed,
                                                                                config.train.dataloader.data_augmentation.anisotropic_scale.y_range,
                                                                                config.train.dataloader.data_augmentation.anisotropic_scale.z_range,
                                                                                config.train.dataloader.data_augmentation.anisotropic_scale.isotropic)
+    elif config.datasets.dataset_name == 'modelnet_ScanObjectNN':
+        trainval_set = ScanObjectNN(partition='training', num_points=config.train.dataloader.selected_points)
+        test_set = ScanObjectNN(partition='test', num_points=config.train.dataloader.selected_points)
     else:
         raise ValueError('Not implemented!')
 
@@ -359,9 +366,13 @@ def train(local_rank, config, random_seed,
                             my_model.module.block.res_link_list)
                         preds = preds[-1]
                     else:
-                        train_loss = loss_fn(preds,
-                                             cls_labels) + config.train.consistency_loss_factor * consistency_loss(
-                            my_model.module.block.res_link_list)
+                        if config.train.consistency_loss_factor > 0:
+                            train_loss = (
+                                    loss_fn(preds, cls_labels) +
+                                    config.train.consistency_loss_factor * consistency_loss(
+                                my_model.module.block.res_link_list))
+                        else:
+                            train_loss = loss_fn(preds, cls_labels)
                 else:
                     assert config.train.aux_loss.enable == False and config.train.consistency_loss_factor == 0, "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
                     train_loss = loss_fn(preds, cls_labels)
@@ -523,9 +534,9 @@ if __name__ == '__main__':
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
-            'train': {'epochs': 200, 'ddp': {'which_gpu': [0, 1]}},
-            'datasets': 'modelnet_AnTao420M',
-            'usr_config': 'configs/cls_boltzmannT01_bin10.yaml',
+            'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
+            'datasets': 'modelnet_ScanObjectNN',  # 'modelnet_AnTao420M',#'modelnet_ScanObjectNN',
+            'usr_config': 'configs/cls_boltzmannT01_bin6.yaml',
             'wandb': {'name': 'Test'}
         }
         config = OmegaConf.merge(config, OmegaConf.create(cmd_config))

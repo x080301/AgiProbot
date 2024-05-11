@@ -187,7 +187,8 @@ def test(local_rank, config):
     # my_model = cls_model_inference_time.ModelNetModel(config)
     # my_model = cls_model_inference_time.ModelNetModel_input_to_2nd_downsample(config)
     # my_model = cls_model_inference_time.ModelNetModel_input_to_1st_downsample(config)
-    my_model = cls_model_inference_time.ModelNetModel_downsample_only(config)
+    # my_model = cls_model_inference_time.ModelNetModel_downsample_only(config)
+    my_model = cls_model_inference_time.ModelNetModel_all_inference_time(config)
 
     my_model.eval()
     my_model = my_model.to(device)
@@ -245,12 +246,39 @@ def test(local_rank, config):
         # time_end = time.time()
         # print(f'Interference time: {time_end - time_begin}s')
 
-        downsampling_time = 0
+        # downsampling_time = 0
+        # for i, (samples, cls_labels) in enumerate(test_loader):
+        #     samples, cls_labels = samples.to(device), cls_labels.to(device)
+        #     preds, downsampling_time_oneiter = my_model(samples)
+        #     downsampling_time += downsampling_time_oneiter
+        # print(f'Interference time: {downsampling_time}s')
+
+        (model_inference_time_total, model_inference_time_start_to_1stds, model_inference_time_start_to_2ndds,
+         model_inference_time_dsonly, batch_counter) = (0, 0, 0, 0, 0)
         for i, (samples, cls_labels) in enumerate(test_loader):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
-            preds, downsampling_time_oneiter = my_model(samples)
-            downsampling_time += downsampling_time_oneiter
-        print(f'Interference time: {downsampling_time}s')
+            preds, (
+                model_inference_time_total_one_iter,
+                model_inference_time_start_to_1stds_one_iter,
+                model_inference_time_start_to_2ndds_one_iter,
+                model_inference_time_dsonly_one_iter) = my_model(samples)
+
+            model_inference_time_total += model_inference_time_total_one_iter
+            model_inference_time_start_to_1stds += model_inference_time_start_to_1stds_one_iter
+            model_inference_time_start_to_2ndds += model_inference_time_start_to_2ndds_one_iter
+            model_inference_time_dsonly += model_inference_time_dsonly_one_iter
+            batch_counter += 1
+
+        model_inference_time_total /= batch_counter
+        model_inference_time_start_to_1stds /= batch_counter
+        model_inference_time_start_to_2ndds /= batch_counter
+        model_inference_time_dsonly /= batch_counter
+
+        print(
+            f'{model_inference_time_total}\t'
+            f'{model_inference_time_start_to_1stds}\t'
+            f'{model_inference_time_start_to_2ndds}\t'
+            f'{model_inference_time_dsonly}\n')
 
 
 if __name__ == '__main__':

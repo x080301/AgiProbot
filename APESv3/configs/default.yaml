@@ -187,6 +187,7 @@ feature_learning_block:
     conv2_out: [ 64 ]
   downsample:
     ds_which: global_carve   # global or local or global_carve or local_insert
+    K: 32
     M: [ 1024, 512 ]
     asm: [ dot, dot ]  # attention scoring method: dot, sub, add, dot-sub, l2, l2+, dot-neighbor
     res: # residual link in downsample module

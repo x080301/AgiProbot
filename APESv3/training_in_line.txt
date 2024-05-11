@@ -1,3 +1,9 @@
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_ScanObjectNN usr_config=configs/cls_boltzmannT01_bin6.yaml wandb.name='Modelnet_Token_ScanObjectNN_1'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_ScanObjectNN usr_config=configs/cls_boltzmannT01_bin6.yaml wandb.name='Modelnet_Token_ScanObjectNN_2'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_ScanObjectNN usr_config=configs/cls_boltzmannT01_bin6.yaml wandb.name='Modelnet_Token_ScanObjectNN_3'
+#---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin2.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin2_1'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin2.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin2_2'

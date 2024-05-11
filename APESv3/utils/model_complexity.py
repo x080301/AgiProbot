@@ -12,6 +12,9 @@ import datetime
 import socket
 import time
 from fvcore.nn import FlopCountAnalysis, parameter_count
+from torchprofile import profile_macs
+import torchprofile
+from torchinfo import summary
 
 from utils.visualization import *
 from utils.visualization_data_processing import *
@@ -111,13 +114,17 @@ def cal_parameters_of_cls(config):
                         params = count_parameters(module)
                         print(f"feature learning layer {name}: {params} parameters")
                 else:
+                    # if name == 'embedding_list':
+                    #     flops, params = profile(module,
+                    #                             inputs=(torch.randn((1, 3, 2048)),))  # , torch.randn((1, 16, 1)),))
+                    #     print(f"{name}: {params} parameters, {flops} FLOPs")
                     params = count_parameters(module)
                     print(f"{name}: {params} parameters")
         else:
 
             params = count_parameters(module)
             print(f"{name}: {params} parameters")
-    print_flops
+
     # if torch.cuda.is_available():
     #     os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
     #     os.environ['CUDA_VISIBLE_DEVICES'] = str(config.test.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
@@ -215,9 +222,10 @@ def cal_parameters_of_seg(config):
                         params = count_parameters(module)
                         print(f"upsample layers {name}: {params} parameters")
                 else:
-                    if name == 'embedding_list':
-                        flops, params = profile(module, inputs=(torch.randn((1, 3, 2048)), torch.randn((1, 16, 1)),))
-                        print(f"{name}: {params} parameters, {flops} FLOPs")
+                    # if name == 'embedding_list':
+                    #     flops, params = profile(module,
+                    #                             inputs=(torch.randn((1, 3, 2048)),))  # , torch.randn((1, 16, 1)),))
+                    #     print(f"{name}: {params} parameters, {flops} FLOPs")
                     params = count_parameters(module)
                     print(f"{name}: {params} parameters")
         else:
@@ -249,3 +257,143 @@ def calculate_model_complexity_seg():
     config = OmegaConf.merge(config, dataset_config)
 
     cal_parameters_of_seg(config)
+
+
+def calculate_model_complexity_and_flops_seg():
+    subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
+    config = OmegaConf.load('configs/default.yaml')
+    cmd_config = {
+        'usr_config': 'configs/token_nonaveragebins_std_seg_logmean.yaml',
+        'datasets': 'shapenet_AnTao350M',
+        'wandb': {'name': '2024_04_16_01_26_Shapenet_Token_Std_logmean_1'},
+        'test': {'ddp': {'which_gpu': [0, 1]}}
+    }
+    config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+
+    dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+    dataset_config = OmegaConf.create({'datasets': dataset_config})
+    config = OmegaConf.merge(config, dataset_config)
+
+    if config.usr_config:
+        test_config = OmegaConf.load(config.usr_config)
+        config = OmegaConf.merge(config, test_config)
+
+    # download artifacts
+    if config.wandb.enable:
+        wandb.login(key=config.wandb.api_key)
+        api = wandb.Api()
+        artifact = api.artifact(f'{config.wandb.entity}/{config.wandb.project}/{config.wandb.name}:latest')
+        if config.test.suffix.enable:
+            local_path = f'./artifacts/{config.wandb.name}_{config.test.suffix.remark}'
+        else:
+            local_path = f'./artifacts/{config.wandb.name}'
+        artifact.download(root=local_path)
+    else:
+        raise ValueError('W&B is not enabled!')
+
+    # overwrite the default config with previous run config
+    config.mode = 'test'
+    run_config = OmegaConf.load(f'{local_path}/usr_config.yaml')
+    if not config.test.suffix.enable:
+        config = OmegaConf.merge(config, run_config)
+    else:
+        OmegaConf.save(config, f'{local_path}/usr_config_test.yaml')
+        print(f'Overwrite the previous run config with new run config.')
+    config = set_config_run(config, "test")
+
+    if config.datasets.dataset_name == 'shapenet_Yi650M':
+        dataloader.download_shapenet_Yi650M(config.datasets.url, config.datasets.saved_path)
+    elif config.datasets.dataset_name == 'shapenet_AnTao350M':
+        dataloader.download_shapenet_AnTao350M(config.datasets.url, config.datasets.saved_path)
+    elif config.datasets.dataset_name == 'shapenet_Normal':
+        dataloader.download_shapenet_Normal(config.datasets.url, config.datasets.saved_path)
+    else:
+        raise ValueError('Not implemented!')
+
+    my_model = seg_model.ShapeNetModel(config)
+    inputs = (torch.randn((8, 3, 2048)), torch.randn((8, 16, 1)))
+
+    flops = FlopCountAnalysis(my_model, inputs)
+    print(flops.by_module())
+
+
+    # # 使用 torchprofile 获取每层的 FLOPs
+    # flops = profile_macs(my_model, inputs)
+    # print(flops)
+
+    # profiler = torchprofile.profile(my_model, inputs=inputs)
+    #
+    # # 输出每一层的 FLOPs 和参数数量
+    # for name, module in my_model.named_modules():
+    #     macs = profiler.ops.get(module, 0)
+    #     params = profiler.params.get(module, 0)
+    #     print(f"{name:20} : {macs:10} MACs, {params:10} parameters")
+
+    # # multiprocessing for ddp
+    #
+    #
+    # flops = profile_macs(my_model, inputs)
+    # print(flops)
+    # flop_counter = FlopCountAnalysis(my_model, inputs)
+    # total_flops = flop_counter.total()
+    #
+    # print(f"Total FLOPs: {total_flops}")
+    # print(flops.by_module())
+def calculate_model_complexity_and_flops_cls():
+    subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
+    config = OmegaConf.load('configs/default.yaml')
+    cmd_config = {
+        'usr_config': 'configs/boltzmannT01_fix.yaml',
+        'datasets': 'modelnet_AnTao420M',
+        'wandb': {'name': '2024_04_09_13_39_Modelnet_Token_Std_boltzmann_T0102_norm_sparsesum1_1'},
+        'test': {'ddp': {'which_gpu': [3]}}
+    }
+    config = OmegaConf.merge(config, OmegaConf.create(cmd_config))
+
+    dataset_config = OmegaConf.load(f'configs/datasets/{config.datasets}.yaml')
+    dataset_config = OmegaConf.create({'datasets': dataset_config})
+    config = OmegaConf.merge(config, dataset_config)
+
+    if config.usr_config:
+        test_config = OmegaConf.load(config.usr_config)
+        config = OmegaConf.merge(config, test_config)
+
+    # download artifacts
+    if config.wandb.enable:
+        wandb.login(key=config.wandb.api_key)
+        api = wandb.Api()
+        artifact = api.artifact(f'{config.wandb.entity}/{config.wandb.project}/{config.wandb.name}:latest')
+        if config.test.suffix.enable:
+            local_path = f'./artifacts/{config.wandb.name}_{config.test.suffix.remark}'
+        else:
+            local_path = f'./artifacts/{config.wandb.name}'
+        artifact.download(root=local_path)
+    else:
+        raise ValueError('W&B is not enabled!')
+
+    # overwrite the default config with previous run config
+    config.mode = 'test'
+    run_config = OmegaConf.load(f'{local_path}/usr_config.yaml')
+    if not config.test.suffix.enable:
+        config = OmegaConf.merge(config, run_config)
+    else:
+        OmegaConf.save(config, f'{local_path}/usr_config_test.yaml')
+        print(f'Overwrite the previous run config with new run config.')
+    config = set_config_run(config, "test")
+
+    if config.datasets.dataset_name == 'modelnet_AnTao420M':
+        dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
+    elif config.datasets.dataset_name == 'modelnet_Alignment1024':
+        dataloader.download_modelnet_Alignment1024(config.datasets.url, config.datasets.saved_path)
+    else:
+        raise ValueError('Not implemented!')
+
+    # multiprocessing for ddp
+
+    my_model = cls_model.ModelNetModel(config)
+
+    inputs = (torch.randn((1, 3, 2048)), )
+
+    flops = FlopCountAnalysis(my_model, inputs)
+    print(flops.by_module())
+
