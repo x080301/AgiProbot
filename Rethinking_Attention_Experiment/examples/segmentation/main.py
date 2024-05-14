@@ -685,6 +685,10 @@ if __name__ == "__main__":
     parser.add_argument('--cfg', type=str, required=True, help='config file')
     parser.add_argument('--profile', action='store_true', default=False, help='set to True to profile speed')
     args, opts = parser.parse_known_args()
+
+    print(f"args:{args}")
+    print(f"opts:{opts}")
+
     cfg = EasyConfig()
     cfg.load(args.cfg, recursive=True)
     cfg.update(opts)  # overwrite the default arguments in yml
