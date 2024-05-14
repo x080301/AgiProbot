@@ -1,3 +1,3 @@
-from examples.segmentation import seg_train
+from examples.segmentation.main import seg_train
 
 seg_train()
