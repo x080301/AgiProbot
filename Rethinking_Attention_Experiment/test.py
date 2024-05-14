@@ -1,3 +1,3 @@
-import torch
-print(torch.__version__)
-print(torch.version.cuda)
+from examples.segmentation import seg_train
+
+seg_train()
