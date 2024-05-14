@@ -148,10 +148,10 @@ class SetAbstraction(nn.Module):
             self.grouper = create_grouper(group_args)
             self.pool = lambda x: torch.max(x, dim=-1, keepdim=False)[0]
             if sampler.lower() == 'fps':
-                print("1")
+                print("fps used")
                 self.sample_fn = furthest_point_sample
             elif sampler.lower() == 'random':
-                print("2")
+                print("random used")
                 self.sample_fn = random_sample
             exit(-1)
 
