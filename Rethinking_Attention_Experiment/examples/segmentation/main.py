@@ -688,6 +688,7 @@ if __name__ == "__main__":
 
     print(f"args:{args}")
     print(f"opts:{opts}")
+    exit(-1)
 
     cfg = EasyConfig()
     cfg.load(args.cfg, recursive=True)
