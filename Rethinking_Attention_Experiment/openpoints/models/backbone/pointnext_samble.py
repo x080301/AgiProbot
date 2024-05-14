@@ -110,7 +110,7 @@ class SetAbstraction(nn.Module):
                  feature_type='dp_fj',
                  use_res=False,
                  is_head=False,
-                 **kwargs, 
+                 **kwargs,
                  ):
         super().__init__()
         self.stride = stride
@@ -148,21 +148,25 @@ class SetAbstraction(nn.Module):
             self.grouper = create_grouper(group_args)
             self.pool = lambda x: torch.max(x, dim=-1, keepdim=False)[0]
             if sampler.lower() == 'fps':
-                print("fps used")
                 self.sample_fn = furthest_point_sample
             elif sampler.lower() == 'random':
-                print("random used")
                 self.sample_fn = random_sample
-            exit(-1)
 
     def forward(self, pf):
         p, f = pf
+
+        print(f"p.shape:{p.shape}")
+        print(f"f.shape:{f.shape}")
+
         if self.is_head:
             f = self.convs(f)  # (n, c)
         else:
             if not self.all_aggr:
+
                 idx = self.sample_fn(p, p.shape[1] // self.stride).long()
                 new_p = torch.gather(p, 1, idx.unsqueeze(-1).expand(-1, -1, 3))
+
+
             else:
                 new_p = p
             """ DEBUG neighbor numbers. 
@@ -179,6 +183,8 @@ class SetAbstraction(nn.Module):
                     identity = self.skipconv(fi)
             else:
                 fi = None
+            
+            print(f"new_p.shape: {new_p.shape}")
 
             dp, fj = self.grouper(new_p, p, f)
             fj = get_aggregation_feautres(new_p, dp, fi, fj, feature_type=self.feature_type)
@@ -372,8 +378,8 @@ class PointNextEncoder_SAMBLE(nn.Module):
         self.strides = strides
         self.in_channels = in_channels
         self.aggr_args = aggr_args
-        self.norm_args = kwargs.get('norm_args', {'norm': 'bn'}) 
-        self.act_args = kwargs.get('act_args', {'act': 'relu'}) 
+        self.norm_args = kwargs.get('norm_args', {'norm': 'bn'})
+        self.act_args = kwargs.get('act_args', {'act': 'relu'})
         self.conv_args = kwargs.get('conv_args', None)
         self.sampler = kwargs.get('sampler', 'fps')
         self.expansion = kwargs.get('expansion', 4)
@@ -436,7 +442,7 @@ class PointNextEncoder_SAMBLE(nn.Module):
                                      group_args=group_args,
                                      sampler=self.sampler,
                                      norm_args=self.norm_args, act_args=self.act_args, conv_args=self.conv_args,
-                                     is_head=is_head, use_res=self.sa_use_res, **self.aggr_args 
+                                     is_head=is_head, use_res=self.sa_use_res, **self.aggr_args
                                      ))
         self.in_channels = channels
         for i in range(1, blocks):
@@ -480,7 +486,7 @@ class PointNextDecoder_SAMBLE(nn.Module):
     def __init__(self,
                  encoder_channel_list: List[int],
                  decoder_layers: int = 2,
-                 decoder_stages: int = 4, 
+                 decoder_stages: int = 4,
                  **kwargs
                  ):
         super().__init__()
@@ -533,7 +539,7 @@ class PointNextPartDecoder_SAMBLE(nn.Module):
         self.in_channels = encoder_channel_list[-1]
         skip_channels = encoder_channel_list[:-1]
         fp_channels = encoder_channel_list[:-1]
-        
+
         # the following is for decoder blocks
         self.conv_args = kwargs.get('conv_args', None)
         radius_scaling = kwargs.get('radius_scaling', 2)
@@ -543,8 +549,8 @@ class PointNextPartDecoder_SAMBLE(nn.Module):
             block = eval(block)
         self.blocks = decoder_blocks
         self.strides = decoder_strides
-        self.norm_args = kwargs.get('norm_args', {'norm': 'bn'}) 
-        self.act_args = kwargs.get('act_args', {'act': 'relu'}) 
+        self.norm_args = kwargs.get('norm_args', {'norm': 'bn'})
+        self.act_args = kwargs.get('act_args', {'act': 'relu'})
         self.expansion = kwargs.get('expansion', 4)
         radius = kwargs.get('radius', 0.1)
         nsample = kwargs.get('nsample', 16)
@@ -554,9 +560,9 @@ class PointNextPartDecoder_SAMBLE(nn.Module):
         self.num_classes = num_classes
         self.use_res = kwargs.get('use_res', True)
         group_args = kwargs.get('group_args', {'NAME': 'ballquery'})
-        self.aggr_args = kwargs.get('aggr_args', 
+        self.aggr_args = kwargs.get('aggr_args',
                                     {'feature_type': 'dp_fj', "reduction": 'max'}
-                                    )  
+                                    )
         if self.cls_map == 'curvenet':
             # global features
             self.global_conv2 = nn.Sequential(
@@ -673,7 +679,7 @@ class PointNextPartDecoder_SAMBLE(nn.Module):
 
         for i in range(-1, -len(self.decoder), -1):
             f[i - 1] = self.decoder[i][1:](
-                [p[i-1], self.decoder[i][0]([p[i - 1], f[i - 1]], [p[i], f[i]])])[1]
+                [p[i - 1], self.decoder[i][0]([p[i - 1], f[i - 1]], [p[i], f[i]])])[1]
 
         # TODO: study where to add this ? 
         f[-len(self.decoder) - 1] = self.decoder[0][1:](
