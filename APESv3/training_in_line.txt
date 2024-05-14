@@ -34,6 +34,12 @@ python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modeln
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_5'
 #---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_fl_k256.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_fl_k256_1'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_fl_k256.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_fl_k256_2'
+#---------------
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_fl_k256.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_fl_k256_3'
+#---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_k256.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_k256_1'
 #---------------
 python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_k256.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_k256_2'

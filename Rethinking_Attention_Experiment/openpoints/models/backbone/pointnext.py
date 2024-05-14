@@ -176,6 +176,7 @@ class SetAbstraction(nn.Module):
                     identity = self.skipconv(fi)
             else:
                 fi = None
+
             dp, fj = self.grouper(new_p, p, f)
             fj = get_aggregation_feautres(new_p, dp, fi, fj, feature_type=self.feature_type)
             f = self.pool(self.convs(fj))
