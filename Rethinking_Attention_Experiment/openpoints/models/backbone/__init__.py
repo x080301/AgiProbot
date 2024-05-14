@@ -1,6 +1,7 @@
 from .pointnet import PointNetEncoder
 from .pointnetv2 import PointNet2Encoder, PointNet2Decoder, PointNetFPModule
 from .pointnext import PointNextEncoder, PointNextDecoder
+from .pointnext_samble import PointNextEncoder_SAMBLE,PointNextDecoder_SAMBLE
 from .pointmetabaselineepe import PointMetaBaselineEPEEncoder
 from .pointmetabaselineepedp import PointMetaBaselineEPEDPEncoder
 from .pointmetabaselinenope import PointMetaBaselineNOPEEncoder
