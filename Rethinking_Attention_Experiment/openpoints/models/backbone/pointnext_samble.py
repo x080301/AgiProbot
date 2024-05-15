@@ -14,6 +14,7 @@ import math
 import einops
 import torch.nn.functional as F
 
+
 def get_reduction_fn(reduction):
     reduction = 'mean' if reduction.lower() == 'avg' else reduction
     assert reduction in ['sum', 'max', 'mean']
@@ -900,7 +901,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-    total_points_to_choose = max_num_points // stride
+    total_points_to_choose = torch.sum(max_num_points[0, :]) // stride  # max_num_points // stride
 
     # print(f'max_num_points:{max_num_points}')
     # print(f'bin_prob:{bin_prob}')
@@ -931,7 +932,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
 
     print(
-        f"..........{num_chosen_points_in_bin[torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,dim=1)].shape}")
+        f"..........{num_chosen_points_in_bin[torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1)].shape}")
     print(f'total_points_to_choose.shape:{total_points_to_choose.shape}')
     print(f'torch.sum(num_chosen_points_in_bin, dim=1).shape:{torch.sum(num_chosen_points_in_bin, dim=1).shape}')
     num_chosen_points_in_bin[
