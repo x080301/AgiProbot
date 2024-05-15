@@ -1161,10 +1161,10 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     num_sampling_scores = attention_point_score.nelement()
 
     bin_boundaries_index = torch.arange(1, num_bins) / num_bins * num_sampling_scores
-    bin_boundaries_index = bin_boundaries_index.to(attention_point_score.device).int()
+    bin_boundaries_index = bin_boundaries_index.to(attention_point_score.device).to(torch.int64)
 
     sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
-    print(bin_boundaries_index)
+    # print(bin_boundaries_index)
     bin_boundaries = sorted_scores[bin_boundaries_index]
 
     try:
