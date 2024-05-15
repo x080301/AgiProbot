@@ -1076,3 +1076,30 @@ def neighbor_mask(pcd, K):
     mask = torch.zeros(B, N, N, dtype=torch.float32, device=idx.device)  # mask.shape == (B, N, N)
     mask.scatter_(2, idx, 1.0)
     return mask
+
+def knn(a, b, k):
+    """
+    :param a: a.shape == (B, N, C)
+    :param b: b.shape == (B, M, C)
+    :param k: int
+    """
+    a_mean = torch.mean(a, dim=1, keepdim=True)
+    a = a - a_mean
+    b = b - a_mean
+
+    a_std = torch.mean(torch.std(a, dim=1, keepdim=True), dim=2, keepdim=True)
+    a = a / a_std
+    b = b / a_std
+
+    # inner = -2 * torch.matmul(a, b.transpose(2, 1))  # inner.shape == (B, N, M)
+    # aa = torch.sum(a ** 2, dim=2, keepdim=True)  # aa.shape == (B, N, 1)
+    # bb = torch.sum(b ** 2, dim=2, keepdim=True)  # bb.shape == (B, M, 1)
+    # pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
+    pairwise_distance = -torch.cdist(a, b)  # , compute_mode='donot_use_mm_for_euclid_dist')
+
+    # diff = torch.unsqueeze(a, dim=1) - torch.unsqueeze(b, dim=2)
+    # pairwise_distance = torch.sum(diff ** 2, dim=-1)
+    # num_positive = torch.sum(pairwise_distance > 0)
+
+    distance, idx = pairwise_distance.topk(k=k, dim=-1)  # idx.shape == (B, N, K)
+    return distance, idx
