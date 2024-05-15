@@ -171,6 +171,7 @@ class SetAbstraction(nn.Module):
                 # idx = self.sample_fn(p, p.shape[1] // self.stride).long()
 
                 f, idx = self.downsample(f)
+                f = f.contiguous()
 
                 new_p = torch.gather(p, 1, idx.unsqueeze(-1).expand(-1, -1, 3))
 
