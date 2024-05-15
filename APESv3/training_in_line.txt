@@ -90,11 +90,11 @@ python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapen
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin6_k256.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_k256_3'
 #---------------
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_vote_1'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_vote_1'
 #---------------
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_vote_2'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_vote_2'
 #---------------
-python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin6_vote_3'
+python train_modelnet.py train.epochs=200 train.ddp.which_gpu=[] datasets=modelnet_AnTao420M usr_config=configs/cls_boltzmannT01_bin6_vote.yaml wandb.name='Modelnet_Token_Std_boltzmann_T01_bin6_vote_3'
 #---------------
 python train_shapenet.py train.epochs=200 train.ddp.which_gpu=[] datasets=shapenet_AnTao350M usr_config=configs/seg_boltzmannT01_bin8.yaml wandb.name='Shapenet_Token_Std_boltzmann_T01_bin8_1'
 #---------------
