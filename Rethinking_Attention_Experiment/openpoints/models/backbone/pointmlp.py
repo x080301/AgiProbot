@@ -168,7 +168,7 @@ class LocalGrouper(nn.Module):
 
     def forward(self, xyz, points):
         B, N, C = xyz.shape
-        S = N // self.sample_ratio 
+        S = N // self.sample_ratio
         xyz = xyz.contiguous()  # xyz [btach, points, xyz]
 
         fps_idx = furthest_point_sample(xyz, S).long()  # [B, npoint]
@@ -348,10 +348,6 @@ class PointMLPEncoder(nn.Module):
         x = F.adaptive_max_pool1d(x, 1).squeeze(dim=-1)
         return x
 
-    def get_logits_loss(self, logits, targets):
-        criterion = SmoothCrossEntropyLoss(smoothing=0.2)
-        loss = criterion(logits, targets)
-        return loss
 
 @MODELS.register_module()
 class PointMLP(PointMLPEncoder):
@@ -379,7 +375,7 @@ class PointMLP(PointMLPEncoder):
         return self.forward_cls_feat(p, x)
 
     def forward_cls_feat(self, p, x=None):
-        if hasattr(p, 'keys'): 
+        if hasattr(p, 'keys'):
             p, x = p['pos'], p.get('x', None)
         if x is None:
             x = p.transpose(1, 2).contiguous()
@@ -407,6 +403,7 @@ def pointMLPElite(num_classes=40, **kwargs) -> PointMLPEncoder:
                            activation="relu", bias=False, use_xyz=False, normalize="anchor",
                            dim_expansion=[2, 2, 2, 1], pre_blocks=[1, 1, 2, 1], pos_blocks=[1, 1, 2, 1],
                            k_neighbors=[24, 24, 24, 24], reducers=[2, 2, 2, 2], **kwargs)
+
 
 class SmoothCrossEntropyLoss(nn.Module):
     def __init__(self, smoothing=0.0):
