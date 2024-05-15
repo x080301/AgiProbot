@@ -401,14 +401,14 @@ class PointMLPSamble(PointMLPEncoderSamble):
 
 
 # -------- There is Point Mlp Original Model Config
-def pointMLP(num_classes=40, **kwargs) -> PointMLPEncoder:
+def pointMLP(num_classes=40, **kwargs) -> PointMLPEncoderSamble:
     return PointMLPEncoder(num_classes=num_classes, embed_dim=64, groups=1, res_expansion=1.0,
                            activation="relu", bias=False, use_xyz=False, normalize="anchor",
                            dim_expansion=[2, 2, 2, 2], pre_blocks=[2, 2, 2, 2], pos_blocks=[2, 2, 2, 2],
                            k_neighbors=[24, 24, 24, 24], reducers=[2, 2, 2, 2], **kwargs)
 
 
-def pointMLPElite(num_classes=40, **kwargs) -> PointMLPEncoder:
+def pointMLPElite(num_classes=40, **kwargs) -> PointMLPEncoderSamble:
     return PointMLPEncoder(num_classes=num_classes, embed_dim=32, groups=1, res_expansion=0.25,
                            activation="relu", bias=False, use_xyz=False, normalize="anchor",
                            dim_expansion=[2, 2, 2, 1], pre_blocks=[1, 1, 2, 1], pos_blocks=[1, 1, 2, 1],
