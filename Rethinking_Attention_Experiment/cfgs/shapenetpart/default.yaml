@@ -1,7 +1,7 @@
 dataset:
   common:
     NAME: ShapeNetPartNormal
-    data_root: /userhome/dataset/pointcloud/ShapeNetPart/shapenetcore_partanno_segmentation_benchmark_v0_normal
+    data_root: '/home/team1/cwu/FuHaoWorkspace/dataset/shapenetcore_partanno_segmentation_benchmark_v0_normal/'
     use_normal: True
     num_points: 2048
   train:
