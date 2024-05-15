@@ -922,6 +922,7 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
 
         # print(f'add:{bin_prob * num_to_choose}')
         num_chosen_points_in_bin += bin_prob * num_to_choose
+        max_num_points = max_num_points.to(num_chosen_points_in_bin.dtype)
         num_chosen_points_in_bin = torch.where(num_chosen_points_in_bin >= max_num_points, max_num_points,
                                                num_chosen_points_in_bin)
         bin_prob = bin_prob * torch.where(num_chosen_points_in_bin >= max_num_points, 0, 1)
