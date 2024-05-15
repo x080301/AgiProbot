@@ -994,29 +994,7 @@ def generating_downsampled_index(attention_point_score, bin_points_mask, bin_sam
             attention_point_score = torch.nn.functional.tanh(attention_point_score)
             # attention_point_score: (B, H, N)
 
-            if boltzmann_t == 'mode_1':
-                # bin_points_mask: (B, H, N, num_bins)
-                num_points_in_onebatch_one_bin = torch.sum(bin_points_mask, dim=2, keepdim=True).float()
-                # num_points_in_onebatch_one_bin: (B, H, 1, num_bins)
-
-                boltzmann_t_inverse = num_points_in_onebatch_one_bin / 100.0
-                # boltzmann_t_inverse: B, H, 1, num_bins)
-
-            elif boltzmann_t == 'mode_2':
-                boltzmann_t_inverse = N / (100.0 * num_bins)
-            elif boltzmann_t == 'mode_3':
-                # bin_points_mask: (B, H, N, num_bins)
-                num_points_in_onebatch_one_bin = torch.sum(bin_points_mask, dim=2, keepdim=True).float()
-                # num_points_in_onebatch_one_bin: (B, H, 1, num_bins)
-
-                boltzmann_t_inverse = num_points_in_onebatch_one_bin / 200.0
-                # boltzmann_t_inverse: B, H, 1, num_bins)
-            elif boltzmann_t == 'mode_4':
-                boltzmann_t_inverse = N / (200.0 * num_bins)
-            elif isinstance(boltzmann_t, numbers.Number):
-                boltzmann_t_inverse = 1 / boltzmann_t
-            else:
-                raise NotImplementedError
+            boltzmann_t_inverse = 1 / boltzmann_t
 
             # sampling_probabilities = torch.exp(attention_point_score.unsqueeze(3) / boltzmann_t) * bin_points_mask
             sampling_probabilities = torch.exp(
