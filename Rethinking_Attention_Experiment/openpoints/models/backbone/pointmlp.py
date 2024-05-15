@@ -348,6 +348,10 @@ class PointMLPEncoder(nn.Module):
         x = F.adaptive_max_pool1d(x, 1).squeeze(dim=-1)
         return x
 
+    def get_logits_loss(self, logits, targets):
+        criterion = SmoothCrossEntropyLoss(smoothing=0.2)
+        loss = criterion(logits, targets)
+        return loss
 
 @MODELS.register_module()
 class PointMLP(PointMLPEncoder):
@@ -355,7 +359,7 @@ class PointMLP(PointMLPEncoder):
                  activation="relu", bias=False, use_xyz=False, normalize="anchor",
                  dim_expansion=[2, 2, 2, 2], pre_blocks=[2, 2, 2, 2], pos_blocks=[2, 2, 2, 2],
                  k_neighbors=[24, 24, 24, 24], reducers=[2, 2, 2, 2], group_args=None, **kwargs):
-        super(PointMLP, self).__init__(in_channels, embed_dim, groups, res_expansion, activation, bias, use_xyz,
+        super().__init__(in_channels, embed_dim, groups, res_expansion, activation, bias, use_xyz,
                          normalize, dim_expansion, pre_blocks, pos_blocks, k_neighbors, reducers,
                          **kwargs
                          )
