@@ -92,11 +92,11 @@ def visualize_shapenet_predictions(config, samples, preds, seg_labels, cls_label
     categories_tmp = []
     ious_tmp = []
     if config.edgeconv_block.enable:
-        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     if config.point2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_preds.vis_which:
         samples_toappend = samples[cls_label == cat_id][:config.test.visualize_preds.num_vis]
@@ -238,11 +238,11 @@ def visualize_shapenet_downsampled_points(config, samples, index, cls_label, sha
     categories_tmp = []
     ious_tmp = []
     if config.edgeconv_block.enable:
-        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     if config.point2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis]
@@ -340,11 +340,11 @@ def visualize_modelnet_downsampled_points(config, samples, index, cls_labels, mo
     samples_tmp = []
     categories_tmp = []
     if config.edgeconv_block.enable:
-        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     if config.point2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
@@ -438,11 +438,11 @@ def visualize_modelnet_heatmap(config, samples, attention_map, cls_labels, artif
     samples_tmp = []
     categories_tmp = []
     if config.edgeconv_block.enable:
-        attention_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        attention_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
-        attention_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        attention_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     if config.point2point_block.enable:
-        attention_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        attention_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_attention_heatmap.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis]
@@ -515,11 +515,11 @@ def visualize_modelnet_downsampled_points_rs_fps(config, samples, index, cls_lab
     samples_tmp = []
     categories_tmp = []
     if config.edgeconv_block.enable:
-        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
         idx_tmp = [[] for _ in range(3)]
     if config.point2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
@@ -606,7 +606,7 @@ def visualize_modelnet_heatmap_mode(config, samples, attention_map, cls_labels, 
     samples_tmp = []
     categories_tmp = []
     if config.neighbor2point_block.enable:
-        attention_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        attention_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_attention_heatmap.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_attention_heatmap.num_vis]
@@ -687,7 +687,7 @@ def visualize_modelnet_heatmap_compare(config, samples, heatmap_dict, cls_labels
     attention_tmp_dict = {}
     if config.neighbor2point_block.enable:
         for mode in heatmap_dict.keys():
-            attention_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+            attention_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
             attention_tmp_dict[mode] = attention_tmp
     i_categories = []
     for cat_id in config.test.visualize_attention_heatmap.vis_which:
@@ -880,11 +880,11 @@ def visualize_modelnet_downsampled_points_few_points(config, samples, index, cls
     samples_tmp = []
     categories_tmp = []
     if config.edgeconv_block.enable:
-        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.edgeconv_with_ds_block.samble_downsample.M))]
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     if config.point2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.point2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.point2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
@@ -968,8 +968,8 @@ def visualize_modelnet_downsampled_points_bin(config, samples, index, bin_prob, 
     samples_tmp = []
     categories_tmp = []
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
-        bin_prob_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
+        bin_prob_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_labels == cat_id][:config.test.visualize_downsampled_points.num_vis]
@@ -1073,8 +1073,8 @@ def visualize_shapenet_downsampled_points_bin(config, samples, index, bin_prob, 
     categories_tmp = []
     ious_tmp = []
     if config.neighbor2point_block.enable:
-        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
-        bin_p_tmp = [[] for _ in range(len(config.neighbor2point_block.downsample.M))]
+        idx_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
+        bin_p_tmp = [[] for _ in range(len(config.neighbor2point_block.samble_downsample.M))]
     i_categories = []
     for cat_id in config.test.visualize_downsampled_points.vis_which:
         samples_toappend = samples[cls_label == cat_id][:config.test.visualize_downsampled_points.num_vis]

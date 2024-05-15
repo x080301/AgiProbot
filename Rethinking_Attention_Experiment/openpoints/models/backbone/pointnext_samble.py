@@ -155,7 +155,7 @@ class SetAbstraction(nn.Module):
             #     self.sample_fn = furthest_point_sample
             # elif sampler.lower() == 'random':
             #     self.sample_fn = random_sample
-            self.downsample = DownSampleToken(self.stride, in_channels)
+            self.samble_downsample = DownSampleToken(self.stride, in_channels)
 
     def forward(self, pf):
         p, f = pf
@@ -170,7 +170,7 @@ class SetAbstraction(nn.Module):
 
                 # idx = self.sample_fn(p, p.shape[1] // self.stride).long()
 
-                f, idx = self.downsample(f)
+                f, idx = self.samble_downsample(f)
                 f = f.contiguous()
 
                 new_p = torch.gather(p, 1, idx.unsqueeze(-1).expand(-1, -1, 3))

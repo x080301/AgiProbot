@@ -8,18 +8,18 @@ from models import downsample
 
 class Neighbor2PointAttentionBlock(nn.Module):
     def __init__(self, config_n2p_block):
-        downsample_which        = config_n2p_block.downsample.ds_which
+        downsample_which        = config_n2p_block.samble_downsample.ds_which
         fl_which                = config_n2p_block.attention.fl_which
         super(Neighbor2PointAttentionBlock, self).__init__()
         self.embedding_list = nn.ModuleList([embedding.EdgeConv(config_n2p_block.embedding, layer) for layer in range(len(config_n2p_block.embedding.K))])
         if downsample_which == 'global':
-            self.downsample_list = nn.ModuleList([downsample.DownSample(config_n2p_block.downsample, layer) for layer in range(len(config_n2p_block.downsample.M))])
+            self.downsample_list = nn.ModuleList([downsample.DownSample(config_n2p_block.samble_downsample, layer) for layer in range(len(config_n2p_block.samble_downsample.M))])
         elif downsample_which == 'local':
-            self.downsample_list = nn.ModuleList([downsample.DownSampleWithSigma(config_n2p_block.downsample, layer) for layer in range(len(config_n2p_block.downsample.M))])
+            self.downsample_list = nn.ModuleList([downsample.DownSampleWithSigma(config_n2p_block.samble_downsample, layer) for layer in range(len(config_n2p_block.samble_downsample.M))])
         elif downsample_which == 'global_carve':
-            self.downsample_list = nn.ModuleList([downsample.DownSampleCarve(config_n2p_block.downsample, layer) for layer in range(len(config_n2p_block.downsample.M))])
+            self.downsample_list = nn.ModuleList([downsample.DownSampleCarve(config_n2p_block.samble_downsample, layer) for layer in range(len(config_n2p_block.samble_downsample.M))])
         elif downsample_which == 'local_insert':
-            self.downsample_list = nn.ModuleList([downsample.DownSampleInsert(config_n2p_block.downsample, layer) for layer in range(len(config_n2p_block.downsample.M))])
+            self.downsample_list = nn.ModuleList([downsample.DownSampleInsert(config_n2p_block.samble_downsample, layer) for layer in range(len(config_n2p_block.samble_downsample.M))])
         else:
             raise ValueError('Only global_carve and local_insert are valid for ds_which!')
         if fl_which == 'n2p':

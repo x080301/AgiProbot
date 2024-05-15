@@ -8,7 +8,7 @@ def vis_data_name_init(config, based_config=True):
         new = {
             vis: [] for vis in config.test.visualize_combine.vis_which
         }
-    elif config.feature_learning_block.downsample.ds_which == "global_carve":
+    elif config.feature_learning_block.samble_downsample.ds_which == "global_carve":
         new = {
             "col_sum": [],
             "row_std": [],
@@ -18,11 +18,11 @@ def vis_data_name_init(config, based_config=True):
             "sparse_col_avg": [],
             "sparse_col_sqr": []
         }
-    elif config.feature_learning_block.downsample.ds_which == "local":
+    elif config.feature_learning_block.samble_downsample.ds_which == "local":
         new = {
             "local_std": []
         }
-    elif config.feature_learning_block.downsample.ds_which == "local_insert":
+    elif config.feature_learning_block.samble_downsample.ds_which == "local_insert":
         new = {
             "local_std": [],
             "sparse_row_std": [],
@@ -34,13 +34,13 @@ def vis_data_name_init(config, based_config=True):
 
 
 def vis_data_structure_init(config, based_config=False):
-    if config.feature_learning_block.downsample.bin.enable[0]:
+    if config.feature_learning_block.samble_downsample.bin.enable[0]:
         trained = {
             "idx": [],
             "attention_point_score": [],
             "bin_prob": []
         }
-    elif config.feature_learning_block.downsample.boltzmann.enable[0]:
+    elif config.feature_learning_block.samble_downsample.boltzmann.enable[0]:
         trained = {
             "idx": [],
             "attention_point_score": [],
@@ -96,7 +96,7 @@ def vis_data_extract(config, model):
     vis_dict = vis_data_structure_init(config, based_config=False)
 
     if config.datasets.dataset_name == "shapenet_AnTao350M" or config.datasets.dataset_name == "shapenet_Yi650M" or config.datasets.dataset_name == "shapenet_Normal":
-        for i in range(len(config.feature_learning_block.downsample.M)):
+        for i in range(len(config.feature_learning_block.samble_downsample.M)):
             # trained model
             attention_map = model.module.block.downsample_list[i].attention_points
             mask = model.module.block.downsample_list[i].mask
@@ -105,15 +105,15 @@ def vis_data_extract(config, model):
             vis_dict["trained"]["idx"].append(model.module.block.downsample_list[i].idx)
             vis_dict["trained"]["attention_point_score"].append(
                 model.module.block.downsample_list[i].attention_point_score)
-            if config.feature_learning_block.downsample.bin.enable[i]:
+            if config.feature_learning_block.samble_downsample.bin.enable[i]:
                 bin_prob = model.module.block.downsample_list[i].bin_prob
                 vis_dict["trained"]["bin_prob"].append(bin_prob.unsqueeze(1))
-            elif config.feature_learning_block.downsample.boltzmann.enable[i]:
+            elif config.feature_learning_block.samble_downsample.boltzmann.enable[i]:
                 aps_boltz = model.module.block.downsample_list[i].aps_boltz
                 vis_dict["trained"]["aps_boltz"].append(aps_boltz)
     elif config.datasets.dataset_name == "modelnet_AnTao420M" or config.datasets.dataset_name == "modelnet_Alignment1024":
-        if config.feature_learning_block.downsample.ds_which == "global_carve":
-            for i in range(len(config.feature_learning_block.downsample.M)):
+        if config.feature_learning_block.samble_downsample.ds_which == "global_carve":
+            for i in range(len(config.feature_learning_block.samble_downsample.M)):
                 # trained model
                 attention_map = model.module.block.downsample_list[i].attention_points
                 mask = model.module.block.downsample_list[i].mask
@@ -122,10 +122,10 @@ def vis_data_extract(config, model):
                 vis_dict["trained"]["idx"].append(model.module.block.downsample_list[i].idx)
                 vis_dict["trained"]["attention_point_score"].append(
                     model.module.block.downsample_list[i].attention_point_score)
-                if config.feature_learning_block.downsample.bin.enable[i]:
+                if config.feature_learning_block.samble_downsample.bin.enable[i]:
                     bin_prob = model.module.block.downsample_list[i].bin_prob
                     vis_dict["trained"]["bin_prob"].append(bin_prob.unsqueeze(1))
-                elif config.feature_learning_block.downsample.boltzmann.enable[i]:
+                elif config.feature_learning_block.samble_downsample.boltzmann.enable[i]:
                     aps_boltz = model.module.block.downsample_list[i].aps_boltz
                     vis_dict["trained"]["aps_boltz"].append(aps_boltz)
 
@@ -157,12 +157,12 @@ def vis_data_extract(config, model):
                     if config.test.few_points.enable:
                         num_points = config.test.few_points.num_points
                     else:
-                        num_points = config.feature_learning_block.downsample.M[i]
+                        num_points = config.feature_learning_block.samble_downsample.M[i]
                     idx = value[-1].topk(num_points, dim=-1)[1]
                     vis_dict["ds_points"][mode].append(idx)
-        elif config.feature_learning_block.downsample.ds_which == "local":
+        elif config.feature_learning_block.samble_downsample.ds_which == "local":
             vis_dict = vis_data_structure_init(config, based_config=True)
-            for i in range(len(config.feature_learning_block.downsample.M)):
+            for i in range(len(config.feature_learning_block.samble_downsample.M)):
                 # trained model
                 attention_map = model.module.block.downsample_list[i].attention_points
                 vis_dict["trained"]["idx"].append(model.module.block.downsample_list[i].idx)
@@ -176,11 +176,11 @@ def vis_data_extract(config, model):
                     if config.test.few_points.enable:
                         num_points = config.test.few_points.num_points
                     else:
-                        num_points = config.feature_learning_block.downsample.M[i]
+                        num_points = config.feature_learning_block.samble_downsample.M[i]
                     idx = value[-1].topk(num_points, dim=-1)[1]
                     vis_dict["ds_points"][mode].append(idx)
-        elif config.feature_learning_block.downsample.ds_which == "local_insert":
-            for i in range(len(config.feature_learning_block.downsample.M)):
+        elif config.feature_learning_block.samble_downsample.ds_which == "local_insert":
+            for i in range(len(config.feature_learning_block.samble_downsample.M)):
                 # trained model
                 attention_map = model.module.block.downsample_list[i].attention_points
                 mask = model.module.block.downsample_list[i].mask
@@ -189,10 +189,10 @@ def vis_data_extract(config, model):
                 vis_dict["trained"]["idx"].append(model.module.block.downsample_list[i].idx)
                 vis_dict["trained"]["attention_point_score"].append(
                     model.module.block.downsample_list[i].attention_point_score)
-                if config.feature_learning_block.downsample.bin.enable[i]:
+                if config.feature_learning_block.samble_downsample.bin.enable[i]:
                     bin_prob = model.module.block.downsample_list[i].bin_prob
                     vis_dict["trained"]["bin_prob"].append(bin_prob.unsqueeze(1))
-                elif config.feature_learning_block.downsample.boltzmann.enable[i]:
+                elif config.feature_learning_block.samble_downsample.boltzmann.enable[i]:
                     aps_boltz = model.module.block.downsample_list[i].aps_boltz
                     vis_dict["trained"]["aps_boltz"].append(aps_boltz)
 
@@ -219,7 +219,7 @@ def vis_data_extract(config, model):
                     if config.test.few_points.enable:
                         num_points = config.test.few_points.num_points
                     else:
-                        num_points = config.feature_learning_block.downsample.M[i]
+                        num_points = config.feature_learning_block.samble_downsample.M[i]
                     idx = value[-1].topk(num_points, dim=-1)[1]
                     vis_dict["ds_points"][mode].append(idx)
         else:
@@ -240,8 +240,8 @@ def vis_data_gather(config, model, device, rank, vis_test_gather_dict):
         for idx_mode in vis_test_gather_dict[vis_type].keys():
             gather_list = [[torch.empty_like(vis_all_dict[vis_type][idx_mode][j]).to(device) for _ in
                             range(config.test.ddp.nproc_this_node)] for j in
-                           range(len(config.feature_learning_block.downsample.M))]
-            for j in range(len(config.feature_learning_block.downsample.M)):
+                           range(len(config.feature_learning_block.samble_downsample.M))]
+            for j in range(len(config.feature_learning_block.samble_downsample.M)):
                 torch.distributed.all_gather(gather_list[j], vis_all_dict[vis_type][idx_mode][j])
                 if rank == 0:
                     index = torch.concat(gather_list[j], dim=0)

@@ -10,6 +10,7 @@ from .pointmetabase import PointMetaBaseEncoder
 from .dgcnn import DGCNN
 from .deepgcn import DeepGCN
 from .pointmlp import PointMLPEncoder, PointMLP
+from .pointmlp_samble import PointMLPEncoderSamble, PointMLPSamble
 from .pointvit import PointViT, PointViTDecoder 
 from .pct import Pct
 from .curvenet import CurveNet

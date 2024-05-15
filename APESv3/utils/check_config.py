@@ -20,11 +20,11 @@ def check_config(config):
     cls_datasets = ["modelnet_AnTao420M", "modelnet_Alignment1024"]
     seg_datasets = ["shapenet_AnTao350M", "shapenet_Yi650M", "shapenet_Normal"]
 
-    bin_boundaries = config.feature_learning_block.downsample.bin.bin_boundaries
-    num_bins = config.feature_learning_block.downsample.bin.num_bins
+    bin_boundaries = config.feature_learning_block.samble_downsample.bin.bin_boundaries
+    num_bins = config.feature_learning_block.samble_downsample.bin.num_bins
     for i, bin_boundaries_one_layer in enumerate(bin_boundaries):
-        if config.feature_learning_block.downsample.bin.enable[i] \
-                and config.feature_learning_block.downsample.bin.mode[i] == 'nonuniform_split_bin':
+        if config.feature_learning_block.samble_downsample.bin.enable[i] \
+                and config.feature_learning_block.samble_downsample.bin.mode[i] == 'nonuniform_split_bin':
             assert num_bins[i] == len(bin_boundaries_one_layer) + 1, 'Length of bin_boundaries should equal num_bins-1.'
 
     # train & test
@@ -58,9 +58,9 @@ def check_config(config):
     if config.test.visualize_combine.enable:
         assert config.test.visualize_downsampled_points.num_vis == config.test.visualize_attention_heatmap.num_vis, "If vis_combine is enabled, downsample points and heatmap must be visualized in the same amount!"
         for idx_mode in config.test.visualize_combine.vis_which:
-            if idx_mode not in idx_mode_dict[config.feature_learning_block.downsample.ds_which]:
+            if idx_mode not in idx_mode_dict[config.feature_learning_block.samble_downsample.ds_which]:
                 raise ValueError(
-                    f"When visualize_combine is enabled, vis_which should be one of {idx_mode_dict[config.feature_learning_block.downsample.ds_which]}! Got: {idx_mode}")
+                    f"When visualize_combine is enabled, vis_which should be one of {idx_mode_dict[config.feature_learning_block.samble_downsample.ds_which]}! Got: {idx_mode}")
 
     # block
     assert config.feature_learning_block.enable and not config.point2point_block.enable and not config.edgeconv_block.enable, "Only N2P block can be enabled!"
@@ -77,24 +77,24 @@ def check_config(config):
                    0] == 6, "When didn't use dataset with normal vector, the first conv_in must be 6"
 
         # feature_learning_block.downsample    
-    for i in range(len(config.feature_learning_block.downsample.M)):
-        q_in = config.feature_learning_block.downsample.q_in[i]
-        q_out = config.feature_learning_block.downsample.q_out[i]
-        k_in = config.feature_learning_block.downsample.k_in[i]
-        k_out = config.feature_learning_block.downsample.k_out[i]
-        v_in = config.feature_learning_block.downsample.v_in[i]
-        v_out = config.feature_learning_block.downsample.v_out[i]
-        num_heads = config.feature_learning_block.downsample.num_heads[i]
-        num_bins = config.feature_learning_block.downsample.bin.num_bins[i]
-        idx_mode = config.feature_learning_block.downsample.idx_mode[i]
-        bin_enable = config.feature_learning_block.downsample.bin.enable[i]
-        boltzmann_enable = config.feature_learning_block.downsample.boltzmann.enable[i]
+    for i in range(len(config.feature_learning_block.samble_downsample.M)):
+        q_in = config.feature_learning_block.samble_downsample.q_in[i]
+        q_out = config.feature_learning_block.samble_downsample.q_out[i]
+        k_in = config.feature_learning_block.samble_downsample.k_in[i]
+        k_out = config.feature_learning_block.samble_downsample.k_out[i]
+        v_in = config.feature_learning_block.samble_downsample.v_in[i]
+        v_out = config.feature_learning_block.samble_downsample.v_out[i]
+        num_heads = config.feature_learning_block.samble_downsample.num_heads[i]
+        num_bins = config.feature_learning_block.samble_downsample.bin.num_bins[i]
+        idx_mode = config.feature_learning_block.samble_downsample.idx_mode[i]
+        bin_enable = config.feature_learning_block.samble_downsample.bin.enable[i]
+        boltzmann_enable = config.feature_learning_block.samble_downsample.boltzmann.enable[i]
 
         if bin_enable and boltzmann_enable:
             raise ValueError("bin and boltzmann cannot be enabled at the same time!")
 
-        assert idx_mode in idx_mode_dict[config.feature_learning_block.downsample.ds_which], \
-            f"When downsample mode is {config.feature_learning_block.downsample.ds_which}, idx_mode should be one of {idx_mode_dict[config.feature_learning_block.downsample.ds_which]}! Got: {idx_mode}"
+        assert idx_mode in idx_mode_dict[config.feature_learning_block.samble_downsample.ds_which], \
+            f"When downsample mode is {config.feature_learning_block.samble_downsample.ds_which}, idx_mode should be one of {idx_mode_dict[config.feature_learning_block.samble_downsample.ds_which]}! Got: {idx_mode}"
 
         if q_in != k_in or q_in != v_in or k_in != v_in:
             raise ValueError(f'q_in, k_in and v_in should be the same! Got q_in:{q_in}, k_in:{k_in}, v_in:{v_in}')
