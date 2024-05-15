@@ -12,7 +12,7 @@ from ..layers import create_convblock1d, create_convblock2d, create_act, CHANNEL
     create_grouper, furthest_point_sample, random_sample, three_interpolation
 import math
 import einops
-
+import torch.nn.functional as F
 
 def get_reduction_fn(reduction):
     reduction = 'mean' if reduction.lower() == 'avg' else reduction
