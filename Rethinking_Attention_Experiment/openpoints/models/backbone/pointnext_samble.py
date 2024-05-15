@@ -742,6 +742,8 @@ class DownSampleToken(nn.Module):
         # boltzmann
         self.boltzmann_T = 0.1
 
+        self.momentum_update_factor = 0.99
+
     def forward(self, x):
         # x.shape == (B, C, N)
 
@@ -1150,3 +1152,51 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
     bin_points_mask = (attention_point_score < bin_boundaries[0]) & (attention_point_score >= bin_boundaries[1])
     # bin_points_mask: (B,H,N,num_bins)
     return bin_boundaries, bin_points_mask
+
+
+def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score, num_bins, momentum_update_factor):
+    # old_bin_boundaries:2 * (1,1,1,num_bins)
+    # attention_point_score: (B, H, N)
+
+    num_sampling_scores = attention_point_score.nelement()
+
+    bin_boundaries_index = torch.arange(1, num_bins) / num_bins * num_sampling_scores
+    bin_boundaries_index = bin_boundaries_index.to(attention_point_score.device).int()
+
+    sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
+    bin_boundaries = sorted_scores[bin_boundaries_index]
+
+    try:
+        world_size = torch.distributed.get_world_size()
+    except Exception as e:
+        pass
+    else:
+        torch.distributed.all_reduce(bin_boundaries)  # , reduce_op=torch.distributed.ReduceOp.SUM)
+        bin_boundaries = bin_boundaries / world_size
+
+    if old_bin_boundaries is not None:
+        new_bin_boundaries = [old_bin_boundaries[0].detach(), old_bin_boundaries[1].detach()]
+
+        bin_boundaries = new_bin_boundaries[0][0, 0, 0, 1:] * momentum_update_factor + (
+                1 - momentum_update_factor) * bin_boundaries
+
+        new_bin_boundaries[0][0, 0, 0, 1:] = bin_boundaries
+        new_bin_boundaries[1][0, 0, 0, :-1] = bin_boundaries
+    else:
+        # self.bin_boundaries = config_ds.bin.bin_boundaries[layer]
+        bin_boundaries_upper = torch.empty((num_bins,), device=attention_point_score.device)
+        bin_boundaries_upper[0] = float('inf')
+        bin_boundaries_upper[1:] = bin_boundaries
+
+        bin_boundaries_lower = torch.empty((num_bins,), device=attention_point_score.device)
+        bin_boundaries_lower[-1] = float('-inf')
+        bin_boundaries_lower[:-1] = bin_boundaries
+
+        new_bin_boundaries = [torch.asarray(bin_boundaries_upper).reshape(1, 1, 1, num_bins),
+                              # [inf, 0.503, 0.031, -0.230, -0.427, -0.627]
+                              torch.asarray(bin_boundaries_lower).reshape(1, 1, 1, num_bins)
+                              # [0.503, 0.031, -0.230, -0.427, -0.627, -inf]
+                              ]
+
+        # print(f'new_bin_boundaries:{new_bin_boundaries}')
+    return new_bin_boundaries
