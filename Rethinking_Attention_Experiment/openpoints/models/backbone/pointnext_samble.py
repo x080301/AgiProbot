@@ -192,7 +192,7 @@ class SetAbstraction(nn.Module):
             else:
                 fi = None
 
-            print(f"new_p.shape: {new_p.shape}")
+            # print(f"new_p.shape: {new_p.shape}")
 
             dp, fj = self.grouper(new_p, p, f)
             fj = get_aggregation_feautres(new_p, dp, fi, fj, feature_type=self.feature_type)
