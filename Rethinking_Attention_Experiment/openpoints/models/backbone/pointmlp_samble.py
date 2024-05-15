@@ -306,7 +306,7 @@ class PointMLPEncoderSamble(nn.Module):
                  activation="relu", bias=False, use_xyz=False, normalize="anchor",
                  dim_expansion=[2, 2, 2, 2], pre_blocks=[2, 2, 2, 2], pos_blocks=[2, 2, 2, 2],
                  k_neighbors=[24, 24, 24, 24], reducers=[2, 2, 2, 2], **kwargs):
-        super(PointMLPEncoder, self).__init__()
+        super(PointMLPEncoderSamble, self).__init__()
         self.stages = len(pre_blocks)
         self.embedding = ConvBNReLU1D(in_channels, embed_dim, bias=bias, activation=activation)
         assert len(pre_blocks) == len(k_neighbors) == len(reducers) == len(pos_blocks) == len(dim_expansion), \
@@ -360,7 +360,7 @@ class PointMLPEncoderSamble(nn.Module):
 
 
 @MODELS.register_module()
-class PointMLPSamble(PointMLPEncoder):
+class PointMLPSamble(PointMLPEncoderSamble):
     def __init__(self, in_channels=3, num_classes=15, embed_dim=64, groups=1, res_expansion=1.0,
                  activation="relu", bias=False, use_xyz=False, normalize="anchor",
                  dim_expansion=[2, 2, 2, 2], pre_blocks=[2, 2, 2, 2], pos_blocks=[2, 2, 2, 2],
