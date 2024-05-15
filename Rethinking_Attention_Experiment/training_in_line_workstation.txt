@@ -17,11 +17,12 @@ cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot
 git fetch --all
 git reset --hard origin/main
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/Rethinking_Attention_Experiment
-CUDA_VISIBLE_DEVICES=0,1 bash script/main_classification.sh cfgs/modelnet40ply2048/pointmlp.yaml wandb.use_wandb=True
+CUDA_VISIBLE_DEVICES=0,1 bash script/main_partseg.sh cfgs/modelnet40ply2048/pointmetabase-s_c160.yaml wandb.use_wandb=True
 #---------------
 nvidia-smi
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot
 git fetch --all
 git reset --hard origin/main
 cd /mnt/Data/cwu/FuHaoWorkspace/agiprobot/Rethinking_Attention_Experiment
-CUDA_VISIBLE_DEVICES=0,1 bash script/main_classification.sh cfgs/modelnet40ply2048/pointmlp.yaml wandb.use_wandb=True
+CUDA_VISIBLE_DEVICES=0,1 bash script/main_partseg.sh cfgs/modelnet40ply2048/pointnext-s_c160.yaml wandb.use_wandb=True
+#---------------
