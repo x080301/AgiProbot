@@ -956,6 +956,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
 
 def generating_downsampled_index(attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_t,
                                  k_point_to_choose):
+    M = torch.sum(k_point_to_choose[0, :])
+
     B, _, N, num_bins = bin_points_mask.shape
     if bin_sample_mode == "topk":
         # attention_point_score: (B, H, N)
@@ -1035,9 +1037,9 @@ def generating_downsampled_index(attention_point_score, bin_points_mask, bin_sam
         sampling_probabilities = sampling_probabilities.permute(0, 2, 1).reshape(-1, N)
         # sampling_probabilities: (B*num_bins,N)
 
-        sampled_index_M_points = torch.multinomial(sampling_probabilities, -1)
+        sampled_index_M_points = torch.multinomial(sampling_probabilities, M)
         # sampled_index_M_points: (B*num_bins,M)
-        sampled_index_M_points = sampled_index_M_points.reshape(B, num_bins, -1)
+        sampled_index_M_points = sampled_index_M_points.reshape(B, num_bins, M)
         # sampled_index_M_points: (B,num_bins,M)
 
         index_down = []
