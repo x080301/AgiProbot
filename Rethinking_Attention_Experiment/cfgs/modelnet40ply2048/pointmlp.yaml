@@ -1,22 +1,24 @@
 # GFLOPs  GMACs   Params.(M)
 #  31.36   15.61   13.239
 model:
-  NAME: PointMLP
-  in_channels: 3
-  points: 1024
-  num_classes: 40
-  embed_dim: 64
-  groups: 1
-  res_expansion: 1.0
-  activation: "relu"
-  bias: False
-  use_xyz: False
-  normalize: "anchor"
-  dim_expansion: [ 2, 2, 2, 2 ]
-  pre_blocks: [ 2, 2, 2, 2 ]
-  pos_blocks: [ 2, 2, 2, 2 ]
-  k_neighbors: [ 24, 24, 24, 24 ]
-  reducers: [ 2, 2, 2, 2 ]
+  NAME: BaseCls
+  encoder_args:
+    NAME: PointMLP
+    in_channels: 3
+    points: 1024
+    num_classes: 40
+    embed_dim: 64
+    groups: 1
+    res_expansion: 1.0
+    activation: "relu"
+    bias: False
+    use_xyz: False
+    normalize: "anchor"
+    dim_expansion: [ 2, 2, 2, 2 ]
+    pre_blocks: [ 2, 2, 2, 2 ]
+    pos_blocks: [ 2, 2, 2, 2 ]
+    k_neighbors: [ 24, 24, 24, 24 ]
+    reducers: [ 2, 2, 2, 2 ]
 
 lr:
   0.1
