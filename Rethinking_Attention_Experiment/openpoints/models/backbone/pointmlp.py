@@ -407,3 +407,17 @@ def pointMLPElite(num_classes=40, **kwargs) -> PointMLPEncoder:
                            activation="relu", bias=False, use_xyz=False, normalize="anchor",
                            dim_expansion=[2, 2, 2, 1], pre_blocks=[1, 1, 2, 1], pos_blocks=[1, 1, 2, 1],
                            k_neighbors=[24, 24, 24, 24], reducers=[2, 2, 2, 2], **kwargs)
+
+class SmoothCrossEntropyLoss(nn.Module):
+    def __init__(self, smoothing=0.0):
+        super(SmoothCrossEntropyLoss, self).__init__()
+        self.smoothing = smoothing
+
+    def forward(self, logits, target):
+        log_probs = F.log_softmax(logits, dim=-1)
+        n_classes = logits.size(-1)
+        # Convert target to one-hot encoding
+        one_hot = torch.zeros_like(logits).scatter(1, target.view(-1, 1), 1)
+        one_hot = one_hot * (1 - self.smoothing) + self.smoothing / n_classes
+        loss = -(one_hot * log_probs).sum(dim=-1).mean()
+        return loss
