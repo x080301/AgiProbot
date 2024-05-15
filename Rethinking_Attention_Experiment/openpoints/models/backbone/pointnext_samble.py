@@ -159,8 +159,8 @@ class SetAbstraction(nn.Module):
     def forward(self, pf):
         p, f = pf
 
-        print(f"p.shape:{p.shape}")
-        print(f"f.shape:{f.shape}")
+        # print(f"p.shape:{p.shape}")
+        # print(f"f.shape:{f.shape}")
 
         if self.is_head:
             f = self.convs(f)  # (n, c)
@@ -930,11 +930,11 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     num_chosen_points_in_bin = num_chosen_points_in_bin.int()
     # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
 
-    print(f'total_points_to_choose.shape:{total_points_to_choose.shape}')
-    print(f'torch.sum(num_chosen_points_in_bin, dim=1).shape:{torch.sum(num_chosen_points_in_bin, dim=1).shape}')
+    # print(f'total_points_to_choose.shape:{total_points_to_choose.shape}')
+    # print(f'torch.sum(num_chosen_points_in_bin, dim=1).shape:{torch.sum(num_chosen_points_in_bin, dim=1).shape}')
     num_chosen_points_in_bin[
         torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
-                                         dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
+                                         dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1,keepdim=True)
 
     # if torch.min(num_chosen_points_in_bin) < 0:
     #     for i in range(B):
