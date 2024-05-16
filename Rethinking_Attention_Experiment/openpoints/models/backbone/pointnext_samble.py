@@ -783,6 +783,10 @@ class DownSampleToken(nn.Module):
             _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
             # attention_bins_beforesoftmax: (B,1,N,num_bins)
             attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+            for i_batch in range(B):
+                if torch.sum(attention_points[i]) == 0:
+                    print(attention_map[i])
+                    exit(-1)
 
         else:
             raise NotImplementedError
@@ -901,7 +905,7 @@ class DownSampleToken(nn.Module):
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
 
         for i in range(attention_point_score.shape[0]):
-            if torch.sum(attention_point_score[i])==0:
+            if torch.sum(attention_point_score[i]) == 0:
                 print(f'torch.sum(sparse_attention_map, dim=-2)[i]:{torch.sum(sparse_attention_map, dim=-2)[i]}')
                 print(f'attention_points:{attention_points[i]}')
                 print(f'mask:{mask[i]}')
@@ -1144,7 +1148,7 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
 
     # attention_point_score: (B,1,N)
     attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
-                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)+1e-8
+                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True) + 1e-8
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
