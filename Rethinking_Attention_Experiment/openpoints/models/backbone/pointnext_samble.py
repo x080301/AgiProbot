@@ -818,6 +818,7 @@ class DownSampleToken(nn.Module):
         #     print('saved')
 
         index_down = generating_downsampled_index(
+            torch.sum(max_num_points[0, :]) // self.stride,
             self.attention_point_score,
             self.bin_points_mask,
             self.bin_sample_mode,
@@ -955,10 +956,8 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     return num_chosen_points_in_bin
 
 
-def generating_downsampled_index(attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_t,
+def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_sample_mode, boltzmann_t,
                                  k_point_to_choose):
-    M = torch.sum(k_point_to_choose[0, :])
-
     B, _, N, num_bins = bin_points_mask.shape
     if bin_sample_mode == "topk":
         # attention_point_score: (B, H, N)
