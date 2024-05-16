@@ -1,15 +1,15 @@
 # Dataset Related
-num_points: 2048  # number of poins actually used in training and evaluation
+num_points: 1024  # number of poins actually used in training and evaluation
 dataset:
   common:
     NAME: ModelNet40Ply2048
     data_dir: '/home/team1/cwu/FuHaoWorkspace/dataset/ModelNet40Ply2048/'
   train:
     split: train
-    num_points: 2048  # in training, use sampled 1024 points for data augmentation.
+    num_points: 1024  # in training, use sampled 1024 points for data augmentation.
   val:
     split: test
-    num_points: 2048  # in testing, use uniformly pre-sampled 1024 points for evaluation (following https://github.com/lulutang0608/Point-BERT)
+    num_points: 1024  # in testing, use uniformly pre-sampled 1024 points for evaluation (following https://github.com/lulutang0608/Point-BERT)
 
 feature_keys: pos
 
@@ -19,7 +19,7 @@ datatransforms:
   val: [PointsToTensor]
   kwargs:
     shift: [0.2, 0.2, 0.2]
-batch_size: 8
+batch_size: 32
 dataloader:
   num_workers: 6
 
