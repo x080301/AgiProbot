@@ -730,7 +730,8 @@ class DownSampleToken(nn.Module):
         self.bin_tokens = nn.Parameter(
             torch.normal(mean=0, std=1 / math.sqrt(q_in), size=(1, q_in, self.num_bins)))
 
-        self.softmax = nn.Softmax(dim=-1)
+        self.softmax_points = nn.Softmax(dim=-1)
+        self.softmax_bins = nn.Softmax(dim=-1)
         # downsample res link
 
         # bin
@@ -778,11 +779,16 @@ class DownSampleToken(nn.Module):
 
             attention_map_beforesoftmax = energy / scale_factor
 
-            attention_map = self.softmax(attention_map_beforesoftmax)  # attention.shape == (B, H, N, N+num_bins)
-
-            _, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N, dim=-1)
+            # attention_map = self.softmax(attention_map_beforesoftmax)  # attention.shape == (B, H, N, N+num_bins)
             # attention_bins_beforesoftmax: (B,1,N,num_bins)
-            attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+            # attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
+
+            attention_points_beforesoftmax, attention_bins_beforesoftmax = torch.split(attention_map_beforesoftmax, N,
+                                                                                       dim=-1)
+            attention_points = self.softmax_points(attention_points_beforesoftmax)
+            attention_bins = self.softmax_bins(attention_bins_beforesoftmax)
+            attention_map = torch.cat((attention_points, attention_bins), dim=-1)
+
             for i_batch in range(B):
                 if torch.sum(attention_points[i_batch]) == 0:
                     print(f'attention_map[i_batch]:{attention_map[i_batch]}')
