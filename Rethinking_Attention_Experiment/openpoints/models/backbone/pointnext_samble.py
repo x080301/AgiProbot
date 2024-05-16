@@ -908,6 +908,7 @@ class DownSampleToken(nn.Module):
             if torch.sum(attention_point_score[i]) == 0:
                 print(f'torch.sum(sparse_attention_map, dim=-2)[i]:{torch.sum(sparse_attention_map, dim=-2)[i]}')
                 print(f'attention_points:{attention_points[i]}')
+                print(f'attention_points sum:{torch.sum(attention_points[i])}')
                 print(f'mask:{mask[i]}')
                 exit(-1)
 
