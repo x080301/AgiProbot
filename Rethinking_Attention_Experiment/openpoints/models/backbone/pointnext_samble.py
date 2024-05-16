@@ -1110,7 +1110,8 @@ def knn(a, b, k):
     # pairwise_distance = -aa - inner - bb.transpose(2, 1)  # pairwise_distance.shape == (B, N, M)
     pairwise_distance = -torch.cdist(a, b)  # , compute_mode='donot_use_mm_for_euclid_dist')
 
-    pairwise_distance += torch.eye(pairwise_distance.shape[0], device=pairwise_distance.device).fill_diagonal_(float('inf'))
+    pairwise_distance += torch.eye(pairwise_distance.shape[1], device=pairwise_distance.device).fill_diagonal_(
+        float('inf')).unsqueeze(0)
 
     # diff = torch.unsqueeze(a, dim=1) - torch.unsqueeze(b, dim=2)
     # pairwise_distance = torch.sum(diff ** 2, dim=-1)
