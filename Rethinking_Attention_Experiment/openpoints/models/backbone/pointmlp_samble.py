@@ -657,10 +657,10 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     num_chosen_points_in_bin = num_chosen_points_in_bin.int()
     # print(torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1).shape)
 
-    print(
-        f"..........{num_chosen_points_in_bin[torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1)].shape}")
-    print(f'total_points_to_choose.shape:{total_points_to_choose.shape}')
-    print(f'torch.sum(num_chosen_points_in_bin, dim=1).shape:{torch.sum(num_chosen_points_in_bin, dim=1).shape}')
+    # print(
+    #     f"..........{num_chosen_points_in_bin[torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin, dim=1)].shape}")
+    # print(f'total_points_to_choose.shape:{total_points_to_choose.shape}')
+    # print(f'torch.sum(num_chosen_points_in_bin, dim=1).shape:{torch.sum(num_chosen_points_in_bin, dim=1).shape}')
     num_chosen_points_in_bin[
         torch.arange(0, B), torch.argmax(max_num_points - num_chosen_points_in_bin,
                                          dim=1)] += total_points_to_choose - torch.sum(num_chosen_points_in_bin, dim=1)
