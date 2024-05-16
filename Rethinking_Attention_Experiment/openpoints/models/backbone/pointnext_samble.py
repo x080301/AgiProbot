@@ -900,10 +900,15 @@ class DownSampleToken(nn.Module):
         # full attention map based
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
 
-        if torch.isnan(attention_point_score).any():
-            print(f'attention_point_score:{attention_point_score}')
-            print(f'sparse_num:{sparse_num}')
-            print(f'sparse_attention_map:{sparse_attention_map}')
+        for i in range(attention_point_score.shape[0]):
+            if torch.sum(attention_point_score[i])==0:
+                print(f'torch.sum(sparse_attention_map, dim=-2)[i]:{torch.sum(sparse_attention_map, dim=-2)[i]}')
+                exit(-1)
+
+        # if torch.isnan(attention_point_score).any():
+        #     print(f'attention_point_score:{attention_point_score}')
+        #     print(f'sparse_num:{sparse_num}')
+        #     print(f'sparse_attention_map:{sparse_attention_map}')
         attention_point_score[torch.isnan(attention_point_score)] = 0
 
         return attention_point_score, sparse_attention_map, mask
@@ -1125,7 +1130,7 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
 
     # attention_point_score: (B,1,N)
     attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
-                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
+                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)+1e-8
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
