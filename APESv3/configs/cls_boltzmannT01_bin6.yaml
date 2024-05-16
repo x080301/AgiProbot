@@ -228,7 +228,7 @@ test: # only valid when running the test script
     enable: false
     remark: debug
   dataloader:
-    batch_size_per_gpu: 2
+    batch_size_per_gpu: 1
     num_workers: 2  # ${test.ddp.nproc_this_node}  # the number of subprocess to load data
   ddp:
     which_gpu: ???
