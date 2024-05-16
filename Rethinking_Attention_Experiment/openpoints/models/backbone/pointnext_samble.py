@@ -885,6 +885,8 @@ class DownSampleToken(nn.Module):
 
     def get_sparse_attention_map(self, x, attention_points):
         mask = neighbor_mask(x, self.K)
+        print(mask.shape)
+        exit(-1)
         mask = mask.unsqueeze(1).expand(-1, attention_points.shape[1], -1, -1)
         # print(f'attention_map.shape{self.attention_map.shape}')
         # print(f'mask.shape{mask.shape}')
