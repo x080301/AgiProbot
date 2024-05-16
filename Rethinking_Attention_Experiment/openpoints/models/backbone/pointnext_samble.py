@@ -750,6 +750,8 @@ class DownSampleToken(nn.Module):
         # x.shape == (B, C, N)
 
         B, C, N = x.shape
+        M = N // 2
+
         if self.bin_mode == 'token':
             bin_tokens = einops.repeat(self.bin_tokens, '1 c num_bins -> b c num_bins', b=B)
             # bin_tokens.shape ==(B,C,num_bins)
@@ -804,7 +806,7 @@ class DownSampleToken(nn.Module):
         # self.bin_points_mask: (B, H, N, num_bins)
         max_num_points = torch.sum(self.bin_points_mask.squeeze(dim=1), dim=1)
         # max_num_points:(B,num_bins)
-        self.k_point_to_choose = calculate_num_points_to_choose(bin_weights, max_num_points, self.stride)
+        self.k_point_to_choose = calculate_num_points_to_choose(M, bin_weights, max_num_points, self.stride)
         # k_point_to_choose.shape == (B, num_bins)
 
         # attention_point_score = (self.attention_point_score - torch.mean(self.attention_point_score, dim=2, keepdim=True)) \
@@ -818,7 +820,7 @@ class DownSampleToken(nn.Module):
         #     print('saved')
 
         index_down = generating_downsampled_index(
-            torch.sum(max_num_points[0, :]) // self.stride,
+            M,
             self.attention_point_score,
             self.bin_points_mask,
             self.bin_sample_mode,
@@ -895,7 +897,7 @@ class DownSampleToken(nn.Module):
         return attention_point_score, sparse_attention_map, mask
 
 
-def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
+def calculate_num_points_to_choose(total_points_to_choose, bin_prob, max_num_points, stride):
     """
 
     :param total_points_to_choose: Int
@@ -903,7 +905,6 @@ def calculate_num_points_to_choose(bin_prob, max_num_points, stride):
     :param max_num_points: torch.Tensor(B,num_bins)
     :return: number of choosen points, torch.Tensor(B,num_bins)
     """
-    total_points_to_choose = torch.sum(max_num_points[0, :]) // stride  # max_num_points // stride
 
     # print(f'max_num_points:{max_num_points}')
     # print(f'bin_prob:{bin_prob}')
