@@ -903,6 +903,8 @@ class DownSampleToken(nn.Module):
         for i in range(attention_point_score.shape[0]):
             if torch.sum(attention_point_score[i])==0:
                 print(f'torch.sum(sparse_attention_map, dim=-2)[i]:{torch.sum(sparse_attention_map, dim=-2)[i]}')
+                print(f'attention_points:{attention_points[i]}')
+                print(f'mask:{mask[i]}')
                 exit(-1)
 
         # if torch.isnan(attention_point_score).any():
@@ -1088,13 +1090,13 @@ def neighbor_mask(pcd, K):
     mask = torch.zeros(B, N, N, dtype=torch.float32, device=idx.device)  # mask.shape == (B, N, N)
     mask.scatter_(2, idx, 1.0)
 
-    for i in range(B):
-        for j in range(N):
-            if mask[i, j,j] == 0:
-                print(f'distances:{distances[i,j,:]}')
-                print(f'idx:{idx[i, j, :]}')
-                print(f'mask:{mask[i,:,:]}')
-                exit(-1)
+    # for i in range(B):
+    #     for j in range(N):
+    #         if mask[i, j,j] == 0:
+    #             print(f'distances:{distances[i,j,:]}')
+    #             print(f'idx:{idx[i, j, :]}')
+    #             print(f'mask:{mask[i,:,:]}')
+    #             exit(-1)
 
     return mask
 
