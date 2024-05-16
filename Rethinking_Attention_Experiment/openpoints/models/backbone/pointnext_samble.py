@@ -786,6 +786,7 @@ class DownSampleToken(nn.Module):
             for i_batch in range(B):
                 if torch.sum(attention_points[i_batch]) == 0:
                     print(f'attention_map[i_batch]:{attention_map[i_batch]}')
+                    print(f'attention_bins[i_batch]:{attention_bins[i_batch]}')
                     print(f'x[i_batch]:{x[i_batch]}')
                     exit(-1)
 
