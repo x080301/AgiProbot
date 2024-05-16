@@ -805,6 +805,13 @@ class DownSampleToken(nn.Module):
 
         # self.bin_points_mask: (B, H, N, num_bins)
         max_num_points = torch.sum(self.bin_points_mask.squeeze(dim=1), dim=1)
+
+        if torch.sum(max_num_points)==0:
+            print("No points found")
+            print(f'max_num_points:{max_num_points}')
+            print(f'self.dynamic_boundaries:{self.dynamic_boundaries}')
+            print(f'self.attention_point_score:{self.attention_point_score}')
+
         # max_num_points:(B,num_bins)
         self.k_point_to_choose = calculate_num_points_to_choose(M, bin_weights, max_num_points, self.stride)
         # k_point_to_choose.shape == (B, num_bins)
