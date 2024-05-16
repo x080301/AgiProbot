@@ -785,7 +785,8 @@ class DownSampleToken(nn.Module):
             attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
             for i_batch in range(B):
                 if torch.sum(attention_points[i_batch]) == 0:
-                    print(attention_map[i_batch])
+                    print(f'attention_map[i_batch]:{attention_map[i_batch]}')
+                    print(f'x[i_batch]:{x[i_batch]}')
                     exit(-1)
 
         else:
