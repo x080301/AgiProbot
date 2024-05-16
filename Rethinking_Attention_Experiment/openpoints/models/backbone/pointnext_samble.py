@@ -784,8 +784,8 @@ class DownSampleToken(nn.Module):
             # attention_bins_beforesoftmax: (B,1,N,num_bins)
             attention_points, attention_bins = torch.split(attention_map, N, dim=-1)
             for i_batch in range(B):
-                if torch.sum(attention_points[i]) == 0:
-                    print(attention_map[i])
+                if torch.sum(attention_points[i_batch]) == 0:
+                    print(attention_map[i_batch])
                     exit(-1)
 
         else:
