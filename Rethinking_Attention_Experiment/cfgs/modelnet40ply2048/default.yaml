@@ -19,7 +19,7 @@ datatransforms:
   val: [PointsToTensor]
   kwargs:
     shift: [0.2, 0.2, 0.2]
-batch_size: 16
+batch_size: 8
 dataloader:
   num_workers: 6
 
