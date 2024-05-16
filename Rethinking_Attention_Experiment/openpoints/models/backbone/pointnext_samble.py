@@ -900,6 +900,10 @@ class DownSampleToken(nn.Module):
         # full attention map based
         attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
 
+        if torch.isnan(attention_point_score).any():
+            print(f'attention_point_score:{attention_point_score}')
+            print(f'sparse_num:{sparse_num}')
+            print(f'sparse_attention_map:{sparse_attention_map}')
         attention_point_score[torch.isnan(attention_point_score)] = 0
 
         return attention_point_score, sparse_attention_map, mask
@@ -1118,31 +1122,10 @@ def bin_partition(attention_point_score, bin_boundaries, dynamic_boundaries_enab
 
     # print(f'B{B},H{H},N{N}')
     # bin_boundaries = [item.to(attention_point_score.device) for item in bin_boundaries]
-    if normalization_mode == 'no_normalization':
-        pass
-    elif normalization_mode == 'z_score':
-        # attention_point_score: (B,1,N)
-        attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
-                                / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
-    elif normalization_mode == 'z_score_no_std':
-        attention_point_score = torch.log(attention_point_score)
-        # try:
-        #     attention_point_score = torch.log(attention_point_score)
-        # except:
-        #     print(f'----------Error in log-----------------')
-        #     print(f'attention_point_score:\n{attention_point_score}')
-        #     print(f'zero or negative value exists = {torch.min(attention_point_score).item() <= 0}')
-        #     print(f'minimun is {torch.min(attention_point_score).item()}')
 
-        # attention_point_score = attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)
-        attention_point_score_no_infnan = torch.where((attention_point_score == float('-inf')) |
-                                                      (attention_point_score == float('inf')) |
-                                                      torch.isnan(attention_point_score), 0, attention_point_score)
-        attention_point_score = attention_point_score - torch.mean(attention_point_score_no_infnan, dim=2, keepdim=True)
-        attention_point_score = torch.where((attention_point_score == float('inf')), 100, attention_point_score)
-        attention_point_score = torch.where(torch.isnan(attention_point_score), 0, attention_point_score)
-    else:
-        raise NotImplementedError
+    # attention_point_score: (B,1,N)
+    attention_point_score = (attention_point_score - torch.mean(attention_point_score, dim=2, keepdim=True)) \
+                            / torch.std(attention_point_score, dim=2, unbiased=False, keepdim=True)
 
     attention_point_score = attention_point_score.reshape(B, H, N, 1)
     # bin_boundaries: [(1,1,1,6),(1,1,1,6)]
