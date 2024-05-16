@@ -885,8 +885,6 @@ class DownSampleToken(nn.Module):
 
     def get_sparse_attention_map(self, x, attention_points):
         mask = neighbor_mask(x, self.K)
-        print(mask.shape)
-        exit(-1)
         mask = mask.unsqueeze(1).expand(-1, attention_points.shape[1], -1, -1)
         # print(f'attention_map.shape{self.attention_map.shape}')
         # print(f'mask.shape{mask.shape}')
@@ -1085,10 +1083,19 @@ def generating_downsampled_index(M, attention_point_score, bin_points_mask, bin_
 
 def neighbor_mask(pcd, K):
     pcd = pcd.permute(0, 2, 1)  # pcd.shape == (B, N, C)
-    _, idx = knn(pcd, pcd, K)  # idx.shape == (B, N, K)
+    distances, idx = knn(pcd, pcd, K)  # idx.shape == (B, N, K)
     B, N, _ = idx.shape
     mask = torch.zeros(B, N, N, dtype=torch.float32, device=idx.device)  # mask.shape == (B, N, N)
     mask.scatter_(2, idx, 1.0)
+
+    for i in range(B):
+        for j in range(N):
+            if mask[i, j,j] == 0:
+                print(f'distances:{distances[i,j,:]}')
+                print(f'idx:{idx[i, j, :]}')
+                print(f'mask:{mask[i,:,:]}')
+                exit(-1)
+
     return mask
 
 
