@@ -790,9 +790,9 @@ class DownSampleToken(nn.Module):
             attention_map = torch.cat((attention_points, attention_bins), dim=-1)
 
             for i_batch in range(B):
-                if torch.sum(attention_points[i_batch]) == 0:
-                    print(f'attention_map[i_batch]:{attention_map[i_batch]}')
-                    print(f'attention_bins[i_batch]:{attention_bins[i_batch]}')
+                if torch.sum(attention_points[i_batch]) < 1e-15:
+                    print(f'attention_points[i_batch]:{attention_points[i_batch]}')
+                    print(f'attention_points_beforesoftmax[i_batch]:{attention_points_beforesoftmax[i_batch]}')
                     print(f'x[i_batch]:{x[i_batch]}')
                     exit(-1)
 
