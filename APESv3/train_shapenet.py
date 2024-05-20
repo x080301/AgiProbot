@@ -327,11 +327,11 @@ def train(local_rank, config, random_seed,
         loss_fn = torch.nn.CrossEntropyLoss(reduction='mean')
 
     if config.feature_learning_block.enable:
-        num_ds_layers = len(config.feature_learning_block.samble_downsample.M)
+        num_ds_layers = len(config.feature_learning_block.downsample.M)
     elif config.point2point_block.enable:
-        num_ds_layers = len(config.point2point_block.samble_downsample.M)
+        num_ds_layers = len(config.point2point_block.downsample.M)
     elif config.edgeconv_block.enable:
-        num_ds_layers = len(config.edgeconv_block.samble_downsample.M)
+        num_ds_layers = len(config.edgeconv_block.downsample.M)
     else:
         raise ValueError('One of feature_learning_block, point2point_block and edgeconv_block should be enabled!')
     val_miou_list = [0]
@@ -398,10 +398,10 @@ def train(local_rank, config, random_seed,
                     preds = my_model(samples, cls_label)
                     train_loss = loss_fn(preds, seg_labels)
 
-                if config.feature_learning_block.samble_downsample.bin.token_orthognonal_loss_factor > 0:
+                if config.feature_learning_block.downsample.bin.token_orthognonal_loss_factor > 0:
                     for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
                         train_loss += token_orthognonal_loss(
-                            downsample_module.attention_bins_beforesoftmax) * config.feature_learning_block.samble_downsample.bin.token_orthognonal_loss_factor
+                            downsample_module.attention_bins_beforesoftmax) * config.feature_learning_block.downsample.bin.token_orthognonal_loss_factor
 
                 train_loss.backward()
                 # log debug information
@@ -585,7 +585,7 @@ def train(local_rank, config, random_seed,
                     # save model
                     if val_miou >= max(val_miou_list):
 
-                        if config.feature_learning_block.samble_downsample.bin.dynamic_boundaries:
+                        if config.feature_learning_block.downsample.bin.dynamic_boundaries:
 
                             state_dict = {'model_state_dict': my_model.state_dict(),
                                           'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in

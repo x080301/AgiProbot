@@ -510,7 +510,7 @@ def train(local_rank, config, random_seed,
                     # save model
                     if val_acc >= max(val_acc_list):
 
-                        if config.feature_learning_block.samble_downsample.bin.dynamic_boundaries:
+                        if config.feature_learning_block.downsample.bin.dynamic_boundaries:
 
                             state_dict = {'model_state_dict': my_model.state_dict(),
                                           'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in
