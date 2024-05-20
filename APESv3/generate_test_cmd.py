@@ -48,8 +48,13 @@ for testline in test_list:
     # print(testline_1)
     for trained in trained_list:
         if testline_1 in trained and trained[-1] == testline_1[-1]:  # len(trained.split(testline_1))==1:
-            test_cmd = f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
 
+            if 'Modelnet' in trained:
+                test_cmd = f"python test_modelnet.py datasets=modelnet_AnTao420M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
+            elif 'Shapenet' in trained:
+                test_cmd = f"python test_shapenet.py datasets=shapenet_AnTao350M usr_config={config} wandb.name='{trained}' test.ddp.which_gpu=[0,1]"
+            else:
+                raise NotImplementedError
             # subprocess.run(test_cmd, shell=True, text=True, stdout=None,  # subprocess.PIPE,
             #                stderr=subprocess.PIPE)
 
