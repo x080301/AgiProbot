@@ -1584,6 +1584,10 @@ def visualization_points_in_bins_one_batch(counter_in_categories, data_dict, sav
         mapping = [value['category'] for value in config.datasets.mapping.values()]
     else:
         raise ValueError(f'Unknown dataset name: {config.datasets.dataset_name}')
+
+
+    if num_bins == 2:
+        colors = ['red', 'yellow']
     if num_bins == 4:
         colors = ['red', 'yellow', 'paleturquoise', 'violet']
     elif num_bins == 6:
