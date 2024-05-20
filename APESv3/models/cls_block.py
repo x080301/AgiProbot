@@ -9,7 +9,7 @@ from models import _downsample_token
 
 class FeatureLearningBlock(nn.Module):
     def __init__(self, config_feature_learning_block):
-        downsample_which = config_feature_learning_block.samble_downsample.ds_which
+        downsample_which = config_feature_learning_block.downsample.ds_which
         ff_conv2_channels_out = config_feature_learning_block.attention.ff_conv2_channels_out
         self.res_link_enable = config_feature_learning_block.res_link.enable
         fl_which = config_feature_learning_block.attention.fl_which
@@ -20,24 +20,24 @@ class FeatureLearningBlock(nn.Module):
              range(len(config_feature_learning_block.embedding.K))])
         if downsample_which == 'global':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSample(config_feature_learning_block.samble_downsample, layer) for layer in
-                 range(len(config_feature_learning_block.samble_downsample.M))])
+                [downsample.DownSample(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'local':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleWithSigma(config_feature_learning_block.samble_downsample, layer) for layer in
-                 range(len(config_feature_learning_block.samble_downsample.M))])
+                [downsample.DownSampleWithSigma(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'global_carve':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleCarve(config_feature_learning_block.samble_downsample, layer) for layer in
-                 range(len(config_feature_learning_block.samble_downsample.M))])
+                [downsample.DownSampleCarve(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'local_insert':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleInsert(config_feature_learning_block.samble_downsample, layer) for layer in
-                 range(len(config_feature_learning_block.samble_downsample.M))])
+                [downsample.DownSampleInsert(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         elif downsample_which == 'token':
             self.downsample_list = nn.ModuleList(
-                [downsample.DownSampleToken(config_feature_learning_block.samble_downsample, layer) for layer in
-                 range(len(config_feature_learning_block.samble_downsample.M))])
+                [downsample.DownSampleToken(config_feature_learning_block.downsample, layer) for layer in
+                 range(len(config_feature_learning_block.downsample.M))])
         else:
             raise NotImplementedError
         if fl_which == 'n2p':
