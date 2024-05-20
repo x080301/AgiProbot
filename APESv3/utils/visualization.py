@@ -1588,7 +1588,7 @@ def visualization_points_in_bins_one_batch(counter_in_categories, data_dict, sav
 
     if num_bins == 2:
         colors = ['red', 'yellow']
-    if num_bins == 4:
+    elif num_bins == 4:
         colors = ['red', 'yellow', 'paleturquoise', 'violet']
     elif num_bins == 6:
         colors = ['red', 'orange', 'yellow', 'lightgreen', 'paleturquoise', 'violet']
