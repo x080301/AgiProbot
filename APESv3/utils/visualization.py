@@ -2232,8 +2232,8 @@ def visualization_segmentation_one_batch(counter_in_categories, data_dict, i, sa
         else:
             id_in_counter = counter_in_categories[category_id]
 
-        print(
-            f'saving: {save_path}/segmentation/{category}/sample_{id_in_counter}_GroundTruth.png')
+        # print(
+        #     f'saving: {save_path}/segmentation/{category}/sample_{id_in_counter}_GroundTruth.png')
         save_figure_for_one_shape_seg(
             f'{save_path}/segmentation/{category}/sample_{id_in_counter}_GroundTruth.png',
             f'{save_path}/segmentation/{category}/sample_{id_in_counter}_Prediction.png',
