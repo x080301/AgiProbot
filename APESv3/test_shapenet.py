@@ -363,7 +363,7 @@ def test(local_rank, config):
 
                         visualization_histogram_one_batch(
                             counter_in_categories_visualization_histogram,
-                            data_dict, save_dir, True)
+                            data_dict, save_dir, False)
 
                         visualization_points_in_bins_one_batch(
                             counter_in_categories_visualization_points_in_bins,
