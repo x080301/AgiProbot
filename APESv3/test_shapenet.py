@@ -398,7 +398,7 @@ def test(local_rank, config):
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
-            break
+    
         if rank == 0:
             if config.test.save_pkl:
                 save_statical_data(data_dict, save_dir, statistic_data_all_samples)
