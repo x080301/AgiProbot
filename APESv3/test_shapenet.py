@@ -398,8 +398,8 @@ def test(local_rank, config):
                 loss /= config.test.ddp.nproc_this_node
                 loss_list.append(loss.detach().cpu().numpy())
                 pbar.update(i)
-        if config.test.save_pkl:
-            save_statical_data(data_dict, save_dir, statistic_data_all_samples)
+                if config.test.save_pkl:
+                    save_statical_data(data_dict, save_dir, statistic_data_all_samples)
 
 
 if __name__ == '__main__':
