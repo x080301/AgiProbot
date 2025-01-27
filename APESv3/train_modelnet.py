@@ -60,6 +60,8 @@ def main_without_Decorators(config):
 
     time_label = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
 
+    print(f'cuda available: {torch.cuda.is_available()}')
+
     if torch.cuda.is_available():
         os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'  # read .h5 file using multiprocessing will raise error
         os.environ['CUDA_VISIBLE_DEVICES'] = str(config.train.ddp.which_gpu).replace(' ', '').replace('[', '').replace(
