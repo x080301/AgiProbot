@@ -76,5 +76,39 @@ def _png_to_gif():
     png_to_gif(r'C:/Users/Lenovo/Desktop', 'C:/Users/Lenovo/Desktop/test.gif', 10)
 
 
+import os
+import subprocess
+
+
+def pdf_to_svg(pdf_path, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    output_file = os.path.join(output_dir, os.path.splitext(os.path.basename(pdf_path))[0] + ".svg")
+    command = ['pdf2svg', pdf_path, output_dir]
+    # command = f"pdf2svg {pdf_path} {output_file} 1"
+    subprocess.run(command, check=True)
+    print(f"SVG file saved to {output_file}")
+
+
+def _pdf_to_svg():
+    pdf_to_svg(r'D:/master/semester5/HiWi/Publication/Presentation/table1.pdf',
+               r'D:/master/semester5/HiWi/Publication/Presentation')
+
+
+def audio_segment():
+    from moviepy.editor import AudioFileClip, concatenate_audioclips, AudioClip
+
+    audio = AudioFileClip(
+        "D:/master/semester5/HiWi/Publication/Presentation/voice/1_Introduction_remanufacturing_4.mp3")
+
+    one_second_silence = AudioClip(lambda t: 0, duration=0.5)
+
+    new_audio = concatenate_audioclips([audio, one_second_silence])
+
+    new_audio.write_audiofile(
+        "D:/master/semester5/HiWi/Publication/Presentation/voice/1_Introduction_remanufacturing_4_2.mp3")
+
+
 if __name__ == "__main__":
-    _pipline_merge_3_pdfs()
+    audio_segment()

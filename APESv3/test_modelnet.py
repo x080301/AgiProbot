@@ -507,6 +507,8 @@ if __name__ == '__main__':
     if num_arguments > 1:
         main_with_Decorators()
     else:
+
+        
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
