@@ -146,6 +146,10 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     bin_boundaries_index = bin_boundaries_index.to(attention_point_score.device).int()
 
     sorted_scores, _ = torch.sort(attention_point_score.flatten(), dim=0, descending=True)
+    print('-------------------------')
+    print(f'bin_boundaries_index is {bin_boundaries_index}')
+    print(f'type is {type(bin_boundaries_index)}')
+    print('-------------------------')
     bin_boundaries = sorted_scores[bin_boundaries_index]
 
     try:
