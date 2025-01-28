@@ -150,7 +150,7 @@ def update_sampling_score_bin_boundary(old_bin_boundaries, attention_point_score
     # print(f'bin_boundaries_index is {bin_boundaries_index}')
     # print(f'type is {type(bin_boundaries_index)}')
     # print('-------------------------')
-    bin_boundaries = sorted_scores[bin_boundaries_indextensor.long()]
+    bin_boundaries = sorted_scores[bin_boundaries_index.long()]
 
     try:
         world_size = torch.distributed.get_world_size()
