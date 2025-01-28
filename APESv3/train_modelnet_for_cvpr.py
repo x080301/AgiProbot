@@ -516,8 +516,9 @@ def train(local_rank, config, random_seed,
                         if config.feature_learning_block.downsample.bin.dynamic_boundaries:
 
                             state_dict = {'model_state_dict': my_model.state_dict(),
-                                          'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in
-                                                             my_model.module.block.downsample_list]}
+                                          # 'bin_boundaries': [downsample_module.bin_boundaries for downsample_module in
+                                          #                    my_model.module.block.downsample_list]
+                                          }
                         else:
                             state_dict = my_model.state_dict()
 
