@@ -6,12 +6,12 @@ import time
 
 
 class ModelNetModel(nn.Module):
-    def __init__(self, config, calculate_inference_time=False):
+    def __init__(self, config, calculate_inference_time=False, fps=False):
 
         super(ModelNetModel, self).__init__()
 
         if config.feature_learning_block.enable:
-            self.block = cls_block.FeatureLearningBlock(config.feature_learning_block, calculate_inference_time)
+            self.block = cls_block.FeatureLearningBlock(config.feature_learning_block, calculate_inference_time, fps)
             num_layers = len(config.feature_learning_block.attention.K)
         else:
             raise ValueError('This time only support neighbor2point block!')

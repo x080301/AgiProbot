@@ -11,7 +11,7 @@ from models.fpsknn import PointNetSetAbstraction, farthest_point_sample
 
 
 class FeatureLearningBlock(nn.Module):
-    def __init__(self, config_feature_learning_block, calculate_inference_time=False):
+    def __init__(self, config_feature_learning_block, calculate_inference_time=False, fps=False):
         downsample_which = config_feature_learning_block.downsample.ds_which
         ff_conv2_channels_out = (
             config_feature_learning_block.attention.ff_conv2_channels_out
@@ -119,6 +119,10 @@ class FeatureLearningBlock(nn.Module):
             self.after_fps = None
             self.after_ds = None
 
+        self.M_list = config_feature_learning_block.downsample.M
+
+        self.fps = fps
+
     def forward(self, x):
         x_list = []
         x_xyz = x.clone()
@@ -137,6 +141,12 @@ class FeatureLearningBlock(nn.Module):
                     torch.cuda.synchronize()
                     self.before_ds = time.time()
 
+                if self.fps:
+                    print(f'x_xyz.shape {x_xyz.shape}')
+                    print(f'x.shape {x.shape}')
+                    exit(-1)
+
+                x_idx = farthest_point_sample(x_xyz, self.M_list[i])
 
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
 

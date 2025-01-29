@@ -212,8 +212,8 @@ def train(local_rank, config, random_seed,
             'modelnet40 has only train_set and test_set, which means validation_set is included in train_set!')
 
     # get model
-    my_model = cls_model.ModelNetModel(config)
-    if rank==0:
+    my_model = cls_model.ModelNetModel(config, fps=True)
+    if rank == 0:
         print(my_model)
 
     # synchronize bn among gpus

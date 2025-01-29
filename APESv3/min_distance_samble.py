@@ -147,7 +147,6 @@ for file_name in os.listdir(file_dir):
         #     distance_512_512 += torch.min(min_distance)
 
 print(f'{counter} batches in total')
-print(f'distance_2048_2048 / 2048 / 16={distance_2048_2048 / 2048 / 16 / counter}')
 print(f'distance_2048_1024 / 2048 / 16={distance_2048_1024 / 2048 / 16 / counter}')
 print(f'distance_2048_512 / 2048 / 16={distance_2048_512 / 2048 / 16 / counter}')
 print(f'distance_2048_1024_no_self / 2048 / 16={distance_2048_1024_no_self / 2048 / 16 / counter}')
