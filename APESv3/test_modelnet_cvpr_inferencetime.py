@@ -214,7 +214,6 @@ def test(local_rank, config):
     else:
         my_model.load_state_dict(torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location))
 
-            
         # state_dict = torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location)
         # my_model.load_state_dict(state_dict['model_state_dict'])
 

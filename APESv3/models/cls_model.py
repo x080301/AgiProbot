@@ -11,7 +11,7 @@ class ModelNetModel(nn.Module):
         super(ModelNetModel, self).__init__()
 
         if config.feature_learning_block.enable:
-            self.block = cls_block.FeatureLearningBlock(config.feature_learning_block)
+            self.block = cls_block.FeatureLearningBlock(config.feature_learning_block, calculate_inference_time)
             num_layers = len(config.feature_learning_block.attention.K)
         else:
             raise ValueError('This time only support neighbor2point block!')
