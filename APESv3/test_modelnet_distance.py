@@ -189,7 +189,8 @@ def test(local_rank, config):
     my_model = torch.nn.parallel.DistributedDataParallel(my_model)
     map_location = {'cuda:0': f'cuda:{local_rank}'}
 
-    print(f'config.feature_learning_block.downsample.bin.dynamic_boundaries={config.feature_learning_block.downsample.bin.dynamic_boundaries}')
+    print(
+        f'config.feature_learning_block.downsample.bin.dynamic_boundaries={config.feature_learning_block.downsample.bin.dynamic_boundaries}')
     config.feature_learning_block.downsample.bin.dynamic_boundaries = False
     if config.feature_learning_block.downsample.bin.dynamic_boundaries:
         state_dict = torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location)
@@ -200,7 +201,10 @@ def test(local_rank, config):
             bin_boundaries[0][0, 0, 0, 1:].tolist()
             for bin_boundaries in state_dict['bin_boundaries']]
     else:
-        my_model.load_state_dict(torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location))
+        # my_model.load_state_dict(torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location))
+
+        state_dict = torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location)
+        my_model.load_state_dict(state_dict['model_state_dict'])
 
     # get loss function
     if config.test.label_smoothing:
