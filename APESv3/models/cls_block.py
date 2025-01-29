@@ -141,14 +141,17 @@ class FeatureLearningBlock(nn.Module):
                     torch.cuda.synchronize()
                     self.before_ds = time.time()
 
+                # x_xyz.shape, torch.Size([8, 3, 2048])
+                # x.shape, torch.Size([8, 128, 2048])
                 if self.fps:
-                    print(f'x_xyz.shape {x_xyz.shape}')
-                    print(f'x.shape {x.shape}')
-                    exit(-1)
-
-                x_idx = farthest_point_sample(x_xyz, self.M_list[i])
+                    x_idx = farthest_point_sample(torch.permute(x_xyz, (0, 2, 1)), self.M_list[i] * 2)  # [B, npoint]
+                    x = torch.gather(x, x_idx.unsqueeze(1).expand(-1, 3, -1))
+                    x_xyz = torch.gather(x_xyz, x_idx.unsqueeze(1).expand(-1, 3, -1))
 
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
+
+                if self.fps:
+                    idx_select = torch.gather(x_idx, idx_select)
 
                 if self.calculate_inference_time:
                     torch.cuda.synchronize()
