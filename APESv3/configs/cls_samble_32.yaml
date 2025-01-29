@@ -130,97 +130,73 @@ feature_learning_block:
       bin_boundaries: [ [ 6.065e-06,3.737e-07,-2.851e-06, -5.421e-06,-8.08e-06 ],[ 5.914e-05,-2.619e-05,-5.652e-05,-7.882e-05,-0.0001078 ] ]
       multiply: [ false, false ]
       mode: [ token, token ] # mode1, mode2 or nonuniform_split_bin, mode1 based on learnable parameter, mode2 based on Boltzmann
-      num_bins: [ 1, 1 ]
+      num_bins: [ 2, 2 ]
       scaling_factor: [ 1.0, 1.0 ]
       sample_mode: [ random, random ] # topk or uniform or random
       norm_mode: [ sigmoid, sigmoid ] # minmax, sigmoid, tanh
       normalization_mode: [ z_score,z_score ] # no_normalization, z_score, z_score_no_std
       boltzmann_T: [ 0.1, 0.1 ] # mode_1,mode_2,[1,0.5],[0.5,0.25],[0.3,0.15],[0.1,0.05],[0.05,0.025]
     M:
-      - 1024
-      - 512
+      - 32
     asm:
-      - dot
       - dot
     q_in:
       - 128
-      - 128
     q_out:
-      - 128
       - 128
     k_in:
       - 128
-      - 128
     k_out:
-      - 128
       - 128
     v_in:
       - 128
-      - 128
     v_out:
-      - 128
       - 128
     num_heads:
       - 1
-      - 1
     idx_mode:
-      - sparse_col_sqr
       - sparse_col_sqr
   attention:
     K:
       - 32
       - 32
-      - 32
     attention_mode:
-      - scalar_dot
       - scalar_dot
       - scalar_dot
     group_type:
       - diff
       - diff
-      - diff
     q_in:
-      - 128
       - 128
       - 128
     q_out:
       - 128
       - 128
-      - 128
     k_in:
-      - 128
       - 128
       - 128
     k_out:
       - 128
       - 128
-      - 128
     v_in:
-      - 128
       - 128
       - 128
     v_out:
       - 128
       - 128
-      - 128
     num_heads:
-      - 4
       - 4
       - 4
     ff_conv1_channels_in:
       - 128
       - 128
-      - 128
     ff_conv1_channels_out:
-      - 512
       - 512
       - 512
     ff_conv2_channels_in:
       - 512
       - 512
-      - 512
     ff_conv2_channels_out:
-      - 128
       - 128
       - 128
 test: # only valid when running the test script
