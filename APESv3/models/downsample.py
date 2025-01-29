@@ -13,12 +13,12 @@ from utils.ops import (
 
 
 def bin_probability_multiple(
-    x_ds,
-    input_x_shape,
-    down_sampling_idx,
-    bin_chunks_idx,
-    bin_probability,
-    direct_link_mode,
+        x_ds,
+        input_x_shape,
+        down_sampling_idx,
+        bin_chunks_idx,
+        bin_probability,
+        direct_link_mode,
 ):
     B, C, N = input_x_shape
     _, _, M = x_ds.shape
@@ -26,17 +26,17 @@ def bin_probability_multiple(
     # bin_prob.shape == (B, num_bins)
     bin_probability = bin_probability / torch.sum(bin_probability, dim=1, keepdim=True)
     if (
-        direct_link_mode == "no_link"
-        or direct_link_mode == "no_link_no_sigmoid"
-        or direct_link_mode == "raw_gradient"
+            direct_link_mode == "no_link"
+            or direct_link_mode == "no_link_no_sigmoid"
+            or direct_link_mode == "raw_gradient"
     ):
         bin_probability = bin_probability / M + 1.0
     elif (
-        direct_link_mode == "no_link_higher_gradient"
-        or direct_link_mode == "higher_gradient"
+            direct_link_mode == "no_link_higher_gradient"
+            or direct_link_mode == "higher_gradient"
     ):
         bin_probability = (
-            bin_probability - bin_probability.clone().detach() * (M - 1) / M + 1.0
+                bin_probability - bin_probability.clone().detach() * (M - 1) / M + 1.0
         )
     else:
         raise NotImplementedError
@@ -66,7 +66,7 @@ def bin_probability_multiple(
 
 
 def calculate_num_points_to_choose_one_iteration(
-    probability, max_num_points, num_undecided_points, num_points_in_bins
+        probability, max_num_points, num_undecided_points, num_points_in_bins
 ):  # , total_points):
     """
 
@@ -84,9 +84,9 @@ def calculate_num_points_to_choose_one_iteration(
     # print(f'probability{probability}')
     num_points_to_choose = probability * num_points_in_bins
     num_points_to_choose = (
-        num_points_to_choose
-        * num_undecided_points
-        / torch.sum(num_points_to_choose, dim=1, keepdim=True)
+            num_points_to_choose
+            * num_undecided_points
+            / torch.sum(num_points_to_choose, dim=1, keepdim=True)
     )
     # print(f'num_points_to_choose2:{num_points_to_choose}')
     num_points_to_choose = num_points_to_choose.int()
@@ -102,13 +102,13 @@ def calculate_num_points_to_choose_one_iteration(
 
 
 def nonuniform_bin_idx_selection(
-    attention_point_score,
-    bin_boundaries,
-    bin_prob,
-    normalization_mode,
-    M,
-    bin_sample_mode,
-    dynamic_boundaries_enable,
+        attention_point_score,
+        bin_boundaries,
+        bin_prob,
+        normalization_mode,
+        M,
+        bin_sample_mode,
+        dynamic_boundaries_enable,
 ):
     B, H, N = attention_point_score.shape
     _, num_bins = bin_prob.shape
@@ -204,17 +204,17 @@ def nonuniform_bin_idx_selection(
 
 
 def nonuniform_bin_idx_selection_beforesoftmaxbinprob(
-    attention_point_score,
-    bin_boundaries,
-    attention_bins_beforesoftmax,
-    normalization_mode,
-    M,
-    bin_sample_mode,
-    dynamic_boundaries_enable,
-    relu_mean_order,
-    num_bins,
-    momentum_update_factor,
-    boltzmann_T,
+        attention_point_score,
+        bin_boundaries,
+        attention_bins_beforesoftmax,
+        normalization_mode,
+        M,
+        bin_sample_mode,
+        dynamic_boundaries_enable,
+        relu_mean_order,
+        num_bins,
+        momentum_update_factor,
+        boltzmann_T,
 ):
     # attention_bins_beforesoftmax: (B,1,N,num_bins) or (B,1,N,1)
     B, H, N, _ = attention_bins_beforesoftmax.shape
@@ -242,7 +242,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(
     if relu_mean_order == "mean_relu":
 
         bin_prob_return = torch.sum(masked_attention_map_token, dim=2) / (
-            torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
         )
         # torch.count_nonzero(masked_attention_map_token, dim=2) + 1e-8)
         bin_prob_return = bin_prob_return.squeeze(1)
@@ -250,7 +250,7 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(
     elif relu_mean_order == "relu_mean":
         masked_attention_map_token = F.relu(masked_attention_map_token)
         bin_prob_return = torch.sum(masked_attention_map_token, dim=2) / (
-            torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
         )
         bin_prob_return = bin_prob_return.squeeze(1)
         bin_prob = bin_prob_return
@@ -315,10 +315,10 @@ def nonuniform_bin_idx_selection_beforesoftmaxbinprob(
                     # aps_chunks_tmp = torch.where(nan_inf_negative_mask, 0, aps_chunks_tmp)
 
                     if (
-                        torch.count_nonzero(aps_chunks_tmp == float("inf"))
-                        + torch.count_nonzero(aps_chunks_tmp < 0)
-                        + torch.count_nonzero(torch.isnan(aps_chunks_tmp))
-                        != 0
+                            torch.count_nonzero(aps_chunks_tmp == float("inf"))
+                            + torch.count_nonzero(aps_chunks_tmp < 0)
+                            + torch.count_nonzero(torch.isnan(aps_chunks_tmp))
+                            != 0
                     ):
                         print(
                             f'\nnum inf elements:{torch.count_nonzero(aps_chunks_tmp == float("inf"))}\n'
@@ -493,7 +493,7 @@ class DownSampleCarve(nn.Module):
                     k_pe, self.num_heads, self.k_depth
                 )  # k_pe.shape == (B, H, D, N)
                 self.k_pe = (
-                    k.permute(0, 1, 3, 2) @ k_pe
+                        k.permute(0, 1, 3, 2) @ k_pe
                 )  # self.k_pe.shape == (B, H, N, N)
             self.q_pe = q @ q_pe  # self.q_pe.shape == (B, H, N, N)
             v = v + v_pe  # v.shape == (B, H, D, N)
@@ -601,7 +601,7 @@ class DownSampleCarve(nn.Module):
         return x
 
     def attention_scoring(
-        self, q, k
+            self, q, k
     ):  # q.shape == (B, H, N, D), k.shape == (B, H, D, N)
         if self.asm == "dot":
             energy = q @ k  # energy.shape == (B, H, N, N)
@@ -666,7 +666,7 @@ class DownSampleCarve(nn.Module):
             attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
         elif self.idx_mode == "sparse_col_sqr":
             attention_point_score = (
-                torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
+                    torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
             )
         else:
             raise ValueError("Please check the setting of idx mode!")
@@ -692,8 +692,8 @@ class DownSampleCarve(nn.Module):
 
                 # bin_prob.shape == (B, num_bins)
             elif (
-                self.direct_link_mode == "no_link"
-                or self.direct_link_mode == "no_link_higher_gradient"
+                    self.direct_link_mode == "no_link"
+                    or self.direct_link_mode == "no_link_higher_gradient"
             ):
                 bin_prob_edge = self.bin_conv1(
                     x
@@ -766,8 +766,8 @@ class DownSampleCarve(nn.Module):
                     idx_tmp = torch.randperm(chunk_size)[:k]
                     idx_tmp = (
                         idx_tmp.unsqueeze(0)
-                        .expand(H, -1)
-                        .to(attention_point_score.device)
+                            .expand(H, -1)
+                            .to(attention_point_score.device)
                     )
                 elif self.bin_sample_mode == "random":
                     if k == 0:
@@ -895,7 +895,7 @@ class DownSampleCarve(nn.Module):
         _, _, bin_size_min = aps_bins[-1].shape
         assert H == 1, "Number of heads should be 1!"
         assert (
-            bin_size_min == bin_size
+                bin_size_min == bin_size
         ), "The number of points must be divisible by the number of bins!"
         aps_bins = torch.stack(
             aps_bins
@@ -961,7 +961,7 @@ class DownSampleCarve(nn.Module):
         return idx_batch, k_batch
 
     def boltzmann_idx_selection(
-        self, attention_point_score, M, boltzmann_norm_mode, boltzmann_T
+            self, attention_point_score, M, boltzmann_norm_mode, boltzmann_T
     ):
         B, H, N = attention_point_score.shape
         aps_boltz = ops.norm_range(
@@ -1207,7 +1207,7 @@ class _DownSampleToken(nn.Module):
         return x
 
     def attention_scoring(
-        self, q, k
+            self, q, k
     ):  # q.shape == (B, H, N, D), k.shape == (B, H, D, N)
         if self.asm == "dot":
             energy = q @ k  # energy.shape == (B, H, N, N)
@@ -1270,7 +1270,7 @@ class _DownSampleToken(nn.Module):
             attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
         elif self.idx_mode == "sparse_col_sqr":
             attention_point_score = (
-                torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
+                    torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
             )
         else:
             raise ValueError("Please check the setting of idx mode!")
@@ -1533,13 +1533,13 @@ class DownSampleToken(nn.Module):
         return (x_ds, index_down), (None, None)
 
     def bin_weghts_calculation(
-        self, attention_bins_beforesoftmax, bin_points_mask, relu_mean_order
+            self, attention_bins_beforesoftmax, bin_points_mask, relu_mean_order
     ):
         masked_attention_map_token = attention_bins_beforesoftmax * bin_points_mask
         if relu_mean_order == "mean_relu":
 
             bin_weights_beforerelu = torch.sum(masked_attention_map_token, dim=2) / (
-                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                    torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
             )
             # torch.count_nonzero(masked_attention_map_token, dim=2) + 1e-8)
             bin_weights_beforerelu = bin_weights_beforerelu.squeeze(1)
@@ -1547,7 +1547,7 @@ class DownSampleToken(nn.Module):
         elif relu_mean_order == "relu_mean":
             masked_attention_map_token = F.relu(masked_attention_map_token)
             bin_weights_beforerelu = torch.sum(masked_attention_map_token, dim=2) / (
-                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                    torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
             )
             bin_weights_beforerelu = bin_weights_beforerelu.squeeze(1)
             bin_weights = bin_weights_beforerelu
@@ -1641,7 +1641,7 @@ class DownSampleToken(nn.Module):
             attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
         elif self.idx_mode == "sparse_col_sqr":
             attention_point_score = (
-                torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
+                    torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
             )
         else:
             raise ValueError("Please check the setting of idx mode!")
@@ -1649,7 +1649,6 @@ class DownSampleToken(nn.Module):
         attention_point_score[torch.isnan(attention_point_score)] = 0
 
         return attention_point_score, sparse_attention_map, mask
-
 
 
 class DownSampleReparameterization(nn.Module):
@@ -1907,13 +1906,13 @@ class DownSampleReparameterization(nn.Module):
         return (x_ds, index_down), (None, None)
 
     def bin_weghts_calculation(
-        self, attention_bins_beforesoftmax, bin_points_mask, relu_mean_order
+            self, attention_bins_beforesoftmax, bin_points_mask, relu_mean_order
     ):
         masked_attention_map_token = attention_bins_beforesoftmax * bin_points_mask
         if relu_mean_order == "mean_relu":
 
             bin_weights_beforerelu = torch.sum(masked_attention_map_token, dim=2) / (
-                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                    torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
             )
             # torch.count_nonzero(masked_attention_map_token, dim=2) + 1e-8)
             bin_weights_beforerelu = bin_weights_beforerelu.squeeze(1)
@@ -1921,7 +1920,7 @@ class DownSampleReparameterization(nn.Module):
         elif relu_mean_order == "relu_mean":
             masked_attention_map_token = F.relu(masked_attention_map_token)
             bin_weights_beforerelu = torch.sum(masked_attention_map_token, dim=2) / (
-                torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
+                    torch.count_nonzero(bin_points_mask, dim=2) + 1e-8
             )
             bin_weights_beforerelu = bin_weights_beforerelu.squeeze(1)
             bin_weights = bin_weights_beforerelu
@@ -2015,7 +2014,7 @@ class DownSampleReparameterization(nn.Module):
             attention_point_score = torch.sum(sparse_attention_map, dim=-2) / sparse_num
         elif self.idx_mode == "sparse_col_sqr":
             attention_point_score = (
-                torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
+                    torch.sum(sparse_attention_map, dim=-2) / sparse_num / sparse_num
             )
         else:
             raise ValueError("Please check the setting of idx mode!")
@@ -2114,8 +2113,9 @@ class DownSampleInsert(nn.Module):
         elif self.boltzmann_enable:
             self.idx = self.boltzmann_idx_selection()
         idx_dropped = \
-        torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(self.attention_map.shape[-3] - self.M,
-                                                                               dim=-1, largest=False)[1]
+            torch.std(self.attention_map, dim=-1, unbiased=False)[:, :, :, 0].topk(
+                self.attention_map.shape[-3] - self.M,
+                dim=-1, largest=False)[1]
         # idx_dropped.shape == (B, H, N-M)
         attention_down = torch.gather(self.attention_map, dim=2,
                                       index=self.idx[..., None, None].expand(-1, -1, -1, -1, k.shape[-1]))
@@ -2143,6 +2143,10 @@ class DownSampleInsert(nn.Module):
         # v_dropped.shape == (B, C, N-M)
         return (x_ds, self.idx), (x_dropped, idx_dropped)
 
+        # 'bin_prob'
+        self.bin_prob = self.bin_weights_beforerelu
+        # bin_prob.shape == (B, num_bins)
+
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N, K)
         x = x.view(x.shape[0], heads, depth, x.shape[2], x.shape[3])
@@ -2158,7 +2162,7 @@ class DownSampleInsert(nn.Module):
             energy = q @ (q.transpose(-1, -2) - k)  # Q@(Q-K)
         elif self.asm == "l2":
             energy = -1 * (q - k.transpose(-1, -2)) @ (
-                        q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
+                    q.transpose(-1, -2) - k)  # -(Q-K)^2 # energy.shape == (B, H, N, K, K)
             energy = torch.mean(energy, dim=-2)  # energy.shape == (B, H, N, K)
             energy = energy.unsqueeze(-2)  # energy.shape == (B, H, N, 1, K)
         elif self.asm == "l2+":

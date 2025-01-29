@@ -259,6 +259,8 @@ def test(local_rank, config):
             }
 
         for i, (samples, cls_labels) in enumerate(test_loader):
+            print(i)
+            print(samples.shape)
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
 
