@@ -151,9 +151,7 @@ class FeatureLearningBlock(nn.Module):
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
 
                 if self.fps:
-                    print(f'x_idx.shape {x_idx.shape}')
-                    print(f'idx_select.shape {idx_select.shape}')
-                    idx_select = torch.gather(x_idx, 1, idx_select)
+                    idx_select = torch.gather(x_idx.unsqueeze(1), 2, idx_select)
 
                 if self.calculate_inference_time:
                     torch.cuda.synchronize()
