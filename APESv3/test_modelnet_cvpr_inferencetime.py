@@ -614,7 +614,7 @@ if __name__ == '__main__':
     else:
 
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
-        config = OmegaConf.load('../configs/default.yaml')
+        config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'usr_config': 'configs/boltzmannT0102.yaml',
             'datasets': 'modelnet_AnTao420M',
