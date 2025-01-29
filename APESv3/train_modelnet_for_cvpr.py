@@ -42,7 +42,7 @@ def main_without_Decorators(config):
         usr_config = OmegaConf.load(config.usr_config)
         config = OmegaConf.merge(config, usr_config)
 
-    # config = set_config_run(config, "train")
+    config = set_config_run(config, "train", check_config_flag=False)
 
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
         dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
