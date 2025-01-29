@@ -2,9 +2,11 @@ import torch
 from torch import nn
 from models import cls_block
 import torch.nn.functional as F
+import time
+
 
 class ModelNetModel(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, calculate_inference_time=False):
 
         super(ModelNetModel, self).__init__()
 
@@ -61,10 +63,28 @@ class ModelNetModel(nn.Module):
                                          nn.Dropout(p=0.5))
             self.linear3 = nn.Linear(256, num_output)
 
+        self.calculate_inference_time = calculate_inference_time
+        if calculate_inference_time:
+            self.beginning = None
+            self.before_ds = None
+            self.after_fps = None
+            self.after_ds = None
+            self.end_time = None
+
     def forward(self, x):  # x.shape == (B, 3, N)
+        if self.calculate_inference_time:
+            torch.cuda.synchronize()
+            self.beginning = time.time()
+
         if self.res_link_enable:
             # with res_link
             x, x_res_link_list = self.block(x)  # x.shape == (B, 3C)
+
+            if self.calculate_inference_time:
+                self.before_ds = self.block.before_ds
+                self.after_fps = self.block.after_fps
+                self.after_ds = self.block.after_ds
+
             if self.aux_loss_enable:
                 # with aux loss
                 x_aux_list = []
@@ -95,6 +115,11 @@ class ModelNetModel(nn.Module):
             else:
                 # no_aux
                 x = self.MLP(x)  # x.shape == (B, 40)
+
+                if self.calculate_inference_time:
+                    torch.cuda.synchronize()
+                    self.end_time = time.time()
+
                 return x
         else:
             # no_res_link
@@ -216,7 +241,7 @@ class ModelNetModel_inference_time(nn.Module):
                 self.linear3 = nn.Linear(256, num_output)
         else:
             assert (
-                self.aux_loss_enable == False and consistency_loss_factor == 0
+                    self.aux_loss_enable == False and consistency_loss_factor == 0
             ), "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(
                 nn.Linear(1024, 256),
@@ -227,12 +252,12 @@ class ModelNetModel_inference_time(nn.Module):
             self.linear3 = nn.Linear(256, num_output)
 
     def forward(self, x):  # x.shape == (B, 3, N)
-        if self.res_link_enable:#True
+        if self.res_link_enable:  # True
             # with res_link
             x, x_res_link_list, inference_time_list = self.block(
                 x
             )  # x.shape == (B, 3C)
-            if self.aux_loss_enable:#False
+            if self.aux_loss_enable:  # False
                 # with aux loss
                 x_aux_list = []
                 if self.aux_loss_shared:
@@ -381,7 +406,7 @@ class ModelNetModel_fps(nn.Module):
                 self.linear3 = nn.Linear(256, num_output)
         else:
             assert (
-                self.aux_loss_enable == False and consistency_loss_factor == 0
+                    self.aux_loss_enable == False and consistency_loss_factor == 0
             ), "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(
                 nn.Linear(1024, 256),
@@ -546,7 +571,7 @@ class ModelNetModel_fps_inference_time(nn.Module):
                 self.linear3 = nn.Linear(256, num_output)
         else:
             assert (
-                self.aux_loss_enable == False and consistency_loss_factor == 0
+                    self.aux_loss_enable == False and consistency_loss_factor == 0
             ), "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(
                 nn.Linear(1024, 256),
@@ -713,7 +738,7 @@ class ModelNetModel_fpsknn(nn.Module):
                 self.linear3 = nn.Linear(256, num_output)
         else:
             assert (
-                self.aux_loss_enable == False and consistency_loss_factor == 0
+                    self.aux_loss_enable == False and consistency_loss_factor == 0
             ), "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(
                 nn.Linear(1024, 256),
@@ -878,7 +903,7 @@ class ModelNetModel_fpsknn_inference_time(nn.Module):
                 self.linear3 = nn.Linear(256, num_output)
         else:
             assert (
-                self.aux_loss_enable == False and consistency_loss_factor == 0
+                    self.aux_loss_enable == False and consistency_loss_factor == 0
             ), "If there is no residual link in the structure, consistency loss and auxiliary loss must be False!"
             self.linear2 = nn.Sequential(
                 nn.Linear(1024, 256),
