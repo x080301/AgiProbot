@@ -146,12 +146,12 @@ class FeatureLearningBlock(nn.Module):
                 if self.fps:
                     x_idx = farthest_point_sample(torch.permute(x_xyz, (0, 2, 1)), self.M_list[i] * 2)  # [B, npoint]
                     x = torch.gather(x, x_idx.unsqueeze(1).expand(-1, 3, -1))
-                    x_xyz = torch.gather(x_xyz, x_idx.unsqueeze(1).expand(-1, 3, -1))
+                    x_xyz = torch.gather(x_xyz, 2, x_idx.unsqueeze(1).expand(-1, 3, -1))
 
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
 
                 if self.fps:
-                    idx_select = torch.gather(x_idx, idx_select)
+                    idx_select = torch.gather(x_idx, 1, idx_select)
 
                 if self.calculate_inference_time:
                     torch.cuda.synchronize()
