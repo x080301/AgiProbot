@@ -28,7 +28,7 @@ def sum_of_min_distance(pc_a, pc_b, no_self):
     return torch.sum(min_distance)
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="default.yaml")
+@hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main_with_Decorators(config):
     main_without_Decorators(config)
 
