@@ -269,6 +269,16 @@ def test(local_rank, config):
                 128: {'rank': rank}
             }
 
+        distance_2048_2048 = 0
+        distance_2048_1024 = 0
+        distance_2048_512 = 0
+        distance_2048_1024_no_self = 0
+        distance_2048_512_no_self = 0
+        distance_1024_1024 = 0
+        distance_1024_512 = 0
+        distance_1024_512_no_self = 0
+        distance_512_512 = 0
+
         for i, (samples, cls_labels) in enumerate(test_loader):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
@@ -303,18 +313,36 @@ def test(local_rank, config):
 
             if rank == 0:
                 samples = torch.concat(sample_gather_list, dim=0)
-                print(f'samples:{samples.shape}')
-                for downsampled_idx in downsampled_idx_all_layers:
-                    print(downsampled_idx.shape)
+                # (16,2048,3)
 
-                # for point_cloud_index in range(16):
-                #     pc_2048 = samples
-                #
-                #     pc_1024_index = data['idx_down'][point_cloud_index][0].flatten()
-                #     pc_1024 = pc_2048[pc_1024_index, :]
-                #
-                #     pc_512_index = data['idx_down'][point_cloud_index][1].flatten()
-                #     pc_512 = pc_1024[pc_512_index, :]
+                # print(f'samples:{samples.shape}')
+                # for downsampled_idx in downsampled_idx_all_layers:
+                #     print(downsampled_idx.shape)
+
+                for point_cloud_index in range(16):
+                    pc_2048 = samples[point_cloud_index, :, :]  # (2048,3)
+
+                    pc_1024_index = downsampled_idx_all_layers[0][point_cloud_index, 0, :]
+                    pc_1024 = pc_2048[pc_1024_index, :]
+
+                    pc_512_index = downsampled_idx_all_layers[1][point_cloud_index, 0, :]
+                    pc_512 = pc_1024[pc_512_index, :]
+
+                    pc_2048 = torch.reshape(pc_2048, (2048, 1, 3))
+                    pc_1024 = torch.reshape(pc_1024, (1024, 1, 3))
+                    pc_512 = torch.reshape(pc_512, (512, 1, 3))
+
+                    distance_2048_2048 += sum_of_min_distance(pc_2048, pc_2048, False)
+                    distance_2048_1024 += sum_of_min_distance(pc_2048, pc_1024, False)
+                    distance_2048_1024_no_self += sum_of_min_distance(pc_2048, pc_1024, True)
+                    distance_2048_512 += sum_of_min_distance(pc_2048, pc_512, False)
+                    distance_2048_512_no_self += sum_of_min_distance(pc_2048, pc_512, True)
+
+                    distance_1024_1024 += sum_of_min_distance(pc_1024, pc_1024, False)
+                    distance_1024_512 += sum_of_min_distance(pc_1024, pc_512, False)
+                    distance_1024_512_no_self += sum_of_min_distance(pc_1024, pc_512, True)
+
+                    distance_512_512 += sum_of_min_distance(pc_512, pc_512, False)
 
             # if config.test.visualize_combine.enable:
             #     sampling_score_all_layers = []
@@ -322,6 +350,16 @@ def test(local_rank, config):
             #     idx_in_bins_all_layers = []
             #     k_point_to_choose_all_layers = []
 
+        print(f'{i + 1} batches in total')
+        print(f'distance_2048_2048 / 2048 / 16={distance_2048_2048 / 2048 / 16 / (i + 1)}')
+        print(f'distance_2048_1024 / 2048 / 16={distance_2048_1024 / 2048 / 16 / (i + 1)}')
+        print(f'distance_2048_512 / 2048 / 16={distance_2048_512 / 2048 / 16 / (i + 1)}')
+        print(f'distance_2048_1024_no_self / 2048 / 16={distance_2048_1024_no_self / 2048 / 16 / (i + 1)}')
+        print(f'distance_2048_512_no_self / 2048 / 16={distance_2048_512_no_self / 2048 / 16 / (i + 1)}')
+        print(f'distance_1024_1024 / 1024 / 16={distance_1024_1024 / 1024 / 16 / (i + 1)}')
+        print(f'distance_1024_512 / 1024 / 16={distance_1024_512 / 1024 / 16 / (i + 1)}')
+        print(f'distance_1024_512_no_self / 1024 / 16={distance_1024_512_no_self / 1024 / 16 / (i + 1)}')
+        print(f'distance_512_512 / 512 / 16={distance_512_512 / 512 / 16 / (i + 1)}')
         #         for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
         #             downsample_module.output_variable_calculatio()
         #
