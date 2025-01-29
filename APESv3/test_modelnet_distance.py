@@ -282,14 +282,18 @@ def test(local_rank, config):
             torch.distributed.all_gather(sample_gather_list, samples)
             torch.distributed.all_reduce(loss)
 
+            downsampled_idx_all_layers = []
             for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
-                downsampled_idx = downsample_module.idx
-                print(
-                    f'rank: {rank}, layer: {i_layer}, downsampled_idx.shape: {downsampled_idx.shape}, max: {torch.max(downsampled_idx)}')
+                downsampled_idx = [torch.empty_like(downsample_module.idx).to(device) for _ in
+                                   range(config.test.ddp.nproc_this_node)]
+                torch.distributed.all_gather(downsampled_idx, downsample_module.idx)
+                downsampled_idx = torch.concat(downsampled_idx, dim=0)
+                downsampled_idx_all_layers.append(downsampled_idx)
 
             if rank == 0:
                 samples = torch.concat(sample_gather_list, dim=0)
-                print(samples.shape)
+                for downsampled_idx in downsampled_idx_all_layers:
+                    print(downsampled_idx.shape)
 
             # if config.test.visualize_combine.enable:
             #     sampling_score_all_layers = []
