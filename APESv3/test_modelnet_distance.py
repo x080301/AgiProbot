@@ -17,6 +17,17 @@ from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
 
 
+def sum_of_min_distance(pc_a, pc_b, no_self):
+    min_distance = pc_a - torch.permute(pc_b, (1, 0, 2))
+    min_distance = torch.sum(min_distance ** 2, dim=2)
+
+    if no_self:
+        min_distance[min_distance == 0] += 100
+
+    min_distance, _ = torch.min(min_distance, dim=1)
+    return torch.sum(min_distance)
+
+
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main_with_Decorators(config):
     main_without_Decorators(config)
@@ -292,8 +303,18 @@ def test(local_rank, config):
 
             if rank == 0:
                 samples = torch.concat(sample_gather_list, dim=0)
+                print(f'samples:{samples.shape}')
                 for downsampled_idx in downsampled_idx_all_layers:
                     print(downsampled_idx.shape)
+
+                # for point_cloud_index in range(16):
+                #     pc_2048 = samples
+                #
+                #     pc_1024_index = data['idx_down'][point_cloud_index][0].flatten()
+                #     pc_1024 = pc_2048[pc_1024_index, :]
+                #
+                #     pc_512_index = data['idx_down'][point_cloud_index][1].flatten()
+                #     pc_512 = pc_1024[pc_512_index, :]
 
             # if config.test.visualize_combine.enable:
             #     sampling_score_all_layers = []

@@ -26,6 +26,11 @@ distance_512_512 = 0
 
 file_dir = 'E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/'
 counter = 0
+
+
+
+
+
 for file_name in os.listdir(file_dir):
     if '.pkl' in file_name:
         print(f'loading: {os.path.join(file_dir, file_name)}')
