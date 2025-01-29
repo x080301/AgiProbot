@@ -194,7 +194,7 @@ def test(local_rank, config):
                                               pin_memory=config.test.dataloader.pin_memory, sampler=test_sampler)
 
     # get model
-    my_model = cls_model.ModelNetModel(config, calculate_inference_time=True)
+    my_model = cls_model.ModelNetModel(config, calculate_inference_time=True, fps=True)
     my_model.eval()
     my_model = my_model.to(device)
     my_model = torch.nn.parallel.DistributedDataParallel(my_model)
@@ -209,7 +209,7 @@ def test(local_rank, config):
         my_model.load_state_dict(state_dict['model_state_dict'])
     else:
         my_model.load_state_dict(state_dict)
-        
+
     # if config.feature_learning_block.downsample.bin.dynamic_boundaries:
     #     state_dict = torch.load(f'{artifacts_path}/checkpoint.pt', map_location=map_location)
     #     my_model.load_state_dict(state_dict['model_state_dict'])
@@ -314,9 +314,9 @@ def test(local_rank, config):
         if rank == 0:
             print(f'number of batches = {i + 1}, batch_size = {samples.shape[0] * 2}')
             print(f'inference_time_begin2ds = {inference_time_begin2ds}')
-            print(f'inference_time_begin2ds = {inference_time_fps}')
-            print(f'inference_time_begin2ds = {inference_time_ds}')
-            print(f'inference_time_begin2ds = {inference_time_ds2end}')
+            print(f'inference_time_fps = {inference_time_fps}')
+            print(f'inference_time_ds = {inference_time_ds}')
+            print(f'inference_time_ds2end = {inference_time_ds2end}')
             print(f'{inference_time_begin2ds}\t{inference_time_fps}\t{inference_time_ds}\t{inference_time_ds2end}')
 
         #     if config.train.aux_loss.enable:
