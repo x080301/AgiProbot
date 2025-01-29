@@ -2350,3 +2350,159 @@ class DownSampleInsert(nn.Module):
             idx_batch_list.append(idx_single)
         idx_batch = torch.stack(idx_batch_list, dim=0)  # idx_batch.shape == (B, H, M)
         return idx_batch
+
+
+class DownSample(nn.Module):
+    def __init__(self, config_ds, layer):
+        super(DownSample, self).__init__()
+        self.M = config_ds.M[layer]
+        self.K = 32
+        self.asm = config_ds.asm[layer]
+        self.res = config_ds.res.enable[layer]
+        self.ff = config_ds.res.ff[layer]
+        self.num_heads = config_ds.num_heads[layer]
+        self.idx_mode = config_ds.idx_mode[layer]
+        q_in = config_ds.q_in[layer]
+        q_out = config_ds.q_out[layer]
+        k_in = config_ds.k_in[layer]
+        k_out = config_ds.k_out[layer]
+        v_in = config_ds.v_in[layer]
+        v_out = config_ds.v_out[layer]
+
+        self.q_depth = int(q_out / self.num_heads)
+        self.k_depth = int(k_out / self.num_heads)
+        self.v_depth = int(v_out / self.num_heads)
+        if self.res:
+            self.bn1 = nn.BatchNorm1d(v_out)
+            if self.ff:
+                self.ffn = nn.Sequential(nn.Conv1d(128, 512, 1, bias=False),
+                                         nn.LeakyReLU(negative_slope=0.2),
+                                         nn.Conv1d(512, 128, 1, bias=False))
+                self.bn2 = nn.BatchNorm1d(v_out)
+
+        self.q_conv = nn.Conv1d(q_in, q_out, 1, bias=False)
+        self.k_conv = nn.Conv1d(k_in, k_out, 1, bias=False)
+        self.v_conv = nn.Conv1d(v_in, v_out, 1, bias=False)
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x, x_xyz=None):
+        # x.shape == (B, C, N)
+        q = self.q_conv(x)
+        # q.shape == (B, C, N)
+        q = self.split_heads(q, self.num_heads, self.q_depth)
+        # q.shape == (B, H, D, N)
+        k = self.k_conv(x)
+        # k.shape ==  (B, C, N)
+        k = self.split_heads(k, self.num_heads, self.k_depth)
+        # k.shape == (B, H, D, N)
+        v = self.v_conv(x)
+        # v.shape ==  (B, C, N)
+        v = self.split_heads(v, self.num_heads, self.v_depth)
+        # v.shape == (B, H, D, N)
+
+        q = q.permute(0, 1, 3, 2)  # q.shape == (B, H, N, D)
+        attention = self.attention_scoring(q, k)  # attention.shape == (B, H, N, N)
+
+        # mask, sam = self.sparse_attention_map(x, attention)
+
+        # # original attention map based
+        # self.attention = torch.sum(attention, dim=-2) # self.attention.shape == (B, H, N)
+        # self.row_std = torch.std(attention, dim=-1)
+
+        # # sparse attention map based
+        # self.sparse_num_sparse = torch.sum(mask, dim=-2)
+        # self.sparse_col_sum = torch.sum(sam, dim=-2)
+        # self.sparse_col_avg = self.sparse_col_sum / self.sparse_num_sparse
+        # self.sparse_col_sqr = self.sparse_col_avg / self.sparse_num_sparse
+        # self.sparse_row_sum = torch.sum(sam, dim=-1)
+
+        # self.idx = self.attention.topk(self.M, dim=-1)[1] # idx.shape == (B, H, M)
+
+        self.idx = self.idx_selection(x, attention)
+
+        idx_dropped = torch.sum(attention, dim=-2).topk(attention.shape[-1] - self.M, dim=-1, largest=False)[1]
+        # idx_dropped.shape == (B, H, N-M)
+        attention_down = torch.gather(attention, dim=2, index=self.idx[..., None].expand(-1, -1, -1, k.shape[-1]))
+        # attention_down.shape == (B, H, M, N)
+        attention_dropped = torch.gather(attention, dim=2, index=idx_dropped[..., None].expand(-1, -1, -1, k.shape[-1]))
+        # attention_dropped.shape == (B, H, N-M, N)
+        v_down = (attention_down @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
+        # v_down.shape == (B, M, H, D)
+        v_dropped = (attention_dropped @ v.permute(0, 1, 3, 2)).permute(0, 2, 1, 3)
+        # v_dropped.shape == (B, N-M, H, D)
+        x_ds = v_down.reshape(v_down.shape[0], v_down.shape[1], -1).permute(0, 2, 1)
+        # v_down.shape == (B, C, M)
+
+        # residual & feedforward
+        if self.res == True:
+            x_ds = self.res_block(x, x_ds)
+
+        x_dropped = v_dropped.reshape(v_dropped.shape[0], v_dropped.shape[1], -1).permute(0, 2, 1)
+        # v_dropped.shape == (B, C, N-M)
+        return (x_ds, self.idx), (x_dropped, idx_dropped)
+
+    def split_heads(self, x, heads, depth):
+        # x.shape == (B, C, N)
+        x = x.view(x.shape[0], heads, depth, x.shape[2])
+        # x.shape == (B, H, D, N)
+        return x
+
+    def attention_scoring(self, q, k):  # q.shape == (B, H, N, D), k.shape == (B, H, D, N)
+        if self.asm == "dot":
+            energy = q @ k  # energy.shape == (B, H, N, N)
+        elif self.asm == "dot-sub":
+            energy = q @ (q.transpose(-1, -2) - k)  # Q@(Q-K) energy.shape == (B, H, N, N)
+        elif self.asm == "l2":
+            energy = -1 * ops.l2_global(q, k)  # -(Q-K)^2 energy.shape == (B, H, N, N)
+        elif self.asm == "l2+":
+            energy = ops.l2_global(q, k)  # (Q-K)^2 energy.shape == (B, H, N, N)
+        else:
+            raise ValueError('Please check the setting of asm!')
+        scale_factor = math.sqrt(q.shape[-1])
+        attention = self.softmax(energy / scale_factor)  # attention.shape == (B, H, N, N)
+        return attention
+
+    def res_block(self, x, x_ds):  # x.shape == (B, C, N), x_ds.shape == (B, C, M)
+        x_tmp = torch.gather(x, dim=-1, index=self.idx)  # x_res.shape == (B, 1, M)
+        x_res = self.bn1(x_ds + x_tmp)  # x_res.shape == (B, C, M)
+        if self.ff == True:
+            x_tmp = self.ffn(x_res)
+            x_res = self.bn2(x_ds + x_tmp)
+        return x_res  # x_res.shape == (B, C, M)
+
+    def sparse_attention_map(self, x, attention):
+        mask = ops.neighbor_mask(x, self.K)
+        mask = mask.unsqueeze(1).expand(-1, attention.shape[1], -1, -1)
+        sparse_attention_map = attention * mask
+        return mask, sparse_attention_map
+
+    def idx_selection(self, x, attention_map):
+
+        # original attention map based
+        if self.idx_mode == "col_sum":
+            self.attention = torch.sum(attention_map, dim=-2)  # self.attention.shape == (B, H, N)
+        elif self.idx_mode == "row_std":
+            self.attention = torch.std(attention_map, dim=-1)
+
+        # sparse attention map based
+        else:
+            mask, sam = self.sparse_attention_map(x, attention_map)
+            self.sparse_num = torch.sum(mask, dim=-2)
+            if self.idx_mode == "sparse_row_sum":
+                self.attention = torch.sum(sam, dim=-1)
+            elif self.idx_mode == "sparse_row_std":
+                self.attention = torch.std(sam, dim=-1)
+            elif self.idx_mode == "sparse_col_sum":
+                self.attention = torch.sum(sam, dim=-2)
+            elif self.idx_mode == "sparse_col_avg":
+                self.attention = torch.sum(sam, dim=-2) / self.sparse_num
+            elif self.idx_mode == "sparse_col_sqr":
+                self.attention = torch.sum(sam, dim=-2) / self.sparse_num / self.sparse_num
+            elif self.idx_mode == "sparse_col_sum_sqr":
+                sparse_col_sum = torch.sum(sam, dim=-2)
+                sparse_col_sqr = sparse_col_sum / self.sparse_num / self.sparse_num
+                self.attention = 0.5 * sparse_col_sqr + 0.5 * sparse_col_sum
+            else:
+                raise ValueError('Please check the setting of idx mode!')
+        idx = self.attention.topk(self.M, dim=-1)[1]
+        return idx
