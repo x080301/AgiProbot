@@ -289,11 +289,12 @@ def test(local_rank, config):
             preds = my_model(samples)
 
             if rank == 0:
-                beginning = my_model.beginning
-                before_ds = my_model.before_ds
-                after_fps = my_model.after_fps
-                after_ds = my_model.after_ds
-                end_time = my_model.end_time
+                beginning = my_model.module.beginning
+                before_ds = my_model.module.before_ds
+                after_fps = my_model.module.after_fps
+                after_ds = my_model.module.after_ds
+                end_time = my_model.module.end_time
+                
 
                 inference_time_begin2ds += before_ds - beginning
                 if after_fps is not None:
