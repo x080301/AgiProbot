@@ -288,153 +288,153 @@ def test(local_rank, config):
                 idx_in_bins_all_layers = []
                 k_point_to_choose_all_layers = []
 
-                for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
-                    downsample_module.output_variable_calculatio()
-
-                    sampling_score_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'attention_point_score',
-                                                  rank, config.test.ddp.nproc_this_node, device))
-
-                    idx_down_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'idx',
-                                                  rank, config.test.ddp.nproc_this_node, device))
-
-                    idx_in_bins_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'idx_chunks',
-                                                  rank, config.test.ddp.nproc_this_node, device))
-                    k_point_to_choose_all_layers.append(
-                        gather_variable_from_gpus(downsample_module, 'k_point_to_choose',
-                                                  rank, config.test.ddp.nproc_this_node, device))
-
-                    bin_prob = gather_variable_from_gpus(downsample_module, 'bin_prob',
-                                                         rank, config.test.ddp.nproc_this_node, device)
-                    # bin_prob.shape == (B, num_bins)
-
-                if rank == 0:
-                    # sampling_score_all_layers: num_layers * (B,H,N) -> (B, num_layers, H, N)
-                    sampling_score = reshape_gathered_variable(sampling_score_all_layers)
-                    # idx_down_all_layers: num_layers * (B,H,M) -> (B, num_layers, H, N)
-                    idx_down = reshape_gathered_variable(idx_down_all_layers)
-                    # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-                    idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
-                    # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
-                    k_point_to_choose = reshape_gathered_variable(k_point_to_choose_all_layers)
-
-                    num_batches = len(k_point_to_choose)
-                    num_layers = len(k_point_to_choose[0])
-                    num_bins = len(k_point_to_choose[0][0])
-                    probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
-                                                      dtype=torch.float)
-                    for i0 in range(num_batches):
-                        for j0 in range(num_layers):
-                            for k0 in range(num_bins):
-                                probability_of_bins[i0, j0, k0] = \
-                                    k_point_to_choose[i0][j0][k0] / idx_in_bins[i0][j0][k0].nelement()
-
-                    # sampling_score_list.append(sampling_score)
-                    # idx_down_list.append(idx_down)
-                    # idx_in_bins_list.append(idx_in_bins)
-                    # probability_of_bins_list.append(probability_of_bins)
-
-                    data_dict = {'sampling_score': sampling_score,  # (B, num_layers, H, N)
-                                 'samples': torch.concat(sample_gather_list, dim=0),  # (B,N,3)
-                                 'idx_down': idx_down,  # B * num_layers * (H,N)
-                                 'idx_in_bins': idx_in_bins,
-                                 # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
-                                 'probability_of_bins': probability_of_bins,
-                                 # B * num_layers * (num_bins)
-                                 'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
-                                 # (B,)
-                                 'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1),  # (B,)
-                                 'config': config,
-                                 'raw_learned_bin_prob': bin_prob
-                                 }
-
-                    if config.test.save_pkl:
-                        statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
-                            data_dict,
-                            statistic_data_all_samples)
-
-                        visualization_histogram_one_batch(
-                            counter_in_categories_visualization_histogram,
-                            data_dict, save_dir, True)
-
-                        visualization_points_in_bins_one_batch(
-                            counter_in_categories_visualization_points_in_bins,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_downsampled_points_one_batch(
-                            counter_in_categories_visualization_downsampled_points,
-                            data_dict, save_dir, 0.6, False)
-
-                        visualization_heatmap_one_batch(
-                            counter_in_categories_visualization_heatmap,
-                            data_dict, save_dir, 0.6, False)
-
-                        for M in [16, 8, 32, 64, 128]:
-                            visualization_few_points_one_batch(
-                                counter_in_categories_visualization_few_points[M],
-                                data_dict, i, save_dir, M, visualization_all=False)
-
-                        # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
-                        #     pickle.dump(data_dict, f)
-
-                        # if 'Yi' in config.datasets.dataset_name:
-                        #     view_range = 0.3
-                        # elif 'AnTao' in config.datasets.dataset_name:
-                        #     view_range = 0.6
-                        # visualization_heatmap(mode='modelnet', data_dict=data_dict,
-                        #                       save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
-                        # visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
-                        #                                  save_path=f'{save_dir}downsampled_points', index=i,
-                        #                                  view_range=view_range)
-                        # visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
-                        #                              save_path=f'{save_dir}points_in_bins', index=i,
-                        #                              view_range=view_range)
-                        # visualization_histogram(mode='modelnet', data_dict=data_dict,
-                        #                         save_path=f'{save_dir}histogram', index=i)
-                        #
-                        # if i == 0:
-                        #     statistic_data_all_samples = None
-                        # statistic_data_all_samples = get_statistic_data_all_samples(
-                        #     mode='modelnet',
-                        #     data_dict=data_dict,
-                        #     save_path=save_dir,
-                        #     statistic_data_all_samples=statistic_data_all_samples)
-                        pass
-
-            if rank == 0:
-                preds = torch.concat(pred_gather_list, dim=0)
-                pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
-                cls_labels = torch.concat(cls_label_gather_list, dim=0)
-                cls_label_list.append(torch.max(cls_labels, dim=1)[1].detach().cpu().numpy())
-                samples = torch.concat(sample_gather_list, dim=0)
-                sample_list.append(samples.permute(0, 2, 1).detach().cpu().numpy())
-                loss /= config.test.ddp.nproc_this_node
-                loss_list.append(loss.detach().cpu().numpy())
-                pbar.update(i)
-
-                # if config.test.sampling_score_histogram.enable:
-                #     if i == 0:
-                #         torch_tensor_to_save_batch = None
-                #
-                #     if i == len(test_loader) - 1:
-                #         save_dir = 'modelnet_sampling_scores.pt'
-                #     else:
-                #         save_dir = None
-                #
-                #     idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
-                #            vis_test_gather_dict["trained"]["idx"]]
-                #     attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
-                #                      vis_test_gather_dict["trained"]["attention_point_score"]]
-                #
-                #     torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
-                #                                                      attention_map,
-                #                                                      save_dir)
-
-        if rank == 0:
-            if config.test.save_pkl:
-                save_statical_data(data_dict, save_dir, statistic_data_all_samples)
+        #         for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
+        #             downsample_module.output_variable_calculatio()
+        #
+        #             sampling_score_all_layers.append(
+        #                 gather_variable_from_gpus(downsample_module, 'attention_point_score',
+        #                                           rank, config.test.ddp.nproc_this_node, device))
+        #
+        #             idx_down_all_layers.append(
+        #                 gather_variable_from_gpus(downsample_module, 'idx',
+        #                                           rank, config.test.ddp.nproc_this_node, device))
+        #
+        #             idx_in_bins_all_layers.append(
+        #                 gather_variable_from_gpus(downsample_module, 'idx_chunks',
+        #                                           rank, config.test.ddp.nproc_this_node, device))
+        #             k_point_to_choose_all_layers.append(
+        #                 gather_variable_from_gpus(downsample_module, 'k_point_to_choose',
+        #                                           rank, config.test.ddp.nproc_this_node, device))
+        #
+        #             bin_prob = gather_variable_from_gpus(downsample_module, 'bin_prob',
+        #                                                  rank, config.test.ddp.nproc_this_node, device)
+        #             # bin_prob.shape == (B, num_bins)
+        #
+        #         if rank == 0:
+        #             # sampling_score_all_layers: num_layers * (B,H,N) -> (B, num_layers, H, N)
+        #             sampling_score = reshape_gathered_variable(sampling_score_all_layers)
+        #             # idx_down_all_layers: num_layers * (B,H,M) -> (B, num_layers, H, N)
+        #             idx_down = reshape_gathered_variable(idx_down_all_layers)
+        #             # idx_in_bins_all_layers: num_layers * (B,num_bins,1,n) or num_layers * B * num_bins * (1,n) -> (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+        #             idx_in_bins = reshape_gathered_variable(idx_in_bins_all_layers)
+        #             # probability_of_bins_all_layers: num_layers * (B, num_bins) -> (B, num_layers, num_bins)
+        #             k_point_to_choose = reshape_gathered_variable(k_point_to_choose_all_layers)
+        #
+        #             num_batches = len(k_point_to_choose)
+        #             num_layers = len(k_point_to_choose[0])
+        #             num_bins = len(k_point_to_choose[0][0])
+        #             probability_of_bins = torch.empty((num_batches, num_layers, num_bins),
+        #                                               dtype=torch.float)
+        #             for i0 in range(num_batches):
+        #                 for j0 in range(num_layers):
+        #                     for k0 in range(num_bins):
+        #                         probability_of_bins[i0, j0, k0] = \
+        #                             k_point_to_choose[i0][j0][k0] / idx_in_bins[i0][j0][k0].nelement()
+        #
+        #             # sampling_score_list.append(sampling_score)
+        #             # idx_down_list.append(idx_down)
+        #             # idx_in_bins_list.append(idx_in_bins)
+        #             # probability_of_bins_list.append(probability_of_bins)
+        #
+        #             data_dict = {'sampling_score': sampling_score,  # (B, num_layers, H, N)
+        #                          'samples': torch.concat(sample_gather_list, dim=0),  # (B,N,3)
+        #                          'idx_down': idx_down,  # B * num_layers * (H,N)
+        #                          'idx_in_bins': idx_in_bins,
+        #                          # (B, num_layers, num_bins, H, n) or B * num_layers * num_bins * (H,n)
+        #                          'probability_of_bins': probability_of_bins,
+        #                          # B * num_layers * (num_bins)
+        #                          'ground_truth': torch.argmax(torch.concat(cls_label_gather_list, dim=0), dim=1),
+        #                          # (B,)
+        #                          'predictions': torch.argmax(torch.concat(pred_gather_list, dim=0), dim=1),  # (B,)
+        #                          'config': config,
+        #                          'raw_learned_bin_prob': bin_prob
+        #                          }
+        #
+        #             if config.test.save_pkl:
+        #                 statistic_data_all_samples = get_statistic_data_all_samples_one_sample(
+        #                     data_dict,
+        #                     statistic_data_all_samples)
+        #
+        #                 visualization_histogram_one_batch(
+        #                     counter_in_categories_visualization_histogram,
+        #                     data_dict, save_dir, True)
+        #
+        #                 visualization_points_in_bins_one_batch(
+        #                     counter_in_categories_visualization_points_in_bins,
+        #                     data_dict, save_dir, 0.6, False)
+        #
+        #                 visualization_downsampled_points_one_batch(
+        #                     counter_in_categories_visualization_downsampled_points,
+        #                     data_dict, save_dir, 0.6, False)
+        #
+        #                 visualization_heatmap_one_batch(
+        #                     counter_in_categories_visualization_heatmap,
+        #                     data_dict, save_dir, 0.6, False)
+        #
+        #                 for M in [16, 8, 32, 64, 128]:
+        #                     visualization_few_points_one_batch(
+        #                         counter_in_categories_visualization_few_points[M],
+        #                         data_dict, i, save_dir, M, visualization_all=False)
+        #
+        #                 # with open(f'{save_dir}intermediate_result_{i}.pkl', 'wb') as f:
+        #                 #     pickle.dump(data_dict, f)
+        #
+        #                 # if 'Yi' in config.datasets.dataset_name:
+        #                 #     view_range = 0.3
+        #                 # elif 'AnTao' in config.datasets.dataset_name:
+        #                 #     view_range = 0.6
+        #                 # visualization_heatmap(mode='modelnet', data_dict=data_dict,
+        #                 #                       save_path=f'{save_dir}heat_map', index=i, view_range=view_range)
+        #                 # visualization_downsampled_points(mode='modelnet', data_dict=data_dict,
+        #                 #                                  save_path=f'{save_dir}downsampled_points', index=i,
+        #                 #                                  view_range=view_range)
+        #                 # visualization_points_in_bins(mode='modelnet', data_dict=data_dict,
+        #                 #                              save_path=f'{save_dir}points_in_bins', index=i,
+        #                 #                              view_range=view_range)
+        #                 # visualization_histogram(mode='modelnet', data_dict=data_dict,
+        #                 #                         save_path=f'{save_dir}histogram', index=i)
+        #                 #
+        #                 # if i == 0:
+        #                 #     statistic_data_all_samples = None
+        #                 # statistic_data_all_samples = get_statistic_data_all_samples(
+        #                 #     mode='modelnet',
+        #                 #     data_dict=data_dict,
+        #                 #     save_path=save_dir,
+        #                 #     statistic_data_all_samples=statistic_data_all_samples)
+        #                 pass
+        #
+        #     if rank == 0:
+        #         preds = torch.concat(pred_gather_list, dim=0)
+        #         pred_list.append(torch.max(preds, dim=1)[1].detach().cpu().numpy())
+        #         cls_labels = torch.concat(cls_label_gather_list, dim=0)
+        #         cls_label_list.append(torch.max(cls_labels, dim=1)[1].detach().cpu().numpy())
+        #         samples = torch.concat(sample_gather_list, dim=0)
+        #         sample_list.append(samples.permute(0, 2, 1).detach().cpu().numpy())
+        #         loss /= config.test.ddp.nproc_this_node
+        #         loss_list.append(loss.detach().cpu().numpy())
+        #         pbar.update(i)
+        #
+        #         # if config.test.sampling_score_histogram.enable:
+        #         #     if i == 0:
+        #         #         torch_tensor_to_save_batch = None
+        #         #
+        #         #     if i == len(test_loader) - 1:
+        #         #         save_dir = 'modelnet_sampling_scores.pt'
+        #         #     else:
+        #         #         save_dir = None
+        #         #
+        #         #     idx = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+        #         #            vis_test_gather_dict["trained"]["idx"]]
+        #         #     attention_map = [torch.squeeze(torch.asarray(item)).to(samples.device) for item in
+        #         #                      vis_test_gather_dict["trained"]["attention_point_score"]]
+        #         #
+        #         #     torch_tensor_to_save_batch = save_sampling_score(torch_tensor_to_save_batch, samples, idx,
+        #         #                                                      attention_map,
+        #         #                                                      save_dir)
+        #
+        # if rank == 0:
+        #     if config.test.save_pkl:
+        #         save_statical_data(data_dict, save_dir, statistic_data_all_samples)
     # if rank == 0:
     #     preds = np.concatenate(pred_list, axis=0)
     #     cls_labels = np.concatenate(cls_label_list, axis=0)
