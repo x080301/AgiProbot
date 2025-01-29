@@ -213,6 +213,8 @@ def train(local_rank, config, random_seed,
 
     # get model
     my_model = cls_model.ModelNetModel(config)
+    if rank==0:
+        print(my_model)
 
     # synchronize bn among gpus
     if config.train.ddp.syn_bn:  # TODO: test performance
