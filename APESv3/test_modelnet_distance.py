@@ -259,8 +259,6 @@ def test(local_rank, config):
             }
 
         for i, (samples, cls_labels) in enumerate(test_loader):
-            print(i)
-            print(samples.shape)
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
 
@@ -284,11 +282,15 @@ def test(local_rank, config):
             torch.distributed.all_gather(sample_gather_list, samples)
             torch.distributed.all_reduce(loss)
 
-            if config.test.visualize_combine.enable:
-                sampling_score_all_layers = []
-                idx_down_all_layers = []
-                idx_in_bins_all_layers = []
-                k_point_to_choose_all_layers = []
+            if rank == 0:
+                samples = torch.concat(sample_gather_list, dim=0)
+                print(samples.shape)
+
+            # if config.test.visualize_combine.enable:
+            #     sampling_score_all_layers = []
+            #     idx_down_all_layers = []
+            #     idx_in_bins_all_layers = []
+            #     k_point_to_choose_all_layers = []
 
         #         for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
         #             downsample_module.output_variable_calculatio()
