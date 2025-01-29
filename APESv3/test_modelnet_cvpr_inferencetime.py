@@ -294,7 +294,6 @@ def test(local_rank, config):
                 after_fps = my_model.module.after_fps
                 after_ds = my_model.module.after_ds
                 end_time = my_model.module.end_time
-                
 
                 inference_time_begin2ds += before_ds - beginning
                 if after_fps is not None:
@@ -311,6 +310,7 @@ def test(local_rank, config):
             print(f'inference_time_begin2ds = {inference_time_fps}')
             print(f'inference_time_begin2ds = {inference_time_ds}')
             print(f'inference_time_begin2ds = {inference_time_ds2end}')
+            print(f'{inference_time_begin2ds}\t{inference_time_fps}\t{inference_time_ds}\t{inference_time_ds2end}')
 
         #     if config.train.aux_loss.enable:
         #         preds = preds[-1]
