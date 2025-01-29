@@ -17,7 +17,6 @@ from utils.visualization_data_processing import *
 from utils.check_config import set_config_run
 
 
-
 @hydra.main(version_base=None, config_path="./configs", config_name="default.yaml")
 def main_with_Decorators(config):
     main_without_Decorators(config)
@@ -70,7 +69,7 @@ def main_without_Decorators(config):
     else:
         OmegaConf.save(config, f'{local_path}/usr_config_test.yaml')
         print(f'Overwrite the previous run config with new run config.')
-    config = set_config_run(config, "test")
+    config = set_config_run(config, "test", check_config_flag=False)
 
     if config.datasets.dataset_name == 'modelnet_AnTao420M':
         dataloader.download_modelnet_AnTao420M(config.datasets.url, config.datasets.saved_path)
@@ -508,7 +507,6 @@ if __name__ == '__main__':
         main_with_Decorators()
     else:
 
-        
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
         config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
