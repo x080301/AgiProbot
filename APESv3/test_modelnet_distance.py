@@ -282,6 +282,11 @@ def test(local_rank, config):
             torch.distributed.all_gather(sample_gather_list, samples)
             torch.distributed.all_reduce(loss)
 
+            for i_layer, downsample_module in enumerate(my_model.module.block.downsample_list):
+                downsampled_idx = downsample_module.idx
+                print(
+                    f'rank: {rank}, layer: {i_layer}, downsampled_idx.shape: {downsampled_idx.shape}, max: {torch.max(downsampled_idx)}')
+
             if rank == 0:
                 samples = torch.concat(sample_gather_list, dim=0)
                 print(samples.shape)

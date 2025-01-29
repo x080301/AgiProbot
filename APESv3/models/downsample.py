@@ -2144,8 +2144,8 @@ class DownSampleInsert(nn.Module):
         return (x_ds, self.idx), (x_dropped, idx_dropped)
 
         # 'bin_prob'
-        self.bin_prob = self.bin_weights_beforerelu
-        # bin_prob.shape == (B, num_bins)
+        # self.bin_prob = self.bin_weights_beforerelu
+        # # bin_prob.shape == (B, num_bins)
 
     def split_heads(self, x, heads, depth):
         # x.shape == (B, C, N, K)
