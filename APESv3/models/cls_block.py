@@ -7,7 +7,7 @@ from models import downsample
 from models import _downsample_token
 import time
 from utils.dataloader import fps
-from models.fpsknn import PointNetSetAbstraction
+from models.fpsknn import PointNetSetAbstraction, farthest_point_sample
 
 
 class FeatureLearningBlock(nn.Module):
@@ -136,6 +136,7 @@ class FeatureLearningBlock(nn.Module):
                 if self.calculate_inference_time:
                     torch.cuda.synchronize()
                     self.before_ds = time.time()
+
 
                 (x, idx_select) = self.downsample_list[i](x, x_xyz)[0]
 

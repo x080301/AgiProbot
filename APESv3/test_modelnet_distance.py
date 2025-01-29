@@ -28,7 +28,7 @@ def sum_of_min_distance(pc_a, pc_b, no_self):
     return torch.sum(min_distance)
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="default.yaml")
+@hydra.main(version_base=None, config_path="configs", config_name="default.yaml")
 def main_with_Decorators(config):
     main_without_Decorators(config)
 
@@ -586,7 +586,7 @@ if __name__ == '__main__':
     else:
 
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
-        config = OmegaConf.load('../configs/default.yaml')
+        config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'usr_config': 'configs/boltzmannT0102.yaml',
             'datasets': 'modelnet_AnTao420M',
