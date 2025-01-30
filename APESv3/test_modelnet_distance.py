@@ -19,7 +19,7 @@ from utils.check_config import set_config_run
 
 def sum_of_min_distance(pc_a, pc_b, no_self):
     min_distance = pc_a - torch.permute(pc_b, (1, 0, 2))
-    min_distance = torch.sum(min_distance ** 2, dim=2)**0.5
+    min_distance = torch.sum(min_distance ** 2, dim=2) ** 0.5
 
     if no_self:
         min_distance[min_distance == 0] += 100
@@ -362,23 +362,23 @@ def test(local_rank, config):
                     min_distance_16 += sum_of_min_distance(pc_2048, pc_16, True)
 
         if rank == 0:
-            min_distance_2048 /= (2048 * i + 1 * 16)
-            min_distance_1024 /= (2048 * i + 1 * 16)
-            min_distance_512 /= (2048 * i + 1 * 16)
-            min_distance_256 /= (2048 * i + 1 * 16)
-            min_distance_128 /= (2048 * i + 1 * 16)
-            min_distance_64 /= (2048 * i + 1 * 16)
-            min_distance_32 /= (2048 * i + 1 * 16)
-            min_distance_16 /= (2048 * i + 1 * 16)
+            min_distance_2048 /= (2048 * (i + 1) * 16)
+            min_distance_1024 /= (2048 * (i + 1) * 16)
+            min_distance_512 /= (2048 * (i + 1) * 16)
+            min_distance_256 /= (2048 * (i + 1) * 16)
+            min_distance_128 /= (2048 * (i + 1) * 16)
+            min_distance_64 /= (2048 * (i + 1) * 16)
+            min_distance_32 /= (2048 * (i + 1) * 16)
+            min_distance_16 /= (2048 * (i + 1) * 16)
 
-            min_distance_2048_noself /= (2048 * i + 1 * 16)
-            min_distance_1024_noself /= (2048 * i + 1 * 16)
-            min_distance_512_noself /= (2048 * i + 1 * 16)
-            min_distance_256_noself /= (2048 * i + 1 * 16)
-            min_distance_128_noself /= (2048 * i + 1 * 16)
-            min_distance_64_noself /= (2048 * i + 1 * 16)
-            min_distance_32_noself /= (2048 * i + 1 * 16)
-            min_distance_16_noself /= (2048 * i + 1 * 16)
+            min_distance_2048_noself /= (2048 * (i + 1) * 16)
+            min_distance_1024_noself /= (2048 * (i + 1) * 16)
+            min_distance_512_noself /= (2048 * (i + 1) * 16)
+            min_distance_256_noself /= (2048 * (i + 1) * 16)
+            min_distance_128_noself /= (2048 * (i + 1) * 16)
+            min_distance_64_noself /= (2048 * (i + 1) * 16)
+            min_distance_32_noself /= (2048 * (i + 1) * 16)
+            min_distance_16_noself /= (2048 * (i + 1) * 16)
 
             print(
                 f'{min_distance_2048}\t{min_distance_1024}\t{min_distance_512}\t{min_distance_256}\t{min_distance_128}\t{min_distance_64}\t{min_distance_32}\t{min_distance_16}')
