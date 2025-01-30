@@ -330,30 +330,60 @@ def test(local_rank, config):
                 for point_cloud_index in range(16):
                     pc_2048 = samples[point_cloud_index, :, :]  # (2048,3)
 
-                    print(f'downsampled_idx_all_layers[0][point_cloud_index, 0, :] {downsampled_idx_all_layers[0][point_cloud_index, 0, :]}')
-                    exit(-1)
+                    pc_1024 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :], :].reshape((-1, 1, 3))
+                    pc_512 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:512], :].reshape(
+                        (-1, 1, 3))
+                    pc_256 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:256], :].reshape(
+                        (-1, 1, 3))
+                    pc_128 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:128], :].reshape(
+                        (-1, 1, 3))
+                    pc_64 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:64], :].reshape((-1, 1, 3))
+                    pc_32 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:32], :].reshape((-1, 1, 3))
+                    pc_16 = pc_2048[downsampled_idx_all_layers[0][point_cloud_index, 0, :][:16], :].reshape((-1, 1, 3))
 
-                    pc_1024_index = downsampled_idx_all_layers[0][point_cloud_index, 0, :]
-                    pc_1024 = pc_2048[pc_1024_index, :]
+                    pc_2048 = torch.reshape(pc_2048, (-1, 1, 3))
 
-                    pc_512_index = downsampled_idx_all_layers[1][point_cloud_index, 0, :]
-                    pc_512 = pc_1024[pc_512_index, :]
+                    min_distance_2048_noself += sum_of_min_distance(pc_2048, pc_2048, True)
+                    min_distance_1024_noself += sum_of_min_distance(pc_2048, pc_1024, True)
+                    min_distance_512_noself += sum_of_min_distance(pc_2048, pc_512, True)
+                    min_distance_256_noself += sum_of_min_distance(pc_2048, pc_256, True)
+                    min_distance_128_noself += sum_of_min_distance(pc_2048, pc_128, True)
+                    min_distance_64_noself += sum_of_min_distance(pc_2048, pc_64, True)
+                    min_distance_32_noself += sum_of_min_distance(pc_2048, pc_32, True)
+                    min_distance_16_noself += sum_of_min_distance(pc_2048, pc_16, True)
 
-                    pc_2048 = torch.reshape(pc_2048, (2048, 1, 3))
-                    pc_1024 = torch.reshape(pc_1024, (1024, 1, 3))
-                    pc_512 = torch.reshape(pc_512, (512, 1, 3))
+                    min_distance_2048 += sum_of_min_distance(pc_2048, pc_2048, True)
+                    min_distance_1024 += sum_of_min_distance(pc_2048, pc_1024, True)
+                    min_distance_512 += sum_of_min_distance(pc_2048, pc_512, True)
+                    min_distance_256 += sum_of_min_distance(pc_2048, pc_256, True)
+                    min_distance_128 += sum_of_min_distance(pc_2048, pc_128, True)
+                    min_distance_64 += sum_of_min_distance(pc_2048, pc_64, True)
+                    min_distance_32 += sum_of_min_distance(pc_2048, pc_32, True)
+                    min_distance_16 += sum_of_min_distance(pc_2048, pc_16, True)
 
-                    distance_2048_2048 += sum_of_min_distance(pc_2048, pc_2048, True)
-                    distance_2048_1024 += sum_of_min_distance(pc_2048, pc_1024, False)
-                    distance_2048_1024_no_self += sum_of_min_distance(pc_2048, pc_1024, True)
-                    distance_2048_512 += sum_of_min_distance(pc_2048, pc_512, False)
-                    distance_2048_512_no_self += sum_of_min_distance(pc_2048, pc_512, True)
+                    print(
+                        f'{min_distance_2048}\t{min_distance_1024}\t{min_distance_512}\t{min_distance_256}\t{min_distance_128}\t{min_distance_64}\t{min_distance_32}\t{min_distance_16}')
+                    print(
+                        f'{min_distance_2048_noself}\t{min_distance_1024_noself}\t{min_distance_512_noself}\t{min_distance_256_noself}\t{min_distance_128_noself}\t{min_distance_64_noself}\t{min_distance_32_noself}\t{min_distance_16_noself}')
 
-                    distance_1024_1024 += sum_of_min_distance(pc_1024, pc_1024, True)
-                    distance_1024_512 += sum_of_min_distance(pc_1024, pc_512, False)
-                    distance_1024_512_no_self += sum_of_min_distance(pc_1024, pc_512, True)
-
-                    distance_512_512 += sum_of_min_distance(pc_512, pc_512, True)
+                    # pc_512_index = downsampled_idx_all_layers[1][point_cloud_index, 0, :]
+                    # pc_512 = pc_1024[pc_512_index, :]
+                    #
+                    #
+                    # pc_1024 = torch.reshape(pc_1024, (1024, 1, 3))
+                    # pc_512 = torch.reshape(pc_512, (512, 1, 3))
+                    #
+                    # distance_2048_2048 += sum_of_min_distance(pc_2048, pc_2048, True)
+                    # distance_2048_1024 += sum_of_min_distance(pc_2048, pc_1024, False)
+                    # distance_2048_1024_no_self += sum_of_min_distance(pc_2048, pc_1024, True)
+                    # distance_2048_512 += sum_of_min_distance(pc_2048, pc_512, False)
+                    # distance_2048_512_no_self += sum_of_min_distance(pc_2048, pc_512, True)
+                    #
+                    # distance_1024_1024 += sum_of_min_distance(pc_1024, pc_1024, True)
+                    # distance_1024_512 += sum_of_min_distance(pc_1024, pc_512, False)
+                    # distance_1024_512_no_self += sum_of_min_distance(pc_1024, pc_512, True)
+                    #
+                    # distance_512_512 += sum_of_min_distance(pc_512, pc_512, True)
 
             # if config.test.visualize_combine.enable:
             #     sampling_score_all_layers = []
