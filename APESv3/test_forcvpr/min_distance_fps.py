@@ -14,9 +14,10 @@ def fps_open3d(points, num_samples):
     sampled_indices = np.array(pcd.farthest_point_down_sample(num_samples).points)
     return torch.from_numpy(sampled_indices).cuda()
 
+
 def sum_of_min_distance(pc_a, pc_b, no_self):
     min_distance = pc_a - torch.permute(pc_b, (1, 0, 2))
-    min_distance = torch.sum(min_distance ** 2, dim=2)
+    min_distance = torch.sum(min_distance ** 2, dim=2) ** 0.5
 
     if no_self:
         min_distance[min_distance == 0] += 100
@@ -58,14 +59,15 @@ for file_name in os.listdir(file_dir):
 
         pc_2048 = pc_2048.reshape((-1, 1, 3))
 
-        min_distance_2048 += sum_of_min_distance(pc_2048, pc_2048, True)
-        min_distance_1024 += sum_of_min_distance(pc_2048, pc_1024, True)
-        min_distance_512 += sum_of_min_distance(pc_2048, pc_512, True)
-        min_distance_256 += sum_of_min_distance(pc_2048, pc_256, True)
-        min_distance_128 += sum_of_min_distance(pc_2048, pc_128, True)
-        min_distance_64 += sum_of_min_distance(pc_2048, pc_64, True)
-        min_distance_32 += sum_of_min_distance(pc_2048, pc_32, True)
-        min_distance_16 += sum_of_min_distance(pc_2048, pc_16, True)
+        no_self = False
+        min_distance_2048 += sum_of_min_distance(pc_2048, pc_2048, no_self)
+        min_distance_1024 += sum_of_min_distance(pc_2048, pc_1024, no_self)
+        min_distance_512 += sum_of_min_distance(pc_2048, pc_512, no_self)
+        min_distance_256 += sum_of_min_distance(pc_2048, pc_256, no_self)
+        min_distance_128 += sum_of_min_distance(pc_2048, pc_128, no_self)
+        min_distance_64 += sum_of_min_distance(pc_2048, pc_64, no_self)
+        min_distance_32 += sum_of_min_distance(pc_2048, pc_32, no_self)
+        min_distance_16 += sum_of_min_distance(pc_2048, pc_16, no_self)
 
 min_distance_2048 /= (2048 * counter * 16)
 min_distance_1024 /= (2048 * counter * 16)
@@ -78,7 +80,6 @@ min_distance_16 /= (2048 * counter * 16)
 
 print(
     f'{min_distance_2048}\t{min_distance_1024}\t{min_distance_512}\t{min_distance_256}\t{min_distance_128}\t{min_distance_64}\t{min_distance_32}\t{min_distance_16}')
-
 
 # with open('E:/datasets/APES/test_results/2024_02_21_01_47_Modelnet_Token_Std/intermediate_result_0.pkl', 'rb') as file:
 #     data = pickle.load(file)
@@ -231,4 +232,3 @@ print(
 # print(f'distance_1024_512 / 1024 / 16={distance_1024_512 / 1024 / 16 / counter}')
 # print(f'distance_1024_512_no_self / 1024 / 16={distance_1024_512_no_self / 1024 / 16 / counter}')
 # print(f'distance_512_512 / 512 / 16={distance_512_512 / 512 / 16 / counter}')
-
