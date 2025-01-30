@@ -287,7 +287,7 @@ def test(local_rank, config):
         min_distance_32_noself = 0
         min_distance_16_noself = 0
 
-        for i, (samples, cls_labels) in enumerate(test_loader):
+        for i, (samples, cls_labels) in tqdm(enumerate(test_loader)):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
             preds = my_model(samples)
 
