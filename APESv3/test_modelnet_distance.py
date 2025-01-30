@@ -352,14 +352,14 @@ def test(local_rank, config):
                     min_distance_32_noself += sum_of_min_distance(pc_2048, pc_32, True)
                     min_distance_16_noself += sum_of_min_distance(pc_2048, pc_16, True)
 
-                    min_distance_2048 += sum_of_min_distance(pc_2048, pc_2048, True)
-                    min_distance_1024 += sum_of_min_distance(pc_2048, pc_1024, True)
-                    min_distance_512 += sum_of_min_distance(pc_2048, pc_512, True)
-                    min_distance_256 += sum_of_min_distance(pc_2048, pc_256, True)
-                    min_distance_128 += sum_of_min_distance(pc_2048, pc_128, True)
-                    min_distance_64 += sum_of_min_distance(pc_2048, pc_64, True)
-                    min_distance_32 += sum_of_min_distance(pc_2048, pc_32, True)
-                    min_distance_16 += sum_of_min_distance(pc_2048, pc_16, True)
+                    min_distance_2048 += sum_of_min_distance(pc_2048, pc_2048, False)
+                    min_distance_1024 += sum_of_min_distance(pc_2048, pc_1024, False)
+                    min_distance_512 += sum_of_min_distance(pc_2048, pc_512, False)
+                    min_distance_256 += sum_of_min_distance(pc_2048, pc_256, False)
+                    min_distance_128 += sum_of_min_distance(pc_2048, pc_128, False)
+                    min_distance_64 += sum_of_min_distance(pc_2048, pc_64, False)
+                    min_distance_32 += sum_of_min_distance(pc_2048, pc_32, False)
+                    min_distance_16 += sum_of_min_distance(pc_2048, pc_16, False)
 
         if rank == 0:
             min_distance_2048 /= (2048 * (i + 1) * 16)
