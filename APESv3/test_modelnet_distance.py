@@ -361,10 +361,10 @@ def test(local_rank, config):
                     min_distance_32 += sum_of_min_distance(pc_2048, pc_32, True)
                     min_distance_16 += sum_of_min_distance(pc_2048, pc_16, True)
 
-                    print(
-                        f'{min_distance_2048}\t{min_distance_1024}\t{min_distance_512}\t{min_distance_256}\t{min_distance_128}\t{min_distance_64}\t{min_distance_32}\t{min_distance_16}')
-                    print(
-                        f'{min_distance_2048_noself}\t{min_distance_1024_noself}\t{min_distance_512_noself}\t{min_distance_256_noself}\t{min_distance_128_noself}\t{min_distance_64_noself}\t{min_distance_32_noself}\t{min_distance_16_noself}')
+        print(
+            f'{min_distance_2048}\t{min_distance_1024}\t{min_distance_512}\t{min_distance_256}\t{min_distance_128}\t{min_distance_64}\t{min_distance_32}\t{min_distance_16}')
+        print(
+            f'{min_distance_2048_noself}\t{min_distance_1024_noself}\t{min_distance_512_noself}\t{min_distance_256_noself}\t{min_distance_128_noself}\t{min_distance_64_noself}\t{min_distance_32_noself}\t{min_distance_16_noself}')
 
                     # pc_512_index = downsampled_idx_all_layers[1][point_cloud_index, 0, :]
                     # pc_512 = pc_1024[pc_512_index, :]
