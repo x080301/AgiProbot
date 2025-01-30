@@ -24,7 +24,7 @@ import subprocess
 from utils.ScanObjectNN import ScanObjectNN
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="default.yaml")
+@hydra.main(version_base=None, config_path="configs", config_name="default.yaml")
 def main_with_Decorators(config):
     main_without_Decorators(config)
 
@@ -553,7 +553,7 @@ if __name__ == '__main__':
         main_with_Decorators()
     else:
         subprocess.run('nvidia-smi', shell=True, text=True, stdout=None, stderr=subprocess.PIPE)
-        config = OmegaConf.load('../configs/default.yaml')
+        config = OmegaConf.load('configs/default.yaml')
         cmd_config = {
             'train': {'epochs': 200, 'ddp': {'which_gpu': [3]}},
             'datasets': 'modelnet_AnTao420M',  # 'modelnet_AnTao420M',#'modelnet_ScanObjectNN',

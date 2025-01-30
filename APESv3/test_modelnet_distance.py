@@ -269,15 +269,23 @@ def test(local_rank, config):
                 128: {'rank': rank}
             }
 
-        distance_2048_2048 = 0
-        distance_2048_1024 = 0
-        distance_2048_512 = 0
-        distance_2048_1024_no_self = 0
-        distance_2048_512_no_self = 0
-        distance_1024_1024 = 0
-        distance_1024_512 = 0
-        distance_1024_512_no_self = 0
-        distance_512_512 = 0
+        min_distance_2048 = 0
+        min_distance_1024 = 0
+        min_distance_512 = 0
+        min_distance_256 = 0
+        min_distance_128 = 0
+        min_distance_64 = 0
+        min_distance_32 = 0
+        min_distance_16 = 0
+
+        min_distance_2048_noself = 0
+        min_distance_1024_noself = 0
+        min_distance_512_noself = 0
+        min_distance_256_noself = 0
+        min_distance_128_noself = 0
+        min_distance_64_noself = 0
+        min_distance_32_noself = 0
+        min_distance_16_noself = 0
 
         for i, (samples, cls_labels) in enumerate(test_loader):
             samples, cls_labels = samples.to(device), cls_labels.to(device)
@@ -321,6 +329,9 @@ def test(local_rank, config):
 
                 for point_cloud_index in range(16):
                     pc_2048 = samples[point_cloud_index, :, :]  # (2048,3)
+
+                    print(f'downsampled_idx_all_layers[0][point_cloud_index, 0, :] {downsampled_idx_all_layers[0][point_cloud_index, 0, :]}')
+                    exit(-1)
 
                     pc_1024_index = downsampled_idx_all_layers[0][point_cloud_index, 0, :]
                     pc_1024 = pc_2048[pc_1024_index, :]
